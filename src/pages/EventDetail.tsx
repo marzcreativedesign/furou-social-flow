@@ -8,11 +8,23 @@ import {
   Share2, 
   MessageCircle, 
   DollarSign,
-  Image
+  Image as ImageIcon,
+  Copy,
+  Link as LinkIcon,
+  Facebook,
+  Mail,
+  Twitter
 } from "lucide-react";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 import ConfirmationButton from "../components/ConfirmationButton";
+import { useToast } from "../hooks/use-toast";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const MOCK_EVENT = {
   id: "1",
@@ -46,6 +58,7 @@ const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [event] = useState(MOCK_EVENT);
+  const { toast } = useToast();
   
   const handleBack = () => {
     navigate(-1);
@@ -59,6 +72,62 @@ const EventDetail = () => {
     console.log("Declined attendance");
   };
   
+  const handleShareLink = () => {
+    // Criar URL para compartilhamento
+    const eventURL = `${window.location.origin}/evento/${id}`;
+    
+    // Verificar se o navegador suporta a API de compartilhamento
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: `Junte-se a mim no evento: ${event.title}`,
+        url: eventURL
+      })
+      .catch((error) => console.log('Erro ao compartilhar:', error));
+    } else {
+      // Fallback: copiar link para clipboard
+      navigator.clipboard.writeText(eventURL).then(() => {
+        toast({
+          title: "Link copiado!",
+          description: "O link do evento foi copiado para sua área de transferência"
+        });
+      });
+    }
+  };
+  
+  const handleCopyLink = () => {
+    const eventURL = `${window.location.origin}/evento/${id}`;
+    navigator.clipboard.writeText(eventURL).then(() => {
+      toast({
+        title: "Link copiado!",
+        description: "O link do evento foi copiado para sua área de transferência"
+      });
+    });
+  };
+  
+  const handleShareVia = (platform: string) => {
+    const eventURL = `${window.location.origin}/evento/${id}`;
+    let shareURL = '';
+    
+    switch (platform) {
+      case 'facebook':
+        shareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventURL)}`;
+        break;
+      case 'twitter':
+        shareURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Junte-se a mim no evento: ${event.title}`)}&url=${encodeURIComponent(eventURL)}`;
+        break;
+      case 'email':
+        shareURL = `mailto:?subject=${encodeURIComponent(`Convite para: ${event.title}`)}&body=${encodeURIComponent(`Olá! Venha participar deste evento comigo: ${event.title}\n\n${eventURL}`)}`;
+        break;
+      default:
+        break;
+    }
+    
+    if (shareURL) {
+      window.open(shareURL, '_blank');
+    }
+  };
+  
   return (
     <div className="pb-20">
       <Header showBack onBack={handleBack} title={event.title} />
@@ -70,9 +139,35 @@ const EventDetail = () => {
           className="w-full h-48 object-cover"
         />
         
-        <button className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full">
-          <Share2 size={20} />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full">
+              <Share2 size={20} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-white">
+            <DropdownMenuItem onClick={handleShareLink} className="cursor-pointer">
+              <LinkIcon className="mr-2 h-4 w-4" />
+              <span>Compartilhar link</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
+              <Copy className="mr-2 h-4 w-4" />
+              <span>Copiar link</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleShareVia('facebook')} className="cursor-pointer">
+              <Facebook className="mr-2 h-4 w-4" />
+              <span>Facebook</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleShareVia('twitter')} className="cursor-pointer">
+              <Twitter className="mr-2 h-4 w-4" />
+              <span>Twitter</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleShareVia('email')} className="cursor-pointer">
+              <Mail className="mr-2 h-4 w-4" />
+              <span>Email</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="p-4">
@@ -159,7 +254,7 @@ const EventDetail = () => {
         <div className="border-t pt-4 mt-6">
           <h2 className="font-bold mb-3">Galeria</h2>
           <button className="border border-border rounded-xl p-3 w-full flex items-center justify-center text-primary">
-            <Image size={18} className="mr-2" />
+            <ImageIcon size={18} className="mr-2" />
             <span>Adicionar fotos</span>
           </button>
         </div>
