@@ -87,6 +87,21 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Dark mode specific colors
+				dark: {
+					background: '#121212',
+					card: '#1E1E1E',
+					text: '#EDEDED',
+					textSecondary: '#B3B3B3',
+					border: '#2C2C2C',
+					primary: '#FF6B00',
+					secondary: '#FF9E3D',
+					hover: '#FF8333',
+					disabled: '#555555',
+					error: '#FF4C4C',
+					success: '#4CAF50',
+					link: '#FFA756',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -97,7 +97,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   ];
   
   return (
-    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
+    <div className="min-h-screen flex flex-col dark:bg-[#121212] dark:text-[#EDEDED]">
       {/* Header */}
       <Header 
         title={title}
@@ -112,7 +112,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       </Header>
 
       {/* Main content */}
-      <main className="flex-1 dark:bg-gray-900 pb-16 lg:pb-0">{children}</main>
+      <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0">{children}</main>
 
       {/* Bottom navigation for mobile */}
       <div className="block lg:hidden">
@@ -121,7 +121,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Dock for desktop - always shown */}
       <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
-        <TooltipProvider>
+        <TooltipProvider delayDuration={0}>
           <Dock className="items-end pb-3">
             {dockItems.map((item, idx) => (
               <Tooltip key={idx} delayDuration={0}>
@@ -129,9 +129,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   <DockItem
                     key={idx}
                     className={`aspect-square rounded-full ${
-                      location.pathname === item.href
+                      location.pathname === item.href || location.pathname.startsWith(item.href + '/')
                         ? "bg-primary text-primary-foreground"
-                        : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                        : "bg-gray-200 hover:bg-gray-300 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]"
                     }`}
                   >
                     <Link to={item.href} className="block h-full w-full flex items-center justify-center">
@@ -140,7 +140,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     </Link>
                   </DockItem>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
+                <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
                   {item.title}
                 </TooltipContent>
               </Tooltip>
@@ -150,7 +150,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <DockItem
-                  className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
+                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600 dark:hover:bg-[#FF8333]"
                 >
                   <Link to="/criar" className="block h-full w-full flex items-center justify-center">
                     <DockLabel>Criar Evento</DockLabel>
@@ -158,7 +158,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </Link>
                 </DockItem>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
                 Criar Evento
               </TooltipContent>
             </Tooltip>
@@ -168,7 +168,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               <TooltipTrigger asChild>
                 <div className="cursor-pointer">
                   <DockItem
-                    className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                    className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]"
                   >
                     <div 
                       className="block h-full w-full flex items-center justify-center cursor-pointer"
@@ -180,7 +180,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </DockItem>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
                 Modo {darkMode ? 'Claro' : 'Escuro'}
               </TooltipContent>
             </Tooltip>

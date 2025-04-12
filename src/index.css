@@ -38,6 +38,39 @@
     --radius: 1rem;
   }
 
+  .dark {
+    --background: 240 10% 7%; /* #121212 */
+    --foreground: 0 0% 93%; /* #EDEDED */
+
+    --card: 240 7% 12%; /* #1E1E1E */
+    --card-foreground: 0 0% 93%; /* #EDEDED */
+
+    --popover: 240 7% 12%; /* #1E1E1E */
+    --popover-foreground: 0 0% 93%; /* #EDEDED */
+
+    --primary: 24 100% 55%; /* #FF6B00 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 32 100% 62%; /* #FF9E3D */
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 240 5% 17%; /* #2C2C2C */
+    --muted-foreground: 0 0% 70%; /* #B3B3B3 */
+
+    --accent: 24 100% 60%; /* #FF8333 - hover state */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 77% 65%; /* #FF4C4C */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5% 17%; /* #2C2C2C */
+    --input: 240 5% 17%; /* #2C2C2C */
+    --ring: 24 100% 55%; /* #FF6B00 */
+
+    --success: 120 39% 49%; /* #4CAF50 */
+    --link: 32 100% 65%; /* #FFA756 */
+  }
+
   * {
     @apply border-border;
   }
@@ -51,11 +84,11 @@
   }
 
   .event-card {
-    @apply relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:shadow-lg;
+    @apply relative overflow-hidden rounded-2xl bg-white dark:bg-card shadow-md transition-all hover:shadow-lg;
   }
 
   .btn-primary {
-    @apply bg-primary text-white rounded-full px-6 py-3 font-medium transition-all hover:bg-primary-600 active:bg-primary-700;
+    @apply bg-primary text-white rounded-full px-6 py-3 font-medium transition-all hover:bg-primary-600 active:bg-primary-700 dark:hover:bg-accent dark:active:bg-primary-700;
   }
 
   .btn-secondary {
@@ -67,10 +100,23 @@
   }
 
   .input-primary {
-    @apply rounded-xl border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10;
+    @apply rounded-xl border border-border bg-background px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 dark:focus:border-primary dark:focus:ring-primary/20;
   }
 
   .card-gradient {
     @apply bg-gradient-to-br from-background to-muted;
+  }
+  
+  /* Dark mode specific styles */
+  .dark .glass-card {
+    @apply bg-card/80 backdrop-blur-lg border border-muted;
+  }
+  
+  .dark .hover-card {
+    @apply hover:bg-muted/50;
+  }
+  
+  .dark .text-fade {
+    @apply text-muted-foreground;
   }
 }
