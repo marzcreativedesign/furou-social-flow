@@ -246,12 +246,17 @@ const GroupDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DialogTrigger asChild onClick={() => setIsEditDialogOpen(true)}>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar grupo
-                </DropdownMenuItem>
-              </DialogTrigger>
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => {
+                    e.preventDefault();
+                    setIsEditDialogOpen(true);
+                  }}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar grupo
+                  </DropdownMenuItem>
+                </DialogTrigger>
+              </Dialog>
               <DropdownMenuItem className="text-destructive">
                 <Trash className="mr-2 h-4 w-4" />
                 Excluir grupo
