@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -98,147 +97,122 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center">
-            {showBack ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onBack || (() => navigate(-1))}
-                className="mr-2"
+          {showBack ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack || (() => navigate(-1))}
+              className="mr-2"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M15 18L9 12L15 6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Button>
-            ) : (
-              <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-                <SheetTrigger asChild className="lg:hidden">
-                  <Button variant="ghost" size="icon" className="mr-2">
-                    <Hamburger onClick={() => setMenuOpen(!menuOpen)} />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                  <SheetHeader>
-                    <SheetTitle className="text-left flex items-center">
-                      <span className="text-2xl font-bold">Furou?!</span>
-                    </SheetTitle>
-                  </SheetHeader>
-                  <Separator className="my-4" />
-                  <div className="flex items-center mb-6 px-2">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                      <AvatarFallback>US</AvatarFallback>
-                    </Avatar>
-                    <div className="ml-3">
-                      <p className="font-medium">Carlos Oliveira</p>
-                      <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
-                    </div>
+                <path
+                  d="M15 18L9 12L15 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Button>
+          ) : (
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild className="lg:hidden">
+                <Button variant="ghost" size="icon" className="mr-2">
+                  <Hamburger onClick={() => setMenuOpen(!menuOpen)} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left flex items-center">
+                    <span className="text-2xl font-bold">Furou?!</span>
+                  </SheetTitle>
+                </SheetHeader>
+                <Separator className="my-4" />
+                <div className="flex items-center mb-6 px-2">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src="https://i.pravatar.cc/150?u=1" />
+                    <AvatarFallback>US</AvatarFallback>
+                  </Avatar>
+                  <div className="ml-3">
+                    <p className="font-medium">Carlos Oliveira</p>
+                    <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
                   </div>
-                  <ScrollArea className="h-[calc(100vh-180px)]">
-                    <div className="space-y-1 px-2">
-                      {menuItems.map((item) => (
-                        <Button
-                          key={item.href}
-                          variant={location.pathname === item.href ? "secondary" : "ghost"}
-                          className="w-full justify-start"
-                          onClick={() => { 
-                            navigate(item.href); 
-                            setMenuOpen(false); 
-                          }}
-                        >
-                          {item.icon}
-                          <span className="ml-2">{item.title}</span>
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    <Separator className="my-4" />
-                    
-                    <div className="px-4 py-2 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
-                          <span>Modo escuro</span>
-                        </div>
-                        <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-                      </div>
-                      
-                      <Button 
-                        variant="outline" 
+                </div>
+                <ScrollArea className="h-[calc(100vh-180px)]">
+                  <div className="space-y-1 px-2">
+                    {menuItems.map((item) => (
+                      <Button
+                        key={item.href}
+                        variant={location.pathname === item.href ? "secondary" : "ghost"}
                         className="w-full justify-start"
                         onClick={() => { 
-                          navigate("/criar"); 
+                          navigate(item.href); 
                           setMenuOpen(false); 
                         }}
                       >
-                        <PlusCircle className="mr-2" size={20} />
-                        <span>Criar evento</span>
+                        {item.icon}
+                        <span className="ml-2">{item.title}</span>
                       </Button>
-                      
-                      <Button 
-                        variant="destructive"
-                        className="w-full justify-start"
-                        onClick={() => navigate("/login")}
-                      >
-                        <LogOut className="mr-2" size={20} />
-                        <span>Sair</span>
-                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="px-4 py-2 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
+                        <span>Modo escuro</span>
+                      </div>
+                      <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
                     </div>
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
-            )}
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => { 
+                        navigate("/criar"); 
+                        setMenuOpen(false); 
+                      }}
+                    >
+                      <PlusCircle className="mr-2" size={20} />
+                      <span>Criar evento</span>
+                    </Button>
+                    
+                    <Button 
+                      variant="destructive"
+                      className="w-full justify-start"
+                      onClick={() => navigate("/login")}
+                    >
+                      <LogOut className="mr-2" size={20} />
+                      <span>Sair</span>
+                    </Button>
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          )}
 
-            {!showSearchInput ? (
-              <h1 className="text-lg font-bold">{title}</h1>
-            ) : (
-              <div className="flex-1 ml-2">
-                <input
-                  type="text"
-                  placeholder="Buscar eventos, locais ou grupos..."
-                  className="w-full input-primary h-9 pl-3"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  autoFocus
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {showSearch && (
-              <Button 
-                variant={showSearchInput ? "secondary" : "ghost"} 
-                size="icon"
-                onClick={toggleSearch}
-              >
-                {showSearchInput ? <X size={18} /> : <Search size={18} />}
-              </Button>
-            )}
-            
-            {rightContent}
-
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate("/configuracoes")}
-              className="hidden sm:flex"
-            >
-              <Settings size={20} />
-            </Button>
-          </div>
+          {!showSearchInput ? (
+            <h1 className="text-lg font-bold">{title}</h1>
+          ) : (
+            <div className="flex-1 ml-2">
+              <input
+                type="text"
+                placeholder="Buscar eventos, locais ou grupos..."
+                className="w-full input-primary h-9 pl-3"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                autoFocus
+              />
+            </div>
+          )}
         </div>
       </header>
 
@@ -263,7 +237,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                 }`}
               >
-                <Link to={item.href}>
+                <Link to={item.href} className="block h-full w-full flex items-center justify-center">
                   <DockLabel>{item.title}</DockLabel>
                   <DockIcon>{item.icon}</DockIcon>
                 </Link>
