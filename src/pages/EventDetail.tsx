@@ -14,10 +14,13 @@ import {
   Mail,
   Twitter,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Edit2,
+  MoreVertical
 } from "lucide-react";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
+import MainLayout from "../components/MainLayout";
 import ConfirmationButton from "../components/ConfirmationButton";
 import { useToast } from "../hooks/use-toast";
 import EventTag from "../components/EventTag";
@@ -34,6 +37,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const MOCK_EVENT = {
   id: "1",
@@ -104,6 +111,17 @@ const EventDetail = () => {
   const { toast } = useToast();
   const [showAllAttendees, setShowAllAttendees] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editEventData, setEditEventData] = useState({
+    title: event.title,
+    description: event.description,
+    location: event.location,
+    address: event.address,
+    date: "2025-04-08", // Would be extracted from event.fullDate in a real app
+    startTime: "19:00", // Would be extracted from event.fullDate in a real app
+    endTime: "23:00", // Would be extracted from event.fullDate in a real app
+    type: event.type,
+  });
   
   const visibleAttendees = showAllAttendees 
     ? event.attendees 
@@ -188,11 +206,46 @@ const EventDetail = () => {
       window.open(shareURL, '_blank');
     }
   };
+
+  const handleEditEvent = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEditedEvent = () => {
+    // Format the date and times back into a display format
+    const formattedDate = "Sexta-feira, 8 de Abril"; // This would be properly formatted from editEventData.date in a real app
+    
+    setEvent(prev => ({
+      ...prev,
+      title: editEventData.title,
+      description: editEventData.description,
+      location: editEventData.location,
+      address: editEventData.address,
+      fullDate: `${formattedDate} • ${editEventData.startTime} - ${editEventData.endTime}`,
+      type: editEventData.type as "public" | "private" | "group"
+    }));
+    
+    setEditDialogOpen(false);
+    
+    toast({
+      title: "Evento atualizado",
+      description: "As alterações no evento foram salvas com sucesso",
+    });
+  };
+
+  const handleEditEventInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditEventData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Check if current user is the event host (for edit button display)
+  const isEventHost = event.host.id === "1"; // In a real app, this would compare with the authenticated user ID
   
   return (
-    <div className="pb-20">
-      <Header showBack onBack={handleBack} title={event.title} />
-      
+    <MainLayout showBack onBack={handleBack} title={event.title}>
       <div className="relative">
         <img 
           src={event.imageUrl} 
@@ -209,46 +262,50 @@ const EventDetail = () => {
             <EventTag type="group" label={event.groupName} />
           )}
         </div>
-        
-        <Button 
-          onClick={handleShareLink}
-          className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full"
-          size="icon"
-          variant="ghost"
-          ref={shareButtonRef}
-        >
-          <Share2 size={20} />
-        </Button>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full"
+
+        {/* Event actions menu (edit, share, etc.) */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          {isEventHost && (
+            <Button 
+              onClick={handleEditEvent}
+              className="bg-white/80 backdrop-blur-sm p-2 rounded-full dark:bg-card/80"
               size="icon"
               variant="ghost"
             >
-              <Share2 size={20} />
+              <Edit2 size={20} className="text-foreground" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white" align="end">
-            <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
-              <Copy className="mr-2 h-4 w-4" />
-              <span>Copiar link</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleShareVia('facebook')} className="cursor-pointer">
-              <Facebook className="mr-2 h-4 w-4" />
-              <span>Facebook</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleShareVia('twitter')} className="cursor-pointer">
-              <Twitter className="mr-2 h-4 w-4" />
-              <span>Twitter</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleShareVia('email')} className="cursor-pointer">
-              <Mail className="mr-2 h-4 w-4" />
-              <span>Email</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="bg-white/80 backdrop-blur-sm p-2 rounded-full dark:bg-card/80"
+                size="icon"
+                variant="ghost"
+              >
+                <Share2 size={20} className="text-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white dark:bg-card dark:border-[#2C2C2C]" align="end">
+              <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer dark:hover:bg-muted">
+                <Copy className="mr-2 h-4 w-4" />
+                <span className="dark:text-[#EDEDED]">Copiar link</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShareVia('facebook')} className="cursor-pointer dark:hover:bg-muted">
+                <Facebook className="mr-2 h-4 w-4" />
+                <span className="dark:text-[#EDEDED]">Facebook</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShareVia('twitter')} className="cursor-pointer dark:hover:bg-muted">
+                <Twitter className="mr-2 h-4 w-4" />
+                <span className="dark:text-[#EDEDED]">Twitter</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShareVia('email')} className="cursor-pointer dark:hover:bg-muted">
+                <Mail className="mr-2 h-4 w-4" />
+                <span className="dark:text-[#EDEDED]">Email</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       
       <div className="p-4">
@@ -258,61 +315,63 @@ const EventDetail = () => {
           <Link to={`/usuario/${event.host.id}`}>
             <Avatar className="h-8 w-8 mr-2">
               <AvatarImage src={event.host.imageUrl} alt={event.host.name} />
-              <AvatarFallback>{event.host.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground">
+                {event.host.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
           </Link>
           <div>
             <Link 
               to={`/usuario/${event.host.id}`} 
-              className="text-sm font-medium hover:underline"
+              className="text-sm font-medium hover:underline dark:text-[#EDEDED]"
             >
               {event.host.name}
             </Link>
-            <p className="text-xs text-muted-foreground">Organizador</p>
+            <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">Organizador</p>
           </div>
         </div>
         
         <div className="space-y-4 mb-6">
           <div className="flex items-center">
-            <Calendar size={18} className="text-primary mr-3" />
-            <span>{event.fullDate}</span>
+            <Calendar size={18} className="text-primary dark:text-primary mr-3" />
+            <span className="dark:text-[#EDEDED]">{event.fullDate}</span>
           </div>
           
           <div className="flex items-center">
-            <MapPin size={18} className="text-primary mr-3" />
+            <MapPin size={18} className="text-primary dark:text-primary mr-3" />
             <div>
-              <div>{event.location}</div>
-              <div className="text-sm text-muted-foreground">{event.address}</div>
+              <div className="dark:text-[#EDEDED]">{event.location}</div>
+              <div className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{event.address}</div>
             </div>
           </div>
           
           <div className="flex items-center">
-            <Users size={18} className="text-primary mr-3" />
-            <span>{event.attendees.length} confirmados</span>
+            <Users size={18} className="text-primary dark:text-primary mr-3" />
+            <span className="dark:text-[#EDEDED]">{event.attendees.length} confirmados</span>
           </div>
         </div>
         
-        <div className="border-t border-b py-4 my-4">
-          <h2 className="font-bold mb-2">Sobre</h2>
-          <p className="text-muted-foreground">{event.description}</p>
+        <div className="border-t border-b py-4 my-4 border-border dark:border-[#2C2C2C]">
+          <h2 className="font-bold mb-2 dark:text-[#EDEDED]">Sobre</h2>
+          <p className="text-muted-foreground dark:text-[#B3B3B3]">{event.description}</p>
         </div>
         
-        <div className="bg-muted p-4 rounded-xl mb-6">
-          <h2 className="font-bold mb-3">Você vai?</h2>
+        <div className="bg-muted dark:bg-[#262626] p-4 rounded-xl mb-6">
+          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Você vai?</h2>
           <ConfirmationButton 
             onConfirm={handleConfirm}
             onDecline={handleDecline}
           />
         </div>
         
-        <div className="border-t pt-4 mt-6">
-          <h2 className="font-bold mb-3">Quem vai</h2>
+        <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Quem vai</h2>
           
           <div className="space-y-4">
             {confirmedAttendees.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <span className="h-3 w-3 rounded-full bg-green-500 mr-2"></span>
+                <h3 className="text-sm font-medium flex items-center mb-2 dark:text-[#EDEDED]">
+                  <span className="h-3 w-3 rounded-full bg-green-500 dark:bg-[#4CAF50] mr-2"></span>
                   Confirmados ({confirmedAttendees.length})
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -322,7 +381,7 @@ const EventDetail = () => {
                       to={`/usuario/${attendee.id}`}
                     >
                       <div 
-                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500"
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500 dark:border-[#4CAF50]"
                         title={attendee.name}
                       >
                         <img 
@@ -339,8 +398,8 @@ const EventDetail = () => {
 
             {pendingAttendees.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <span className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
+                <h3 className="text-sm font-medium flex items-center mb-2 dark:text-[#EDEDED]">
+                  <span className="h-3 w-3 rounded-full bg-yellow-500 dark:bg-yellow-500 mr-2"></span>
                   Pendentes ({pendingAttendees.length})
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -367,8 +426,8 @@ const EventDetail = () => {
 
             {cancelledAttendees.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <span className="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
+                <h3 className="text-sm font-medium flex items-center mb-2 dark:text-[#EDEDED]">
+                  <span className="h-3 w-3 rounded-full bg-red-500 dark:bg-[#FF4C4C] mr-2"></span>
                   Furaram ({cancelledAttendees.length})
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -378,7 +437,7 @@ const EventDetail = () => {
                       to={`/usuario/${attendee.id}`}
                     >
                       <div 
-                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500"
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 dark:border-[#FF4C4C]"
                         title={attendee.name}
                       >
                         <img 
@@ -399,7 +458,7 @@ const EventDetail = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => setShowAllAttendees(!showAllAttendees)}
-              className="text-primary flex gap-1 items-center mt-2"
+              className="text-primary dark:text-[#FFA756] flex gap-1 items-center mt-2"
             >
               {showAllAttendees ? (
                 <>Ver menos <ChevronUp size={16} /></>
@@ -411,27 +470,27 @@ const EventDetail = () => {
         </div>
         
         {event.type === "private" && (
-          <div className="border-t pt-4 mt-6">
-            <h2 className="font-bold mb-3">Calculadora de Custos</h2>
+          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Calculadora de Custos</h2>
             <EventCostCalculator attendeesCount={event.attendees.length} />
           </div>
         )}
         
         {event.type === "public" && (
-          <div className="border-t pt-4 mt-6">
-            <h2 className="font-bold mb-3">Vaquinha</h2>
-            <div className="bg-muted rounded-xl p-4">
+          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Vaquinha</h2>
+            <div className="bg-muted dark:bg-[#262626] rounded-xl p-4">
               <div className="flex justify-between items-center mb-2">
-                <span>Meta: R$ {event.targetContribution.toFixed(2)}</span>
-                <span className="font-bold">R$ {event.totalContribution.toFixed(2)}</span>
+                <span className="dark:text-[#EDEDED]">Meta: R$ {event.targetContribution.toFixed(2)}</span>
+                <span className="font-bold dark:text-[#EDEDED]">R$ {event.totalContribution.toFixed(2)}</span>
               </div>
-              <div className="w-full bg-background rounded-full h-3 mb-3">
+              <div className="w-full bg-background dark:bg-[#121212] rounded-full h-3 mb-3">
                 <div 
-                  className="bg-secondary h-3 rounded-full"
+                  className="bg-secondary h-3 rounded-full dark:bg-secondary"
                   style={{ width: `${(event.totalContribution / event.targetContribution) * 100}%` }}
                 />
               </div>
-              <Button className="w-full flex items-center justify-center">
+              <Button className="w-full flex items-center justify-center dark:bg-primary dark:hover:bg-accent">
                 <DollarSign size={18} className="mr-2" />
                 Contribuir
               </Button>
@@ -439,16 +498,16 @@ const EventDetail = () => {
           </div>
         )}
         
-        <div className="border-t pt-4 mt-6">
-          <h2 className="font-bold mb-3">Discussão</h2>
+        <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Discussão</h2>
           <EventDiscussion 
             eventId={event.id} 
             initialComments={event.comments} 
           />
         </div>
         
-        <div className="border-t pt-4 mt-6">
-          <h2 className="font-bold mb-3">Galeria</h2>
+        <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Galeria</h2>
           <EventGallery 
             eventId={event.id}
             initialImages={event.gallery}
@@ -456,11 +515,11 @@ const EventDetail = () => {
         </div>
         
         {event.offers.length > 0 && (
-          <div className="border-t pt-4 mt-6">
-            <h2 className="font-bold mb-3">Ofertas especiais</h2>
+          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Ofertas especiais</h2>
             <div className="space-y-3">
               {event.offers.map((offer) => (
-                <div key={offer.id} className="bg-muted rounded-xl p-3 flex items-center">
+                <div key={offer.id} className="bg-muted dark:bg-[#262626] rounded-xl p-3 flex items-center">
                   <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
                     <img 
                       src={offer.imageUrl} 
@@ -469,8 +528,8 @@ const EventDetail = () => {
                     />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{offer.title}</div>
-                    <div className="text-sm text-muted-foreground">{offer.businessName}</div>
+                    <div className="font-medium dark:text-[#EDEDED]">{offer.title}</div>
+                    <div className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{offer.businessName}</div>
                   </div>
                 </div>
               ))}
@@ -478,9 +537,138 @@ const EventDetail = () => {
           </div>
         )}
       </div>
-      
-      <BottomNav />
-    </div>
+
+      {/* Edit Event Modal */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="dark:bg-card dark:border-[#2C2C2C]">
+          <DialogHeader>
+            <DialogTitle className="dark:text-[#EDEDED]">Editar Evento</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title" className="dark:text-[#EDEDED]">Título</Label>
+              <Input 
+                id="title" 
+                name="title"
+                value={editEventData.title}
+                onChange={handleEditEventInputChange}
+                className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description" className="dark:text-[#EDEDED]">Descrição</Label>
+              <textarea 
+                id="description" 
+                name="description"
+                value={editEventData.description}
+                onChange={handleEditEventInputChange}
+                rows={3}
+                className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] resize-none"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date" className="dark:text-[#EDEDED]">Data</Label>
+                <Input 
+                  id="date" 
+                  name="date"
+                  type="date"
+                  value={editEventData.date}
+                  onChange={handleEditEventInputChange}
+                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="startTime" className="dark:text-[#EDEDED]">Hora de início</Label>
+                <Input 
+                  id="startTime" 
+                  name="startTime"
+                  type="time"
+                  value={editEventData.startTime}
+                  onChange={handleEditEventInputChange}
+                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="endTime" className="dark:text-[#EDEDED]">Hora de término</Label>
+                <Input 
+                  id="endTime" 
+                  name="endTime"
+                  type="time"
+                  value={editEventData.endTime}
+                  onChange={handleEditEventInputChange}
+                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label className="dark:text-[#EDEDED]">Tipo de evento</Label>
+                <RadioGroup
+                  name="type"
+                  value={editEventData.type}
+                  onValueChange={(value) => setEditEventData({ ...editEventData, type: value })}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="public" value="public" className="dark:border-[#2C2C2C]" />
+                    <Label htmlFor="public" className="dark:text-[#EDEDED]">Público</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem id="private" value="private" className="dark:border-[#2C2C2C]" />
+                    <Label htmlFor="private" className="dark:text-[#EDEDED]">Privado</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="location" className="dark:text-[#EDEDED]">Local</Label>
+              <Input 
+                id="location" 
+                name="location"
+                value={editEventData.location}
+                onChange={handleEditEventInputChange}
+                className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="address" className="dark:text-[#EDEDED]">Endereço</Label>
+              <Input 
+                id="address" 
+                name="address"
+                value={editEventData.address}
+                onChange={handleEditEventInputChange}
+                className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setEditDialogOpen(false)}
+              className="dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSaveEditedEvent}
+              className="dark:bg-primary dark:text-white dark:hover:bg-accent"
+            >
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </MainLayout>
   );
 };
 

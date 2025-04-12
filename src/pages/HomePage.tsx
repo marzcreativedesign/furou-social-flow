@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, CalendarDays, Settings, Bell, X, Check } from "lucide-react";
 import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
 import MainLayout from "../components/MainLayout";
 import EventCard from "../components/EventCard";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import CostCalculator from "@/components/CostCalculator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-// Mock events
+// Extended mock events for testing
 const MOCK_EVENTS = [
   {
     id: "1",
@@ -46,6 +45,28 @@ const MOCK_EVENTS = [
     type: "group",
     groupName: "Amigos da Faculdade"
   },
+  {
+    id: "10",
+    title: "Noite de Jogos",
+    date: "Sábado, 18:00",
+    location: "Rua Augusta, 500",
+    imageUrl: "https://images.unsplash.com/photo-1606167668584-78701c57f13d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    attendees: 6,
+    confirmed: true,
+    type: "private",
+    groupName: null
+  },
+  {
+    id: "11",
+    title: "Trilha no Pico do Jaraguá",
+    date: "Domingo, 07:00",
+    location: "Pico do Jaraguá",
+    imageUrl: "https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    attendees: 10,
+    confirmed: false,
+    type: "group",
+    groupName: "Aventureiros SP"
+  },
 ];
 
 const PENDING_ACTIONS = [
@@ -65,8 +86,25 @@ const PENDING_ACTIONS = [
     imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2232&q=80",
     type: "group_invite"
   },
+  {
+    id: "3",
+    title: "Convite para evento",
+    eventName: "Aniversário do João",
+    date: "Próximo sábado, 20:00",
+    imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    type: "event_invite"
+  },
+  {
+    id: "4",
+    title: "Mudança de local",
+    eventName: "Festival de Música",
+    date: "Local atualizado",
+    imageUrl: "https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    type: "location_change"
+  },
 ];
 
+// Extended mock upcoming events for testing
 const UPCOMING_EVENTS = [
   {
     id: "4",
@@ -86,6 +124,50 @@ const UPCOMING_EVENTS = [
     location: "MASP",
     imageUrl: "https://images.unsplash.com/photo-1605429523419-d828acb941d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
     attendees: 30,
+    confirmed: false,
+    type: "public",
+    groupName: null
+  },
+  {
+    id: "6",
+    title: "Show de Stand-up",
+    date: "Sexta-feira, 21:00",
+    location: "Comedy Club",
+    imageUrl: "https://images.unsplash.com/photo-1527224857830-43a7acc85260?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1171&q=80",
+    attendees: 80,
+    confirmed: true,
+    type: "public",
+    groupName: null
+  },
+  {
+    id: "7",
+    title: "Food Truck Festival",
+    date: "Domingo, 12:00",
+    location: "Memorial da América Latina",
+    imageUrl: "https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1171&q=80",
+    attendees: 120,
+    confirmed: false,
+    type: "public",
+    groupName: null
+  },
+  {
+    id: "8",
+    title: "Feira de Vinil",
+    date: "Sábado, 10:00",
+    location: "Centro Cultural",
+    imageUrl: "https://images.unsplash.com/photo-1603048588665-791ca91d0e92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    attendees: 45,
+    confirmed: true,
+    type: "public",
+    groupName: null
+  },
+  {
+    id: "9",
+    title: "Workshop de Fotografia",
+    date: "Terça-feira, 18:30",
+    location: "Estúdio Central",
+    imageUrl: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    attendees: 15,
     confirmed: false,
     type: "public",
     groupName: null
@@ -148,19 +230,19 @@ const HomePage = () => {
         <>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <CalendarDays size={20} />
+              <Button variant="ghost" size="icon" className="dark:hover:bg-[#262626]">
+                <CalendarDays size={20} className="dark:text-[#EDEDED]" />
               </Button>
             </SheetTrigger>
-            <SheetContent>
-              <h2 className="text-xl font-bold mb-4">Calculadora de Rateio</h2>
-              <p className="text-muted-foreground mb-4">
+            <SheetContent className="dark:bg-card dark:border-[#2C2C2C]">
+              <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Calculadora de Rateio</h2>
+              <p className="text-muted-foreground mb-4 dark:text-[#B3B3B3]">
                 Divida facilmente o valor de um evento entre os participantes
               </p>
               <CostCalculator isDrawer />
               
               <Button 
-                className="w-full mt-4"
+                className="w-full mt-4 dark:bg-primary dark:hover:bg-accent"
                 onClick={() => navigate("/calculadora")}
               >
                 Abrir calculadora completa
@@ -172,8 +254,9 @@ const HomePage = () => {
             variant="outline"
             size="icon"
             onClick={() => navigate("/criar")}
+            className="dark:border-[#2C2C2C] dark:hover:bg-[#262626]"
           >
-            <Plus size={20} />
+            <Plus size={20} className="dark:text-[#EDEDED]" />
           </Button>
         </>
       }
@@ -181,15 +264,15 @@ const HomePage = () => {
       <div className="p-4">
         {/* Welcome message */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-3">Olá, {userName} 👋</h1>
+          <h1 className="text-2xl font-bold mb-3 dark:text-[#EDEDED]">Olá, {userName} 👋</h1>
           
           {/* Search bar */}
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-[#B3B3B3]" size={18} />
             <input
               type="text"
               placeholder="Buscar eventos..."
-              className="w-full px-10 py-3 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-colors"
+              className="w-full px-10 py-3 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3] dark:focus:border-primary dark:focus:ring-primary/20"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -199,32 +282,32 @@ const HomePage = () => {
         {/* Pending Actions Section */}
         {pendingActions.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Ações Pendentes</h2>
+            <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Ações Pendentes</h2>
             <div className="space-y-3">
               {pendingActions.map((action) => (
-                <div key={action.id} className="bg-accent/10 p-4 rounded-lg flex justify-between items-center">
+                <div key={action.id} className="bg-accent/10 dark:bg-[#FF6B00]/20 p-4 rounded-lg flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full overflow-hidden">
                       <img src={action.imageUrl} alt={action.eventName} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h3 className="font-medium">{action.title}</h3>
-                      <p className="text-sm text-muted-foreground">{action.eventName}</p>
-                      <span className="text-xs text-muted-foreground">{action.date}</span>
+                      <h3 className="font-medium dark:text-[#EDEDED]">{action.title}</h3>
+                      <p className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{action.eventName}</p>
+                      <span className="text-xs text-muted-foreground dark:text-[#B3B3B3]">{action.date}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="rounded-full w-9 h-9 p-0" 
+                      className="rounded-full w-9 h-9 p-0 dark:border-[#2C2C2C] dark:bg-[#262626] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]" 
                       onClick={() => handleRejectAction(action.id)}
                     >
                       <X size={16} />
                     </Button>
                     <Button 
                       size="sm"
-                      className="rounded-full w-9 h-9 p-0" 
+                      className="rounded-full w-9 h-9 p-0 dark:bg-primary dark:hover:bg-accent" 
                       onClick={() => handleAcceptAction(action.id)}
                     >
                       <Check size={16} />
@@ -241,7 +324,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'all' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'all' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('all')}
           >
             Todos
@@ -249,7 +334,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'public' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'public' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('public')}
           >
             Eventos Públicos
@@ -257,7 +344,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'private' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'private' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('private')}
           >
             Eventos Privados
@@ -265,7 +354,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'group' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'group' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('group')}
           >
             Grupos
@@ -273,7 +364,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'confirmed' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'confirmed' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('confirmed')}
           >
             Confirmados
@@ -281,7 +374,9 @@ const HomePage = () => {
           <Button 
             variant={activeFilter === 'missed' ? 'default' : 'outline'}
             size="sm"
-            className="rounded-full whitespace-nowrap"
+            className={`rounded-full whitespace-nowrap ${
+              activeFilter !== 'missed' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'
+            }`}
             onClick={() => setActiveFilter('missed')}
           >
             Furei
@@ -291,8 +386,8 @@ const HomePage = () => {
         {/* Seus Eventos Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Seus Eventos</h2>
-            <Button variant="ghost" size="sm" asChild>
+            <h2 className="text-xl font-bold dark:text-[#EDEDED]">Seus Eventos</h2>
+            <Button variant="ghost" size="sm" asChild className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
               <Link to="/eventos">Ver todos</Link>
             </Button>
           </div>
@@ -320,20 +415,25 @@ const HomePage = () => {
               ))}
             </div>
           ) : searchQuery ? (
-            <div className="text-center py-8 bg-muted/20 rounded-xl">
-              <Search className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-              <p className="text-muted-foreground">
+            <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
+              <Search className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
+              <p className="text-muted-foreground dark:text-[#B3B3B3]">
                 Nenhum evento encontrado para "{searchQuery}"
               </p>
             </div>
           ) : (
-            <div className="text-center py-8 bg-muted/20 rounded-xl">
-              <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-              <h3 className="text-lg font-medium mb-1">Nenhum evento</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+            <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
+              <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
+              <h3 className="text-lg font-medium mb-1 dark:text-[#EDEDED]">Nenhum evento</h3>
+              <p className="text-sm text-muted-foreground dark:text-[#B3B3B3] mb-4">
                 Você não tem eventos ativos no momento
               </p>
-              <Button onClick={() => navigate("/criar")}>Criar Evento</Button>
+              <Button 
+                onClick={() => navigate("/criar")}
+                className="dark:bg-primary dark:hover:bg-accent"
+              >
+                Criar Evento
+              </Button>
             </div>
           )}
         </div>
@@ -342,8 +442,8 @@ const HomePage = () => {
         {!searchQuery && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Eventos Públicos</h2>
-              <Button variant="ghost" size="sm" asChild>
+              <h2 className="text-xl font-bold dark:text-[#EDEDED]">Eventos Públicos</h2>
+              <Button variant="ghost" size="sm" asChild className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
                 <Link to="/eventos?filter=public">Ver todos</Link>
               </Button>
             </div>
