@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { AuthProvider } from "./contexts/AuthContext";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import HomePage from "./pages/HomePage";
@@ -37,27 +38,29 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <TooltipProvider>
-          <Routes>
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<HomePage />} />
-            <Route path="/evento/:id" element={<EventDetail />} />
-            <Route path="/criar" element={<CreateEvent />} />
-            <Route path="/grupos" element={<Groups />} />
-            <Route path="/grupo/:id" element={<GroupDetail />} />
-            <Route path="/notificacoes" element={<Notifications />} />
-            <Route path="/perfil" element={<Profile />} />
-            <Route path="/usuario/:id" element={<UserProfile />} />
-            <Route path="/agenda" element={<CalendarView />} />
-            <Route path="/configuracoes" element={<Settings />} />
-            <Route path="/eventos" element={<EventsPage />} />
-            <Route path="/calculadora" element={<CostCalculatorPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Routes>
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/evento/:id" element={<EventDetail />} />
+              <Route path="/criar" element={<CreateEvent />} />
+              <Route path="/grupos" element={<Groups />} />
+              <Route path="/grupo/:id" element={<GroupDetail />} />
+              <Route path="/notificacoes" element={<Notifications />} />
+              <Route path="/perfil" element={<Profile />} />
+              <Route path="/usuario/:id" element={<UserProfile />} />
+              <Route path="/agenda" element={<CalendarView />} />
+              <Route path="/configuracoes" element={<Settings />} />
+              <Route path="/eventos" element={<EventsPage />} />
+              <Route path="/calculadora" element={<CostCalculatorPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

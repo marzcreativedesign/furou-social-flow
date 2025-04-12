@@ -1,26 +1,34 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Apple, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signInWithGoogle, signInWithApple, isLoading } = useAuth();
   const [emailLogin, setEmailLogin] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (provider: string) => {
-    setIsLoading(true);
-    
+  const handleLogin = async (provider: string) => {
     if (provider === "email" && !emailLogin) {
       setEmailLogin(true);
-      setIsLoading(false);
+      return;
+    }
+
+    if (provider === "google") {
+      await signInWithGoogle();
+      return;
+    }
+
+    if (provider === "apple") {
+      await signInWithApple();
       return;
     }
 
@@ -28,29 +36,47 @@ const Login = () => {
       // Validação básica
       if (!email.trim() || !password.trim()) {
         toast.error("Por favor, preencha todos os campos");
-        setIsLoading(false);
         return;
       }
 
       if (!email.includes("@")) {
         toast.error("Por favor, insira um e-mail válido");
-        setIsLoading(false);
         return;
       }
 
       if (password.length < 6) {
         toast.error("A senha deve ter pelo menos 6 caracteres");
-        setIsLoading(false);
         return;
       }
-    }
 
-    // Simulando login
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Login realizado com sucesso!");
-      navigate("/");
-    }, 1500);
+      try {
+        const { error } = isSignUp 
+          ? await signUp(email, password)
+          : await signIn(email, password);
+        
+        if (error) {
+          if (error.message.includes("Email not confirmed")) {
+            toast.error("Por favor, confirme seu e-mail para fazer login");
+          } else if (error.message.includes("Invalid login credentials")) {
+            toast.error("E-mail ou senha incorretos");
+          } else if (error.message.includes("User already registered")) {
+            toast.error("Este e-mail já está cadastrado");
+            setIsSignUp(false); // Mudar para login
+          } else {
+            toast.error(`Erro: ${error.message}`);
+          }
+          return;
+        }
+
+        if (isSignUp) {
+          toast.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
+        } else {
+          toast.success("Login realizado com sucesso!");
+        }
+      } catch (error: any) {
+        toast.error(`Erro inesperado: ${error.message}`);
+      }
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -112,19 +138,31 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Link to="/resetar-senha" className="text-sm text-primary hover:underline">
-                  Esqueceu a senha?
-                </Link>
-              </div>
+              {!isSignUp && (
+                <div className="flex justify-end">
+                  <Link to="/resetar-senha" className="text-sm text-primary hover:underline">
+                    Esqueceu a senha?
+                  </Link>
+                </div>
+              )}
 
               <Button
                 onClick={() => handleLogin("email")}
                 disabled={isLoading}
                 className="w-full bg-primary text-white rounded-full h-12"
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? "Processando..." : isSignUp ? "Cadastrar" : "Entrar"}
               </Button>
+
+              <div className="text-center mt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {isSignUp ? "Já tem uma conta? Entrar" : "Não tem conta? Cadastre-se"}
+                </button>
+              </div>
 
               <button
                 onClick={() => setEmailLogin(false)}
