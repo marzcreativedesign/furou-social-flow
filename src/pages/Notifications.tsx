@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
+import { useToast } from "@/hooks/use-toast";
 
 const MOCK_NOTIFICATIONS = [
   {
@@ -51,13 +52,22 @@ const MOCK_NOTIFICATIONS = [
 const Notifications = () => {
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleDismissAll = () => {
     setNotifications([]);
+    toast({
+      title: "Notificações removidas",
+      description: "Todas as notificações foram removidas",
+    });
   };
   
   const handleDismiss = (id: string) => {
     setNotifications(notifications.filter(notif => notif.id !== id));
+    toast({
+      title: "Notificação removida",
+      description: "A notificação foi removida com sucesso",
+    });
   };
 
   const handleBackToHome = () => {
