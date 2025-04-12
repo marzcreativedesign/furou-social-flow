@@ -9,7 +9,7 @@ import {
   Bell, 
   Settings, 
   Menu,
-  CalendarPlus,
+  PlusCircle,
   LogOut,
   Search,
   User,
@@ -142,11 +142,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <DockItem
-                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600 dark:bg-[#FF6B00] dark:hover:bg-[#FF8333] transform transition-all duration-300 ease-in-out"
+                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600"
                 >
                   <Link to="/criar" className="block h-full w-full flex items-center justify-center">
                     <DockLabel>Criar Evento</DockLabel>
-                    <DockIcon><CalendarPlus /></DockIcon>
+                    <DockIcon><PlusCircle /></DockIcon>
                   </Link>
                 </DockItem>
               </TooltipTrigger>
