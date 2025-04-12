@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -15,7 +16,8 @@ import {
   Calculator,
   Moon,
   Sun,
-  X
+  X,
+  ScrollText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -44,7 +46,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   onBack,
   showSearch = false,
   onSearch,
-  showDock = false,
+  showDock = true, // Changed default to true
   rightContent
 }) => {
   const navigate = useNavigate();
@@ -74,12 +76,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
+  // Updated dockItems to include all functionality from hamburger menu
   const dockItems = [
-    { title: 'Home', icon: <Home />, href: '/' },
+    { title: 'Início', icon: <Home />, href: '/' },
     { title: 'Eventos', icon: <Calendar />, href: '/eventos' },
+    { title: 'Agenda', icon: <ScrollText />, href: '/agenda' },
     { title: 'Grupos', icon: <Users />, href: '/grupos' },
     { title: 'Notificações', icon: <Bell />, href: '/notificacoes' },
+    { title: 'Calculadora', icon: <Calculator />, href: '/calculadora' },
     { title: 'Perfil', icon: <User />, href: '/perfil' },
+    { title: 'Configurações', icon: <Settings />, href: '/configuracoes' },
   ];
 
   const menuItems = [
@@ -224,9 +230,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         <BottomNav />
       </div>
 
-      {/* Dock for desktop */}
+      {/* Dock for desktop - now shown on all pages by default */}
       {showDock && (
-        <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2">
+        <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
           <Dock className="items-end pb-3">
             {dockItems.map((item, idx) => (
               <DockItem
@@ -243,6 +249,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 </Link>
               </DockItem>
             ))}
+
+            {/* Additional special actions */}
+            <DockItem
+              className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
+            >
+              <Link to="/criar" className="block h-full w-full flex items-center justify-center">
+                <DockLabel>Criar Evento</DockLabel>
+                <DockIcon><PlusCircle /></DockIcon>
+              </Link>
+            </DockItem>
+
+            {/* Dark mode toggle in dock */}
+            <DockItem
+              className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+              onClick={toggleDarkMode}
+            >
+              <div className="block h-full w-full flex items-center justify-center cursor-pointer">
+                <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
+                <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
+              </div>
+            </DockItem>
           </Dock>
         </div>
       )}
