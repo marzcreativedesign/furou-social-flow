@@ -216,7 +216,7 @@ const Header = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {showSearch && !isSearchActive && (
+          {showSearch && (
             <button 
               className={`p-2 rounded-full hover:bg-muted ${isSearchActive ? 'bg-muted' : ''}`}
               onClick={handleSearchClick}
@@ -227,17 +227,42 @@ const Header = ({
           )}
 
           {isSearchActive && (
-            <div className="flex-1 w-full max-w-xs">
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <input
-                  type="text"
-                  placeholder="Buscar eventos..."
-                  className="w-full input-primary h-9 pl-8 pr-3 rounded-full dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  autoFocus
-                />
+            <div className="fixed inset-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md">
+              <div className="flex items-center p-4">
+                <button
+                  onClick={handleSearchClick}
+                  className="p-2 mr-2 rounded-full hover:bg-muted"
+                  aria-label="Voltar"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M15 18L9 12L15 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Buscar eventos..."
+                      className="w-full h-12 pl-10 pr-4 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-colors dark:bg-gray-800 dark:text-white dark:border-gray-700"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      autoFocus
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -250,8 +275,6 @@ const Header = ({
               </span>
             </Button>
           </Link>
-          
-          {children}
         </div>
       </div>
     </header>

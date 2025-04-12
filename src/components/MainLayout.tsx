@@ -125,7 +125,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         <TooltipProvider>
           <Dock className="items-end pb-3">
             {dockItems.map((item, idx) => (
-              <Tooltip key={idx}>
+              <Tooltip key={idx} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <DockItem
                     key={idx}
@@ -141,14 +141,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     </Link>
                   </DockItem>
                 </TooltipTrigger>
-                <TooltipContent side="top">
+                <TooltipContent side="top" className="text-xs">
                   {item.title}
                 </TooltipContent>
               </Tooltip>
             ))}
 
             {/* Additional special actions */}
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <DockItem
                   className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
@@ -159,13 +159,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </Link>
                 </DockItem>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent side="top" className="text-xs">
                 Criar Evento
               </TooltipContent>
             </Tooltip>
 
             {/* Dark mode toggle in dock */}
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <div className="cursor-pointer">
                   <DockItem
@@ -181,7 +181,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   </DockItem>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent side="top" className="text-xs">
                 Modo {darkMode ? 'Claro' : 'Escuro'}
               </TooltipContent>
             </Tooltip>
