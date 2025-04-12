@@ -1,5 +1,5 @@
 
-import { Home, Calendar, Plus, Bell, User } from "lucide-react";
+import { Home, Calendar, Plus, Bell, User, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const BottomNav = () => {
@@ -10,7 +10,7 @@ const BottomNav = () => {
     { name: "Home", path: "/", icon: Home },
     { name: "Eventos", path: "/eventos", icon: Calendar },
     { name: "Criar", path: "/criar", icon: Plus, special: true },
-    { name: "Notificações", path: "/notificacoes", icon: Bell },
+    { name: "Grupos", path: "/grupos", icon: Users },
     { name: "Perfil", path: "/perfil", icon: User },
   ];
 

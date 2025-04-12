@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import HomePage from "./pages/HomePage";
 import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
+import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/evento/:id" element={<EventDetail />} />
           <Route path="/criar" element={<CreateEvent />} />
+          <Route path="/grupos" element={<Groups />} />
+          <Route path="/grupo/:id" element={<GroupDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
