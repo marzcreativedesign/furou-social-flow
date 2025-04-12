@@ -11,6 +11,8 @@ import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
 import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/criar" element={<CreateEvent />} />
           <Route path="/grupos" element={<Groups />} />
           <Route path="/grupo/:id" element={<GroupDetail />} />
+          <Route path="/notificacoes" element={<Notifications />} />
+          <Route path="/perfil" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

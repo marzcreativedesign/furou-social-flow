@@ -7,33 +7,33 @@
 
 @layer base {
   :root {
-    --background: 260 25% 98%;
-    --foreground: 260 25% 15%;
+    --background: 0 0% 98%;
+    --foreground: 240 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 260 25% 15%;
+    --card-foreground: 240 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 25% 15%;
+    --popover-foreground: 240 10% 15%;
 
-    --primary: 263 90% 66%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 6 100% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 95% 53%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 46 100% 66%;
+    --secondary-foreground: 0 0% 0%;
 
-    --accent: 199 92% 48%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 214 100% 73%;
+    --accent-foreground: 0 0% 100%;
 
-    --muted: 260 5% 90%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 10% 45%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 260 10% 90%;
-    --input: 260 10% 90%;
-    --ring: 263 90% 66%;
+    --border: 240 10% 90%;
+    --input: 240 10% 90%;
+    --ring: 6 100% 67%;
 
     --radius: 1rem;
   }
@@ -59,7 +59,7 @@
   }
 
   .btn-secondary {
-    @apply bg-secondary text-white rounded-full px-6 py-3 font-medium transition-all hover:bg-secondary-600 active:bg-secondary-700;
+    @apply bg-secondary text-black rounded-full px-6 py-3 font-medium transition-all hover:bg-secondary-600 active:bg-secondary-700;
   }
 
   .btn-accent {

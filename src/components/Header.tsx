@@ -1,12 +1,15 @@
 
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
   title?: string;
   showSearch?: boolean;
   showBack?: boolean;
   onBack?: () => void;
+  children?: React.ReactNode;
 }
 
 const Header = ({
@@ -14,6 +17,7 @@ const Header = ({
   showSearch = false,
   showBack = false,
   onBack,
+  children,
 }: HeaderProps) => {
   const location = useLocation();
   const path = location.pathname;
@@ -30,6 +34,8 @@ const Header = ({
         return "Meu Perfil";
       case "/criar":
         return "Criar Evento";
+      case "/grupos":
+        return "Meus Grupos";
       default:
         return title || "Furou?!";
     }
@@ -64,13 +70,15 @@ const Header = ({
           <h1 className="text-lg font-bold">{getTitleFromPath()}</h1>
         </div>
 
-        {showSearch && (
-          <div className="relative">
+        <div className="flex items-center gap-3">
+          {showSearch && (
             <button className="p-2 rounded-full hover:bg-muted">
               <Search size={20} />
             </button>
-          </div>
-        )}
+          )}
+          
+          {children}
+        </div>
       </div>
     </header>
   );
