@@ -16,6 +16,9 @@ import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import CalendarView from "./pages/CalendarView";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
+import EventsPage from "./pages/EventsPage";
+import CostCalculatorPage from "./pages/CostCalculatorPage";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,9 @@ const App = () => (
           <Route path="/perfil" element={<Profile />} />
           <Route path="/usuario/:id" element={<UserProfile />} />
           <Route path="/agenda" element={<CalendarView />} />
+          <Route path="/configuracoes" element={<Settings />} />
+          <Route path="/eventos" element={<EventsPage />} />
+          <Route path="/calculadora" element={<CostCalculatorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />

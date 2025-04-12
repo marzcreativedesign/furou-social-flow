@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
@@ -109,6 +108,15 @@ const EventDetail = () => {
   const visibleAttendees = showAllAttendees 
     ? event.attendees 
     : event.attendees.slice(0, 6);
+
+  const confirmedAttendees = event.attendees.filter(attendee => 
+    event.id === "1" || Math.random() > 0.3);
+  
+  const pendingAttendees = event.attendees.filter(attendee => 
+    event.id === "2" || (Math.random() > 0.7 && Math.random() < 0.9));
+  
+  const cancelledAttendees = event.attendees.filter(attendee => 
+    event.id === "3" || Math.random() < 0.2);
   
   const handleBack = () => {
     navigate(-1);
@@ -129,10 +137,8 @@ const EventDetail = () => {
   };
   
   const handleShareLink = () => {
-    // Create URL for sharing
     const eventURL = `${window.location.origin}/evento/${id}`;
     
-    // Check if the browser supports the share API
     if (navigator.share) {
       navigator.share({
         title: event.title,
@@ -141,7 +147,6 @@ const EventDetail = () => {
       })
       .catch((error) => console.log('Erro ao compartilhar:', error));
     } else {
-      // Fallback: copy link to clipboard
       navigator.clipboard.writeText(eventURL).then(() => {
         toast({
           title: "Link copiado!",
@@ -249,7 +254,6 @@ const EventDetail = () => {
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
         
-        {/* Host info */}
         <div className="flex items-center mb-4">
           <Link to={`/usuario/${event.host.id}`}>
             <Avatar className="h-8 w-8 mr-2">
@@ -293,7 +297,6 @@ const EventDetail = () => {
           <p className="text-muted-foreground">{event.description}</p>
         </div>
         
-        {/* RSVP Section - More Prominent */}
         <div className="bg-muted p-4 rounded-xl mb-6">
           <h2 className="font-bold mb-3">Você vai?</h2>
           <ConfirmationButton 
@@ -304,24 +307,91 @@ const EventDetail = () => {
         
         <div className="border-t pt-4 mt-6">
           <h2 className="font-bold mb-3">Quem vai</h2>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {visibleAttendees.map((attendee) => (
-              <Link 
-                key={attendee.id}
-                to={`/usuario/${attendee.id}`}
-              >
-                <div 
-                  className="w-10 h-10 rounded-full overflow-hidden"
-                  title={attendee.name}
-                >
-                  <img 
-                    src={attendee.imageUrl} 
-                    alt={attendee.name} 
-                    className="w-full h-full object-cover"
-                  />
+          
+          <div className="space-y-4">
+            {confirmedAttendees.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium flex items-center mb-2">
+                  <span className="h-3 w-3 rounded-full bg-green-500 mr-2"></span>
+                  Confirmados ({confirmedAttendees.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {confirmedAttendees.slice(0, showAllAttendees ? undefined : 6).map(attendee => (
+                    <Link 
+                      key={attendee.id}
+                      to={`/usuario/${attendee.id}`}
+                    >
+                      <div 
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-500"
+                        title={attendee.name}
+                      >
+                        <img 
+                          src={attendee.imageUrl} 
+                          alt={attendee.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
+              </div>
+            )}
+
+            {pendingAttendees.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium flex items-center mb-2">
+                  <span className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
+                  Pendentes ({pendingAttendees.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {pendingAttendees.slice(0, showAllAttendees ? undefined : 6).map(attendee => (
+                    <Link 
+                      key={attendee.id}
+                      to={`/usuario/${attendee.id}`}
+                    >
+                      <div 
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-500"
+                        title={attendee.name}
+                      >
+                        <img 
+                          src={attendee.imageUrl} 
+                          alt={attendee.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {cancelledAttendees.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium flex items-center mb-2">
+                  <span className="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
+                  Furaram ({cancelledAttendees.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {cancelledAttendees.slice(0, showAllAttendees ? undefined : 6).map(attendee => (
+                    <Link 
+                      key={attendee.id}
+                      to={`/usuario/${attendee.id}`}
+                    >
+                      <div 
+                        className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500"
+                        title={attendee.name}
+                      >
+                        <img 
+                          src={attendee.imageUrl} 
+                          alt={attendee.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           {event.attendees.length > 6 && (
@@ -329,7 +399,7 @@ const EventDetail = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => setShowAllAttendees(!showAllAttendees)}
-              className="text-primary flex gap-1 items-center"
+              className="text-primary flex gap-1 items-center mt-2"
             >
               {showAllAttendees ? (
                 <>Ver menos <ChevronUp size={16} /></>
@@ -340,7 +410,6 @@ const EventDetail = () => {
           )}
         </div>
         
-        {/* Add cost calculator for private events */}
         {event.type === "private" && (
           <div className="border-t pt-4 mt-6">
             <h2 className="font-bold mb-3">Calculadora de Custos</h2>
@@ -348,7 +417,6 @@ const EventDetail = () => {
           </div>
         )}
         
-        {/* Vaquinha for public events */}
         {event.type === "public" && (
           <div className="border-t pt-4 mt-6">
             <h2 className="font-bold mb-3">Vaquinha</h2>
@@ -371,28 +439,20 @@ const EventDetail = () => {
           </div>
         )}
         
-        {/* Tabs for Discussion and Gallery */}
         <div className="border-t pt-4 mt-6">
-          <Tabs defaultValue="discussion">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="discussion">Discussão</TabsTrigger>
-              <TabsTrigger value="gallery">Galeria</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="discussion" className="pt-4">
-              <EventDiscussion 
-                eventId={event.id} 
-                initialComments={event.comments} 
-              />
-            </TabsContent>
-            
-            <TabsContent value="gallery" className="pt-4">
-              <EventGallery 
-                eventId={event.id}
-                initialImages={event.gallery}
-              />
-            </TabsContent>
-          </Tabs>
+          <h2 className="font-bold mb-3">Discussão</h2>
+          <EventDiscussion 
+            eventId={event.id} 
+            initialComments={event.comments} 
+          />
+        </div>
+        
+        <div className="border-t pt-4 mt-6">
+          <h2 className="font-bold mb-3">Galeria</h2>
+          <EventGallery 
+            eventId={event.id}
+            initialImages={event.gallery}
+          />
         </div>
         
         {event.offers.length > 0 && (

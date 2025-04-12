@@ -12,6 +12,7 @@ interface EventCardProps {
   confirmed?: boolean;
   type?: "public" | "private" | "group";
   groupName?: string | null;
+  size?: "default" | "large";
 }
 
 const EventCard = ({
@@ -24,6 +25,7 @@ const EventCard = ({
   confirmed,
   type = "public",
   groupName = null,
+  size = "default",
 }: EventCardProps) => {
   // Define background color based on event type
   const getCardBorder = () => {
@@ -39,9 +41,12 @@ const EventCard = ({
     }
   };
 
+  // Determine if the card should be larger
+  const isLarge = size === "large";
+
   return (
     <div className={`event-card animate-fade-in ${getCardBorder()}`}>
-      <div className="relative h-40">
+      <div className={`relative ${isLarge ? 'h-60' : 'h-40'}`}>
         <img
           src={imageUrl}
           alt={title}
@@ -70,19 +75,19 @@ const EventCard = ({
           </div>
         )}
       </div>
-      <div className="p-4">
-        <h3 className="font-bold text-lg line-clamp-1">{title}</h3>
-        <div className="mt-2 space-y-1">
+      <div className={`p-4 ${isLarge ? 'space-y-3' : ''}`}>
+        <h3 className={`font-bold ${isLarge ? 'text-xl' : 'text-lg'} line-clamp-1`}>{title}</h3>
+        <div className={`${isLarge ? 'mt-3' : 'mt-2'} space-y-2`}>
           <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar size={14} className="mr-1" />
+            <Calendar size={isLarge ? 16 : 14} className="mr-1" />
             <span>{date}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
-            <MapPin size={14} className="mr-1" />
+            <MapPin size={isLarge ? 16 : 14} className="mr-1" />
             <span className="line-clamp-1">{location}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
-            <Users size={14} className="mr-1" />
+            <Users size={isLarge ? 16 : 14} className="mr-1" />
             <span>{attendees} confirmados</span>
           </div>
         </div>

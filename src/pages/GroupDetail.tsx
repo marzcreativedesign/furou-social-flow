@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -38,8 +37,9 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Progress } from "../components/ui/progress";
+import GroupRanking from "@/components/GroupRanking";
+import MainLayout from "@/components/MainLayout";
 
-// Mock data for a group
 const MOCK_GROUP = {
   id: "1",
   name: "Amigos da Faculdade",
@@ -106,7 +106,6 @@ const GroupDetail = () => {
   const [editGroupName, setEditGroupName] = useState(group.name);
   const [editGroupDescription, setEditGroupDescription] = useState(group.description || "");
 
-  // Sort members by participation rate
   const sortedMembers = [...group.members].sort((a, b) => {
     const totalA = a.stats.participated + a.stats.missed + a.stats.pending;
     const totalB = b.stats.participated + b.stats.missed + b.stats.pending;
@@ -129,7 +128,6 @@ const GroupDetail = () => {
       return;
     }
 
-    // Here you would send the invitation
     toast({
       title: "Convite enviado",
       description: `Um convite foi enviado para ${inviteEmail}`,
@@ -215,11 +213,13 @@ const GroupDetail = () => {
   };
 
   return (
-    <div className="pb-20">
-      <Header showBack onBack={handleBack} title={group.name} />
-      
+    <MainLayout 
+      title={group.name}
+      showBack
+      onBack={() => navigate(-1)}
+      showDock
+    >
       <div className="px-4 py-4">
-        {/* Group Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-3">
             <Avatar className="h-16 w-16">
@@ -328,117 +328,20 @@ const GroupDetail = () => {
           </Button>
         </div>
         
-        {/* Tabs */}
         <Tabs defaultValue="members" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="members">Membros</TabsTrigger>
+            <TabsTrigger value="members">Ranking</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
           </TabsList>
           
-          {/* Members Tab */}
           <TabsContent value="members" className="pt-4">
-            <div className="space-y-4">
-              {sortedMembers.map((member, index) => {
-                const total = member.stats.participated + member.stats.missed + member.stats.pending;
-                const participationRate = total > 0 ? (member.stats.participated / total) * 100 : 0;
-                const missedRate = total > 0 ? (member.stats.missed / total) * 100 : 0;
-                const pendingRate = total > 0 ? (member.stats.pending / total) * 100 : 0;
-                
-                return (
-                  <Card key={member.id}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={member.image} alt={member.name} />
-                            <AvatarFallback>
-                              {member.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">
-                              {member.name}
-                              {member.isAdmin && (
-                                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                  Admin
-                                </span>
-                              )}
-                            </p>
-                            <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-                              <span className="flex items-center">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                                Participou: {member.stats.participated}
-                              </span>
-                              <span className="flex items-center">
-                                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                                Furou: {member.stats.missed}
-                              </span>
-                              <span className="flex items-center">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                                Pendente: {member.stats.pending}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {!member.isAdmin ? (
-                              <DropdownMenuItem onClick={() => handlePromoteToAdmin(member.id)}>
-                                <ArrowUp className="mr-2 h-4 w-4" />
-                                Tornar administrador
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem onClick={() => handleDemoteFromAdmin(member.id)}>
-                                <ArrowDown className="mr-2 h-4 w-4" />
-                                Remover como administrador
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleRemoveMember(member.id)}
-                            >
-                              <Trash className="mr-2 h-4 w-4" />
-                              Remover do grupo
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      
-                      {/* Participation Bar */}
-                      <div className="mt-3">
-                        <div className="w-full h-2 flex">
-                          <div 
-                            className="bg-green-500 h-full"
-                            style={{ width: `${participationRate}%` }}
-                          ></div>
-                          <div 
-                            className="bg-red-500 h-full"
-                            style={{ width: `${missedRate}%` }}
-                          ></div>
-                          <div 
-                            className="bg-yellow-500 h-full"
-                            style={{ width: `${pendingRate}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <GroupRanking members={group.members} />
           </TabsContent>
           
-          {/* Events Tab */}
           <TabsContent value="events" className="pt-4">
             <div className="space-y-4">
               {group.events.map((event) => (
-                <Card key={event.id} className="overflow-hidden">
+                <Card key={event.id} className="overflow-hidden cursor-pointer" onClick={() => navigate(`/evento/${event.id}`)}>
                   <div className="flex h-24">
                     <div 
                       className="w-24 h-full bg-cover bg-center"
@@ -470,7 +373,11 @@ const GroupDetail = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Este grupo ainda não tem eventos
                   </p>
-                  <Button>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => navigate('/criar')}
+                  >
                     <Calendar className="mr-2 h-4 w-4" />
                     Criar o primeiro evento
                   </Button>
@@ -481,7 +388,6 @@ const GroupDetail = () => {
         </Tabs>
       </div>
       
-      {/* Edit Group Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -521,9 +427,7 @@ const GroupDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <BottomNav />
-    </div>
+    </MainLayout>
   );
 };
 
