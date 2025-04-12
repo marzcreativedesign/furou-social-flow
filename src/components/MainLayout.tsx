@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -10,7 +9,7 @@ import {
   Bell, 
   Settings, 
   Menu,
-  PlusCircle,
+  CalendarPlus,
   LogOut,
   Search,
   User,
@@ -54,7 +53,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Check for stored dark mode preference on component mount
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
     setDarkMode(isDark);
@@ -84,7 +82,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
-  // Updated dockItems to include all functionality from hamburger menu
   const dockItems = [
     { title: 'Início', icon: <Home />, href: '/' },
     { title: 'Eventos', icon: <Calendar />, href: '/eventos' },
@@ -98,7 +95,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   
   return (
     <div className="min-h-screen flex flex-col dark:bg-[#121212] dark:text-[#EDEDED]">
-      {/* Header */}
       <Header 
         title={title}
         showBack={showBack}
@@ -111,15 +107,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {rightContent}
       </Header>
 
-      {/* Main content */}
       <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0">{children}</main>
 
-      {/* Bottom navigation for mobile */}
       <div className="block lg:hidden">
         <BottomNav />
       </div>
 
-      {/* Dock for desktop - always shown */}
       <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
         <TooltipProvider delayDuration={0}>
           <Dock className="items-end pb-3">
@@ -146,15 +139,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               </Tooltip>
             ))}
 
-            {/* Additional special actions */}
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <DockItem
-                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600 dark:hover:bg-[#FF8333]"
+                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600 dark:bg-[#FF6B00] dark:hover:bg-[#FF8333] transform transition-all duration-300 ease-in-out"
                 >
                   <Link to="/criar" className="block h-full w-full flex items-center justify-center">
                     <DockLabel>Criar Evento</DockLabel>
-                    <DockIcon><PlusCircle /></DockIcon>
+                    <DockIcon><CalendarPlus /></DockIcon>
                   </Link>
                 </DockItem>
               </TooltipTrigger>
@@ -163,7 +155,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               </TooltipContent>
             </Tooltip>
 
-            {/* Dark mode toggle in dock */}
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <div className="cursor-pointer">
