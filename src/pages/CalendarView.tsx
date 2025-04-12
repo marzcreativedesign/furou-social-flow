@@ -100,6 +100,16 @@ const CalendarView = () => {
   
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+  // Helper function to get label from event type
+  const getEventTypeLabel = (type: string) => {
+    switch (type) {
+      case "public": return "Público";
+      case "private": return "Privado";
+      case "group": return "Grupo";
+      default: return "Evento";
+    }
+  };
+
   return (
     <div className="pb-20">
       <Header title="Agenda" />
@@ -182,8 +192,8 @@ const CalendarView = () => {
                         <div>
                           <div className="flex gap-1 mb-1">
                             <EventTag 
-                              type={event.type} 
-                              label={event.type === "public" ? "Público" : event.type === "private" ? "Privado" : "Grupo"} 
+                              type={event.type as "public" | "private" | "group"} 
+                              label={getEventTypeLabel(event.type)} 
                             />
                             {event.groupName && (
                               <EventTag type="group" label={event.groupName} />
