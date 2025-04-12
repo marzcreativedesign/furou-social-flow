@@ -29,25 +29,25 @@ const ConfirmationButton = ({
     <div className="flex gap-4 my-4 justify-center">
       <button
         onClick={handleDecline}
-        className={`flex items-center justify-center gap-2 px-5 py-2 rounded-full ${
+        className={`flex items-center justify-center gap-2 px-5 py-3 rounded-full transition-all ${
           confirmed === false
             ? "bg-destructive text-white"
-            : "bg-muted text-muted-foreground"
+            : "border-2 border-destructive text-destructive hover:bg-destructive/10"
         }`}
       >
         <X size={18} />
-        <span>Não vou</span>
+        <span className="font-semibold">Furei</span>
       </button>
       <button
         onClick={handleConfirm}
-        className={`flex items-center justify-center gap-2 px-5 py-2 rounded-full ${
+        className={`flex items-center justify-center gap-2 px-5 py-3 rounded-full transition-all ${
           confirmed === true
             ? "bg-green-500 text-white"
-            : "bg-muted text-muted-foreground"
+            : "border-2 border-green-500 text-green-700 hover:bg-green-50"
         }`}
       >
         <Check size={18} />
-        <span>Vou!</span>
+        <span className="font-semibold">Eu vou!</span>
       </button>
     </div>
   );

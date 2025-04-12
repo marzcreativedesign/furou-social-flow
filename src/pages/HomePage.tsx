@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, MapPin, Bell, Check, X, Filter } from "lucide-react";
@@ -117,6 +118,7 @@ const HomePage = () => {
   });
   const [filteredEvents, setFilteredEvents] = useState(MOCK_EVENTS);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Apply filters
   useEffect(() => {
@@ -128,8 +130,15 @@ const HomePage = () => {
         events = events.filter(event => event.type === 'public');
       } else if (filters.type === 'private') {
         events = events.filter(event => event.type === 'private');
+      } else if (filters.type === 'confirmed') {
+        // In a real app, this would filter confirmed events
+        events = events.filter(event => event.attendees > 5);
+      } else if (filters.type === 'missed') {
+        // In a real app, this would filter missed events
+        events = events.filter(event => event.attendees < 10);
+      } else if (filters.type === 'group') {
+        events = events.filter(event => event.type === 'group');
       }
-      // Other filters would be applied here in a real app
     }
     
     // Filter by date
@@ -145,8 +154,18 @@ const HomePage = () => {
       }
     }
     
+    // Apply search query if it exists
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      events = events.filter(event => 
+        event.title.toLowerCase().includes(query) || 
+        event.location.toLowerCase().includes(query) ||
+        (event.groupName && event.groupName.toLowerCase().includes(query))
+      );
+    }
+    
     setFilteredEvents(events);
-  }, [filters]);
+  }, [filters, searchQuery]);
   
   const handleAcceptInvitation = (id: string) => {
     setPendingInvitations(prev => prev.filter(inv => inv.id !== id));
@@ -168,6 +187,10 @@ const HomePage = () => {
 
   const handleFilterChange = (newFilters: EventFiltersType) => {
     setFilters(newFilters);
+  };
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
   
   return (
@@ -194,7 +217,7 @@ const HomePage = () => {
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="flex gap-1">
                 <Filter size={16} />
-                Filtros
+                Filtros avançados
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -220,8 +243,10 @@ const HomePage = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Buscar eventos..."
+              placeholder="Buscar eventos, locais ou grupos..."
               className="w-full input-primary pl-10"
+              value={searchQuery}
+              onChange={handleSearch}
             />
             <Search
               size={18}
@@ -299,12 +324,66 @@ const HomePage = () => {
               {filters.type === 'all' ? 'Seus eventos' : 
                filters.type === 'public' ? 'Eventos Públicos' :
                filters.type === 'private' ? 'Eventos Privados' :
-               filters.type === 'invited' ? 'Eventos que Você Foi Convidado' :
-               'Eventos Confirmados'}
+               filters.type === 'confirmed' ? 'Eventos Confirmados' :
+               filters.type === 'missed' ? 'Eventos que Furei' :
+               filters.type === 'group' ? 'Eventos de Grupos' :
+               'Eventos Convidados'}
             </h2>
             <Link to="/eventos" className="text-sm font-medium text-primary">
               Ver todos
             </Link>
+          </div>
+          
+          {/* Event type filters as pills */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none">
+            <Button 
+              variant={filters.type === 'all' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'all'})}
+            >
+              Todos
+            </Button>
+            <Button 
+              variant={filters.type === 'public' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'public'})}
+            >
+              Públicos
+            </Button>
+            <Button 
+              variant={filters.type === 'private' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'private'})}
+            >
+              Privados
+            </Button>
+            <Button 
+              variant={filters.type === 'confirmed' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'confirmed'})}
+            >
+              Eu Vou
+            </Button>
+            <Button 
+              variant={filters.type === 'missed' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'missed'})}
+            >
+              Furei
+            </Button>
+            <Button 
+              variant={filters.type === 'group' ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setFilters({...filters, type: 'group'})}
+            >
+              Grupos
+            </Button>
           </div>
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -320,7 +399,9 @@ const HomePage = () => {
               ))
             ) : (
               <div className="col-span-2 text-center py-8 bg-muted/20 rounded-xl">
-                <p className="text-muted-foreground">Nenhum evento encontrado com estes filtros</p>
+                <p className="text-muted-foreground">
+                  {searchQuery ? "Nenhum evento encontrado para sua busca." : "Nenhum evento encontrado com estes filtros"}
+                </p>
               </div>
             )}
           </div>

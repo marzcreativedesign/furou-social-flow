@@ -25,8 +25,22 @@ const EventCard = ({
   type = "public",
   groupName = null,
 }: EventCardProps) => {
+  // Define background color based on event type
+  const getCardBorder = () => {
+    switch (type) {
+      case "public":
+        return "border-l-4 border-l-green-500";
+      case "private":
+        return "border-l-4 border-l-blue-500";
+      case "group":
+        return "border-l-4 border-l-amber-500";
+      default:
+        return "";
+    }
+  };
+
   return (
-    <div className="event-card animate-fade-in">
+    <div className={`event-card animate-fade-in ${getCardBorder()}`}>
       <div className="relative h-40">
         <img
           src={imageUrl}

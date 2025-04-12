@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { Calculator } from "lucide-react";
+import { Calculator, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 type EventCostCalculatorProps = {
   attendeesCount: number;
@@ -12,6 +14,7 @@ const EventCostCalculator = ({ attendeesCount }: EventCostCalculatorProps) => {
   const [totalCost, setTotalCost] = useState<string>("100");
   const [serviceFee, setServiceFee] = useState<string>("10");
   const [costPerPerson, setCostPerPerson] = useState<number>(0);
+  const { toast } = useToast();
   
   useEffect(() => {
     const calculateCost = () => {
@@ -29,11 +32,19 @@ const EventCostCalculator = ({ attendeesCount }: EventCostCalculatorProps) => {
     calculateCost();
   }, [totalCost, serviceFee, attendeesCount]);
   
+  const handleCopyValue = () => {
+    navigator.clipboard.writeText(`R$ ${costPerPerson.toFixed(2)}`);
+    toast({
+      title: "Valor copiado!",
+      description: "O valor por pessoa foi copiado para sua área de transferência."
+    });
+  };
+  
   return (
     <div className="bg-muted rounded-xl p-4">
       <div className="flex items-center gap-2 mb-4">
         <Calculator className="h-5 w-5 text-primary" />
-        <h3 className="font-bold">Calculadora de Custos</h3>
+        <h3 className="font-bold">Simulador de Custos</h3>
       </div>
       
       <div className="space-y-4">
@@ -64,11 +75,20 @@ const EventCostCalculator = ({ attendeesCount }: EventCostCalculatorProps) => {
           </p>
         </div>
         
-        <div className="bg-background border border-input rounded-md p-3 text-center">
-          <p className="text-sm text-muted-foreground">Custo por pessoa</p>
-          <p className="text-2xl font-bold text-primary">
+        <div className="bg-background border border-input rounded-md p-3">
+          <p className="text-sm text-muted-foreground text-center">Custo por pessoa</p>
+          <p className="text-2xl font-bold text-primary text-center">
             R$ {costPerPerson.toFixed(2)}
           </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full mt-2 flex gap-2 items-center justify-center"
+            onClick={handleCopyValue}
+          >
+            <Copy size={16} /> 
+            Copiar valor
+          </Button>
         </div>
       </div>
     </div>

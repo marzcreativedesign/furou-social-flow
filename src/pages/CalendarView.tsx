@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CircleDot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, isSameMonth, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -75,6 +75,8 @@ const CalendarView = () => {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
+  const [filter, setFilter] = useState<'all' | 'confirmed' | 'missed' | 'invited'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Get all days in current month
   const monthStart = startOfMonth(currentMonth);
@@ -83,11 +85,55 @@ const CalendarView = () => {
   
   // Get events for selected day
   const selectedDayEvents = selectedDay 
-    ? MOCK_EVENTS.filter(event => isSameDay(parseISO(event.date), selectedDay))
+    ? MOCK_EVENTS.filter(event => {
+        const isSameDate = isSameDay(parseISO(event.date), selectedDay);
+        
+        // Apply filters
+        if (filter === 'confirmed') return isSameDate && event.confirmed === true;
+        if (filter === 'missed') return isSameDate && event.confirmed === false;
+        // In a real app, you'd have a proper invited filter
+        if (filter === 'invited') return isSameDate;
+        
+        return isSameDate;
+      })
     : [];
+    
+  // Apply search filter
+  const filteredDayEvents = selectedDayEvents.filter(event => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    return (
+      event.title.toLowerCase().includes(query) || 
+      event.location.toLowerCase().includes(query) ||
+      (event.groupName && event.groupName.toLowerCase().includes(query))
+    );
+  });
     
   const hasEventOnDay = (day: Date) => {
     return MOCK_EVENTS.some(event => isSameDay(parseISO(event.date), day));
+  };
+
+  const getEventTypeOnDay = (day: Date): "public" | "private" | "group" | "mixed" | null => {
+    const eventsOnDay = MOCK_EVENTS.filter(event => isSameDay(parseISO(event.date), day));
+    
+    if (eventsOnDay.length === 0) return null;
+    
+    const types = new Set(eventsOnDay.map(event => event.type));
+    
+    if (types.size > 1) return "mixed";
+    return eventsOnDay[0].type as "public" | "private" | "group";
+  };
+  
+  const getDotColorForEventType = (type: "public" | "private" | "group" | "mixed" | null): string => {
+    if (!type) return "transparent";
+    
+    switch (type) {
+      case "public": return "bg-green-500";
+      case "private": return "bg-blue-500";
+      case "group": return "bg-amber-500";
+      case "mixed": return "bg-purple-500";
+      default: return "bg-gray-400";
+    }
   };
   
   const nextMonth = () => {
@@ -108,6 +154,10 @@ const CalendarView = () => {
       case "group": return "Grupo";
       default: return "Evento";
     }
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -130,6 +180,70 @@ const CalendarView = () => {
           </Button>
         </div>
         
+        {/* Calendar Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-xs">
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-green-500 mr-1"></span>
+            <span>Público</span>
+          </div>
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-blue-500 mr-1"></span>
+            <span>Privado</span>
+          </div>
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-amber-500 mr-1"></span>
+            <span>Grupo</span>
+          </div>
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-purple-500 mr-1"></span>
+            <span>Diversos</span>
+          </div>
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-green-700 mr-1"></span>
+            <span>Confirmado</span>
+          </div>
+          <div className="flex items-center">
+            <span className="h-3 w-3 rounded-full bg-destructive mr-1"></span>
+            <span>Furei</span>
+          </div>
+        </div>
+        
+        {/* Filter tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none">
+          <Button 
+            variant={filter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setFilter('all')}
+          >
+            Todos
+          </Button>
+          <Button 
+            variant={filter === 'confirmed' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setFilter('confirmed')}
+          >
+            Eu Vou
+          </Button>
+          <Button 
+            variant={filter === 'missed' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setFilter('missed')}
+          >
+            Furei
+          </Button>
+          <Button 
+            variant={filter === 'invited' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setFilter('invited')}
+          >
+            Convidado
+          </Button>
+        </div>
+        
         {/* Week days header */}
         <div className="grid grid-cols-7 gap-2 mb-2">
           {weekDays.map((day) => (
@@ -148,6 +262,8 @@ const CalendarView = () => {
             const hasEvent = hasEventOnDay(day);
             const isSelected = selectedDay && isSameDay(day, selectedDay);
             const isCurrentMonth = isSameMonth(day, currentMonth);
+            const eventType = getEventTypeOnDay(day);
+            const dotColor = getDotColorForEventType(eventType);
             
             return (
               <button
@@ -161,11 +277,26 @@ const CalendarView = () => {
               >
                 <span className="text-sm">{format(day, "d")}</span>
                 {hasEvent && !isSelected && (
-                  <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-primary"></span>
+                  <span className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${dotColor}`}></span>
                 )}
               </button>
             );
           })}
+        </div>
+        
+        {/* Search bar for events */}
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="Buscar eventos..."
+            className="w-full input-primary pl-10 mb-4"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+          <CalendarIcon
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+            size={18}
+          />
         </div>
         
         {/* Selected day events */}
@@ -175,9 +306,9 @@ const CalendarView = () => {
               Eventos para {format(selectedDay, "dd 'de' MMMM", { locale: ptBR })}
             </h3>
             
-            {selectedDayEvents.length > 0 ? (
+            {filteredDayEvents.length > 0 ? (
               <div className="space-y-4">
-                {selectedDayEvents.map(event => (
+                {filteredDayEvents.map(event => (
                   <Card 
                     key={event.id}
                     className="overflow-hidden cursor-pointer"
@@ -217,7 +348,7 @@ const CalendarView = () => {
                 <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                 <h3 className="text-lg font-medium mb-1">Nenhum evento</h3>
                 <p className="text-sm text-muted-foreground">
-                  Não há eventos agendados para esta data
+                  {searchQuery ? "Nenhum evento encontrado para sua busca." : "Não há eventos agendados para esta data"}
                 </p>
                 <Button 
                   variant="outline" 
