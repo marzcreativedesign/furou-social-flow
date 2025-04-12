@@ -1,13 +1,24 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, MapPin, Bell, Check, X } from "lucide-react";
+import { Search, MapPin, Bell, Check, X, Filter } from "lucide-react";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 import EventCard from "../components/EventCard";
+import EventFilters, { EventFilters as EventFiltersType } from "../components/EventFilters";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { 
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const MOCK_EVENTS = [
   {
@@ -17,6 +28,8 @@ const MOCK_EVENTS = [
     location: "Rua Augusta, 1492",
     imageUrl: "https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     attendees: 8,
+    type: "public",
+    groupName: null
   },
   {
     id: "2",
@@ -25,6 +38,8 @@ const MOCK_EVENTS = [
     location: "Alameda Santos, 1000",
     imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     attendees: 15,
+    type: "private",
+    groupName: null
   },
   {
     id: "3",
@@ -33,6 +48,8 @@ const MOCK_EVENTS = [
     location: "Av. Paulista, 1000",
     imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
     attendees: 12,
+    type: "group",
+    groupName: "Amigos da Faculdade"
   },
   {
     id: "4",
@@ -41,6 +58,8 @@ const MOCK_EVENTS = [
     location: "Parque Ibirapuera",
     imageUrl: "https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     attendees: 50,
+    type: "public",
+    groupName: null
   },
 ];
 
@@ -52,6 +71,8 @@ const MOCK_NEARBY_EVENTS = [
     location: "MASP",
     imageUrl: "https://images.unsplash.com/photo-1605429523419-d828acb941d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
     attendees: 30,
+    type: "public",
+    groupName: null
   },
   {
     id: "6",
@@ -60,6 +81,8 @@ const MOCK_NEARBY_EVENTS = [
     location: "Parque Villa-Lobos",
     imageUrl: "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
     attendees: 15,
+    type: "public",
+    groupName: null
   },
 ];
 
@@ -88,6 +111,42 @@ const HomePage = () => {
   const [location, setLocation] = useState("São Paulo, SP");
   const [pendingInvitations, setPendingInvitations] = useState(MOCK_PENDING_INVITATIONS);
   const [notificationCount, setNotificationCount] = useState(3);
+  const [filters, setFilters] = useState<EventFiltersType>({
+    type: 'all',
+    date: 'all',
+  });
+  const [filteredEvents, setFilteredEvents] = useState(MOCK_EVENTS);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Apply filters
+  useEffect(() => {
+    let events = [...MOCK_EVENTS];
+    
+    // Filter by type
+    if (filters.type !== 'all') {
+      if (filters.type === 'public') {
+        events = events.filter(event => event.type === 'public');
+      } else if (filters.type === 'private') {
+        events = events.filter(event => event.type === 'private');
+      }
+      // Other filters would be applied here in a real app
+    }
+    
+    // Filter by date
+    if (filters.date !== 'all') {
+      // In a real app, this would filter by actual dates
+      if (filters.date === 'today') {
+        events = events.filter(event => event.date.includes('Hoje'));
+      } else if (filters.date === 'weekend') {
+        events = events.filter(event => 
+          event.date.includes('Sábado') || 
+          event.date.includes('Domingo')
+        );
+      }
+    }
+    
+    setFilteredEvents(events);
+  }, [filters]);
   
   const handleAcceptInvitation = (id: string) => {
     setPendingInvitations(prev => prev.filter(inv => inv.id !== id));
@@ -106,6 +165,10 @@ const HomePage = () => {
       description: "Você recusou o convite"
     });
   };
+
+  const handleFilterChange = (newFilters: EventFiltersType) => {
+    setFilters(newFilters);
+  };
   
   return (
     <div className="pb-20">
@@ -121,9 +184,36 @@ const HomePage = () => {
       </Header>
       
       <div className="px-4 pt-2 pb-4">
-        <div className="flex items-center text-sm mb-6">
-          <MapPin size={16} className="text-primary mr-1" />
-          <span>{location}</span>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center text-sm">
+            <MapPin size={16} className="text-primary mr-1" />
+            <span>{location}</span>
+          </div>
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="flex gap-1">
+                <Filter size={16} />
+                Filtros
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filtrar Eventos</SheetTitle>
+                <SheetDescription>
+                  Selecione os filtros para encontrar eventos
+                </SheetDescription>
+              </SheetHeader>
+              <div className="py-4">
+                <EventFilters onFilterChange={handleFilterChange} />
+              </div>
+              <SheetFooter>
+                <SheetClose asChild>
+                  <Button>Aplicar Filtros</Button>
+                </SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
         
         <div className="relative mb-6">
@@ -157,13 +247,20 @@ const HomePage = () => {
                     className="bg-white rounded-xl p-4 shadow-sm min-w-[250px]"
                   >
                     <div className="flex items-center mb-3">
-                      <img
-                        src={invitation.hostImage}
-                        alt={invitation.host}
-                        className="w-8 h-8 rounded-full mr-2"
-                      />
+                      <Link to={`/usuario/${invitation.hostImage.split('=')[1]}`}>
+                        <img
+                          src={invitation.hostImage}
+                          alt={invitation.host}
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                      </Link>
                       <div>
-                        <p className="text-sm font-medium">{invitation.host}</p>
+                        <Link 
+                          to={`/usuario/${invitation.hostImage.split('=')[1]}`}
+                          className="text-sm font-medium hover:underline"
+                        >
+                          {invitation.host}
+                        </Link>
                         <p className="text-xs text-muted-foreground">
                           te convidou para {invitation.type === "event" ? "um evento" : "um grupo"}
                         </p>
@@ -198,18 +295,34 @@ const HomePage = () => {
         
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Seus eventos</h2>
+            <h2 className="text-lg font-bold">
+              {filters.type === 'all' ? 'Seus eventos' : 
+               filters.type === 'public' ? 'Eventos Públicos' :
+               filters.type === 'private' ? 'Eventos Privados' :
+               filters.type === 'invited' ? 'Eventos que Você Foi Convidado' :
+               'Eventos Confirmados'}
+            </h2>
             <Link to="/eventos" className="text-sm font-medium text-primary">
               Ver todos
             </Link>
           </div>
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {MOCK_EVENTS.slice(0, 2).map((event) => (
-              <Link to={`/evento/${event.id}`} key={event.id}>
-                <EventCard {...event} />
-              </Link>
-            ))}
+            {filteredEvents.length > 0 ? (
+              filteredEvents.slice(0, 4).map((event) => (
+                <Link to={`/evento/${event.id}`} key={event.id}>
+                  <EventCard 
+                    {...event} 
+                    type={event.type as "public" | "private" | "group"} 
+                    groupName={event.groupName} 
+                  />
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8 bg-muted/20 rounded-xl">
+                <p className="text-muted-foreground">Nenhum evento encontrado com estes filtros</p>
+              </div>
+            )}
           </div>
         </section>
         
@@ -224,7 +337,11 @@ const HomePage = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {MOCK_NEARBY_EVENTS.map((event) => (
               <Link to={`/evento/${event.id}`} key={event.id}>
-                <EventCard {...event} />
+                <EventCard 
+                  {...event} 
+                  type={event.type as "public" | "private" | "group"} 
+                  groupName={event.groupName}
+                />
               </Link>
             ))}
           </div>

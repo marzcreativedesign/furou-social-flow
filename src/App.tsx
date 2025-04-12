@@ -13,6 +13,8 @@ import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import CalendarView from "./pages/CalendarView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/grupo/:id" element={<GroupDetail />} />
           <Route path="/notificacoes" element={<Notifications />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/usuario/:id" element={<UserProfile />} />
+          <Route path="/agenda" element={<CalendarView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
