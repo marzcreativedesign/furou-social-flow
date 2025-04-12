@@ -98,6 +98,7 @@ const Header = ({
     { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
     { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
     { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
+    { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
     { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
     { title: 'Configurações', icon: <Settings size={20} />, href: '/configuracoes' },
   ];
@@ -209,7 +210,7 @@ const Header = ({
             </Sheet>
           )}
           {!isSearchActive && (
-            <h1 className="text-lg font-bold text-center flex-1">
+            <h1 className="text-lg font-bold text-center">
               {path === '/' ? 'Furou?!' : getTitleFromPath()}
             </h1>
           )}

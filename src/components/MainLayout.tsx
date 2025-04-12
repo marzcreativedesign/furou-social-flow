@@ -58,14 +58,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
     setDarkMode(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     localStorage.setItem('darkMode', newDarkMode.toString());
-    document.documentElement.classList.toggle('dark', newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
   
   const handleSearchChange = (query: string) => {
@@ -86,16 +95,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     { title: 'Perfil', icon: <User />, href: '/perfil' },
     { title: 'Configurações', icon: <Settings />, href: '/configuracoes' },
   ];
-
-  const menuItems = [
-    { title: 'Início', icon: <Home size={20} />, href: '/' },
-    { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
-    { title: 'Agenda', icon: <Calendar size={20} />, href: '/agenda' },
-    { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
-    { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
-    { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
-    { title: 'Configurações', icon: <Settings size={20} />, href: '/configuracoes' },
-  ];
   
   return (
     <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
@@ -113,7 +112,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       </Header>
 
       {/* Main content */}
-      <main className="flex-1 dark:bg-gray-900">{children}</main>
+      <main className="flex-1 dark:bg-gray-900 pb-16 lg:pb-0">{children}</main>
 
       {/* Bottom navigation for mobile */}
       <div className="block lg:hidden">
