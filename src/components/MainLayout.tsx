@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
+import Header from "./Header";
 import { 
   Home, 
   Calendar, 
@@ -20,13 +21,12 @@ import {
   ScrollText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/ui/dock";
-import { Hamburger } from "@/components/ui/hamburger";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -46,33 +46,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   onBack,
   showSearch = false,
   onSearch,
-  showDock = true, // Changed default to true
+  showDock = true,
   rightContent
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSearchInput, setShowSearchInput] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark', !darkMode);
   };
   
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
     if (onSearch) {
-      onSearch(e.target.value);
-    }
-  };
-  
-  const toggleSearch = () => {
-    setShowSearchInput(!showSearchInput);
-    if (showSearchInput) {
-      setSearchQuery("");
-      if (onSearch) onSearch("");
+      onSearch(query);
     }
   };
 
@@ -101,126 +91,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between h-16 px-4">
-          {showBack ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack || (() => navigate(-1))}
-              className="mr-2"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M15 18L9 12L15 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Button>
-          ) : (
-            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-              <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon" className="mr-2">
-                  <Hamburger onClick={() => setMenuOpen(!menuOpen)} />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle className="text-left flex items-center">
-                    <span className="text-2xl font-bold">Furou?!</span>
-                  </SheetTitle>
-                </SheetHeader>
-                <Separator className="my-4" />
-                <div className="flex items-center mb-6 px-2">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                    <AvatarFallback>US</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-3">
-                    <p className="font-medium">Carlos Oliveira</p>
-                    <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
-                  </div>
-                </div>
-                <ScrollArea className="h-[calc(100vh-180px)]">
-                  <div className="space-y-1 px-2">
-                    {menuItems.map((item) => (
-                      <Button
-                        key={item.href}
-                        variant={location.pathname === item.href ? "secondary" : "ghost"}
-                        className="w-full justify-start"
-                        onClick={() => { 
-                          navigate(item.href); 
-                          setMenuOpen(false); 
-                        }}
-                      >
-                        {item.icon}
-                        <span className="ml-2">{item.title}</span>
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="px-4 py-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
-                        <span>Modo escuro</span>
-                      </div>
-                      <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => { 
-                        navigate("/criar"); 
-                        setMenuOpen(false); 
-                      }}
-                    >
-                      <PlusCircle className="mr-2" size={20} />
-                      <span>Criar evento</span>
-                    </Button>
-                    
-                    <Button 
-                      variant="destructive"
-                      className="w-full justify-start"
-                      onClick={() => navigate("/login")}
-                    >
-                      <LogOut className="mr-2" size={20} />
-                      <span>Sair</span>
-                    </Button>
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-          )}
-
-          {!showSearchInput ? (
-            <h1 className="text-lg font-bold">{title}</h1>
-          ) : (
-            <div className="flex-1 ml-2">
-              <input
-                type="text"
-                placeholder="Buscar eventos, locais ou grupos..."
-                className="w-full input-primary h-9 pl-3"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                autoFocus
-              />
-            </div>
-          )}
-        </div>
-      </header>
+      <Header 
+        title={title}
+        showBack={showBack}
+        onBack={onBack}
+        showSearch={showSearch}
+        onSearch={handleSearchChange}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      >
+        {rightContent}
+      </Header>
 
       {/* Main content */}
       <main className="flex-1">{children}</main>
@@ -232,46 +113,73 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Dock for desktop - now shown on all pages by default */}
       {showDock && (
-        <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
-          <Dock className="items-end pb-3">
-            {dockItems.map((item, idx) => (
-              <DockItem
-                key={idx}
-                className={`aspect-square rounded-full ${
-                  location.pathname === item.href
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                }`}
-              >
-                <Link to={item.href} className="block h-full w-full flex items-center justify-center">
-                  <DockLabel>{item.title}</DockLabel>
-                  <DockIcon>{item.icon}</DockIcon>
-                </Link>
-              </DockItem>
-            ))}
+        <TooltipProvider>
+          <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
+            <Dock className="items-end pb-3">
+              {dockItems.map((item, idx) => (
+                <Tooltip key={idx}>
+                  <TooltipTrigger asChild>
+                    <DockItem
+                      key={idx}
+                      className={`aspect-square rounded-full ${
+                        location.pathname === item.href
+                          ? "bg-primary text-white"
+                          : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                      }`}
+                    >
+                      <Link to={item.href} className="block h-full w-full flex items-center justify-center">
+                        <DockLabel>{item.title}</DockLabel>
+                        <DockIcon>{item.icon}</DockIcon>
+                      </Link>
+                    </DockItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {item.title}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
 
-            {/* Additional special actions */}
-            <DockItem
-              className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
-            >
-              <Link to="/criar" className="block h-full w-full flex items-center justify-center">
-                <DockLabel>Criar Evento</DockLabel>
-                <DockIcon><PlusCircle /></DockIcon>
-              </Link>
-            </DockItem>
+              {/* Additional special actions */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DockItem
+                    className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
+                  >
+                    <Link to="/criar" className="block h-full w-full flex items-center justify-center">
+                      <DockLabel>Criar Evento</DockLabel>
+                      <DockIcon><PlusCircle /></DockIcon>
+                    </Link>
+                  </DockItem>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Criar Evento
+                </TooltipContent>
+              </Tooltip>
 
-            {/* Dark mode toggle in dock */}
-            <DockItem
-              className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-              onClick={toggleDarkMode}
-            >
-              <div className="block h-full w-full flex items-center justify-center cursor-pointer">
-                <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
-                <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
-              </div>
-            </DockItem>
-          </Dock>
-        </div>
+              {/* Dark mode toggle in dock */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-pointer">
+                    <DockItem
+                      className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                    >
+                      <div 
+                        className="block h-full w-full flex items-center justify-center cursor-pointer"
+                        onClick={toggleDarkMode}
+                      >
+                        <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
+                        <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
+                      </div>
+                    </DockItem>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Modo {darkMode ? 'Claro' : 'Escuro'}
+                </TooltipContent>
+              </Tooltip>
+            </Dock>
+          </div>
+        </TooltipProvider>
       )}
     </div>
   );

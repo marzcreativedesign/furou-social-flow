@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, CalendarDays, Settings } from "lucide-react";
+import { Plus, Search, CalendarDays, Settings, Bell, X, Check } from "lucide-react";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 import MainLayout from "../components/MainLayout";
@@ -9,6 +9,7 @@ import EventCard from "../components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import CostCalculator from "@/components/CostCalculator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Mock events
 const MOCK_EVENTS = [
@@ -47,6 +48,25 @@ const MOCK_EVENTS = [
   },
 ];
 
+const PENDING_ACTIONS = [
+  {
+    id: "1",
+    title: "Confirmação de presença",
+    eventName: "Happy Hour no Bar do Zé",
+    date: "Hoje, 19:00",
+    imageUrl: "https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    type: "confirmation"
+  },
+  {
+    id: "2",
+    title: "Convite para grupo",
+    eventName: "Amigos do Colégio",
+    date: "Novo grupo",
+    imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2232&q=80",
+    type: "group_invite"
+  },
+];
+
 const UPCOMING_EVENTS = [
   {
     id: "4",
@@ -78,6 +98,8 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [pendingActions, setPendingActions] = useState(PENDING_ACTIONS);
+  const userName = "Carlos"; // This would come from user authentication
   
   const filteredEvents = MOCK_EVENTS.filter(event => {
     // Filter by event type
@@ -106,6 +128,14 @@ const HomePage = () => {
   
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
+  };
+  
+  const handleAcceptAction = (id: string) => {
+    setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
+  };
+  
+  const handleRejectAction = (id: string) => {
+    setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
   };
   
   return (
@@ -149,6 +179,63 @@ const HomePage = () => {
       }
     >
       <div className="p-4">
+        {/* Welcome message */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-3">Olá, {userName} 👋</h1>
+          
+          {/* Search bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar eventos..."
+              className="w-full px-10 py-3 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-colors"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Pending Actions Section */}
+        {pendingActions.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">Ações Pendentes</h2>
+            <div className="space-y-3">
+              {pendingActions.map((action) => (
+                <div key={action.id} className="bg-accent/10 p-4 rounded-lg flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <img src={action.imageUrl} alt={action.eventName} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{action.title}</h3>
+                      <p className="text-sm text-muted-foreground">{action.eventName}</p>
+                      <span className="text-xs text-muted-foreground">{action.date}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="rounded-full w-9 h-9 p-0" 
+                      onClick={() => handleRejectAction(action.id)}
+                    >
+                      <X size={16} />
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="rounded-full w-9 h-9 p-0" 
+                      onClick={() => handleAcceptAction(action.id)}
+                    >
+                      <Check size={16} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Filter pills */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none">
           <Button 

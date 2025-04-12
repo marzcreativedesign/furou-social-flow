@@ -1,10 +1,9 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import MainLayout from "../components/MainLayout";
 
 const MOCK_NOTIFICATIONS = [
   {
@@ -66,15 +65,18 @@ const Notifications = () => {
   };
   
   return (
-    <div className="min-h-screen pb-20">
-      <Header title="Notificações" showBack onBack={handleBackToHome}>
-        {notifications.length > 0 && (
+    <MainLayout
+      title="Notificações"
+      showBack
+      onBack={handleBackToHome}
+      rightContent={
+        notifications.length > 0 && (
           <Button variant="ghost" size="sm" onClick={handleDismissAll}>
             Limpar tudo
           </Button>
-        )}
-      </Header>
-      
+        )
+      }
+    >
       <div className="p-4">
         {notifications.length > 0 ? (
           <div className="space-y-3">
@@ -90,6 +92,7 @@ const Notifications = () => {
                   size="icon" 
                   className="absolute top-2 right-2 h-6 w-6"
                   onClick={() => handleDismiss(notification.id)}
+                  aria-label="Fechar notificação"
                 >
                   <X size={16} />
                 </Button>
@@ -113,9 +116,7 @@ const Notifications = () => {
           </div>
         )}
       </div>
-      
-      <BottomNav />
-    </div>
+    </MainLayout>
   );
 };
 

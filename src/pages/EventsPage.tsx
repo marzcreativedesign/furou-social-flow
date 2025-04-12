@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarIcon, Filter, MapPin, Search } from "lucide-react";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
+import MainLayout from "../components/MainLayout";
 import EventCard from "../components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,8 +108,8 @@ const EventsPage = () => {
     return true;
   });
   
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
   };
   
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,64 +119,75 @@ const EventsPage = () => {
   const handleEventClick = (id: string) => {
     navigate(`/evento/${id}`);
   };
+
+  const handleBackToHome = () => {
+    navigate('/');
+  };
   
   return (
-    <div className="pb-20">
-      <Header title="Eventos" showSearch onSearch={setSearchQuery}>
-        <Drawer>
-          <DrawerTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Filter size={20} />
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>Filtrar por localização</DrawerTitle>
-            </DrawerHeader>
-            <div className="p-4">
-              <div className="relative mb-4">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input
-                  placeholder="Digite uma localização..."
-                  value={locationQuery}
-                  onChange={handleLocationChange}
-                  className="pl-10"
-                />
+    <MainLayout
+      title="Eventos"
+      showBack
+      onBack={handleBackToHome}
+      showSearch
+      onSearch={handleSearchChange}
+      rightContent={
+        <>
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Filter size={20} />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Filtrar por localização</DrawerTitle>
+              </DrawerHeader>
+              <div className="p-4">
+                <div className="relative mb-4">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+                  <Input
+                    placeholder="Digite uma localização..."
+                    value={locationQuery}
+                    onChange={handleLocationChange}
+                    className="pl-10"
+                  />
+                </div>
+                <h3 className="font-medium mb-2">Explorar por localização</h3>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("São Paulo")}>
+                    <MapPin size={16} className="mr-2" />
+                    São Paulo
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Rio de Janeiro")}>
+                    <MapPin size={16} className="mr-2" />
+                    Rio de Janeiro
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Belo Horizonte")}>
+                    <MapPin size={16} className="mr-2" />
+                    Belo Horizonte
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Porto Alegre")}>
+                    <MapPin size={16} className="mr-2" />
+                    Porto Alegre
+                  </Button>
+                </div>
               </div>
-              <h3 className="font-medium mb-2">Explorar por localização</h3>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("São Paulo")}>
-                  <MapPin size={16} className="mr-2" />
-                  São Paulo
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Rio de Janeiro")}>
-                  <MapPin size={16} className="mr-2" />
-                  Rio de Janeiro
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Belo Horizonte")}>
-                  <MapPin size={16} className="mr-2" />
-                  Belo Horizonte
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => setLocationQuery("Porto Alegre")}>
-                  <MapPin size={16} className="mr-2" />
-                  Porto Alegre
-                </Button>
-              </div>
-            </div>
-            <DrawerFooter>
-              <Button onClick={() => setLocationQuery("")} variant="outline">Limpar filtros</Button>
-              <DrawerClose asChild>
-                <Button>Aplicar</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
+              <DrawerFooter>
+                <Button onClick={() => setLocationQuery("")} variant="outline">Limpar filtros</Button>
+                <DrawerClose asChild>
+                  <Button>Aplicar</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
 
-        <Button variant="outline" size="icon" onClick={() => navigate("/agenda")}>
-          <CalendarIcon size={20} />
-        </Button>
-      </Header>
-
+          <Button variant="outline" size="icon" onClick={() => navigate("/agenda")}>
+            <CalendarIcon size={20} />
+          </Button>
+        </>
+      }
+    >
       <div className="px-4 py-4">
         {/* Filter pills */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none">
@@ -277,9 +287,7 @@ const EventsPage = () => {
           </div>
         )}
       </div>
-      
-      <BottomNav />
-    </div>
+    </MainLayout>
   );
 };
 
