@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
-  const { signIn, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithApple, isLoading } = useAuth();
   const [emailLogin, setEmailLogin] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
