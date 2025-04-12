@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import HomePage from "./pages/HomePage";
@@ -22,32 +23,44 @@ import CostCalculatorPage from "./pages/CostCalculatorPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <TooltipProvider>
-        <Routes>
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<HomePage />} />
-          <Route path="/evento/:id" element={<EventDetail />} />
-          <Route path="/criar" element={<CreateEvent />} />
-          <Route path="/grupos" element={<Groups />} />
-          <Route path="/grupo/:id" element={<GroupDetail />} />
-          <Route path="/notificacoes" element={<Notifications />} />
-          <Route path="/perfil" element={<Profile />} />
-          <Route path="/usuario/:id" element={<UserProfile />} />
-          <Route path="/agenda" element={<CalendarView />} />
-          <Route path="/configuracoes" element={<Settings />} />
-          <Route path="/eventos" element={<EventsPage />} />
-          <Route path="/calculadora" element={<CostCalculatorPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize dark mode from localStorage on app start
+  useEffect(() => {
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <TooltipProvider>
+          <Routes>
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/evento/:id" element={<EventDetail />} />
+            <Route path="/criar" element={<CreateEvent />} />
+            <Route path="/grupos" element={<Groups />} />
+            <Route path="/grupo/:id" element={<GroupDetail />} />
+            <Route path="/notificacoes" element={<Notifications />} />
+            <Route path="/perfil" element={<Profile />} />
+            <Route path="/usuario/:id" element={<UserProfile />} />
+            <Route path="/agenda" element={<CalendarView />} />
+            <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/eventos" element={<EventsPage />} />
+            <Route path="/calculadora" element={<CostCalculatorPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

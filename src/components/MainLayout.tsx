@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
@@ -54,9 +54,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Check for stored dark mode preference on component mount
+  useEffect(() => {
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
+
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark', !darkMode);
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    document.documentElement.classList.toggle('dark', newDarkMode);
   };
   
   const handleSearchChange = (query: string) => {
@@ -89,7 +98,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   ];
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
       {/* Header */}
       <Header 
         title={title}
@@ -104,83 +113,81 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       </Header>
 
       {/* Main content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 dark:bg-gray-900">{children}</main>
 
       {/* Bottom navigation for mobile */}
       <div className="block lg:hidden">
         <BottomNav />
       </div>
 
-      {/* Dock for desktop - now shown on all pages by default */}
-      {showDock && (
+      {/* Dock for desktop - always shown */}
+      <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
         <TooltipProvider>
-          <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
-            <Dock className="items-end pb-3">
-              {dockItems.map((item, idx) => (
-                <Tooltip key={idx}>
-                  <TooltipTrigger asChild>
-                    <DockItem
-                      key={idx}
-                      className={`aspect-square rounded-full ${
-                        location.pathname === item.href
-                          ? "bg-primary text-white"
-                          : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                      }`}
-                    >
-                      <Link to={item.href} className="block h-full w-full flex items-center justify-center">
-                        <DockLabel>{item.title}</DockLabel>
-                        <DockIcon>{item.icon}</DockIcon>
-                      </Link>
-                    </DockItem>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {item.title}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-
-              {/* Additional special actions */}
-              <Tooltip>
+          <Dock className="items-end pb-3">
+            {dockItems.map((item, idx) => (
+              <Tooltip key={idx}>
                 <TooltipTrigger asChild>
                   <DockItem
-                    className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
+                    key={idx}
+                    className={`aspect-square rounded-full ${
+                      location.pathname === item.href
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                    }`}
                   >
-                    <Link to="/criar" className="block h-full w-full flex items-center justify-center">
-                      <DockLabel>Criar Evento</DockLabel>
-                      <DockIcon><PlusCircle /></DockIcon>
+                    <Link to={item.href} className="block h-full w-full flex items-center justify-center">
+                      <DockLabel>{item.title}</DockLabel>
+                      <DockIcon>{item.icon}</DockIcon>
                     </Link>
                   </DockItem>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  Criar Evento
+                  {item.title}
                 </TooltipContent>
               </Tooltip>
+            ))}
 
-              {/* Dark mode toggle in dock */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="cursor-pointer">
-                    <DockItem
-                      className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+            {/* Additional special actions */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DockItem
+                  className="aspect-square rounded-full bg-green-500 text-white hover:bg-green-600"
+                >
+                  <Link to="/criar" className="block h-full w-full flex items-center justify-center">
+                    <DockLabel>Criar Evento</DockLabel>
+                    <DockIcon><PlusCircle /></DockIcon>
+                  </Link>
+                </DockItem>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Criar Evento
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Dark mode toggle in dock */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-pointer">
+                  <DockItem
+                    className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                  >
+                    <div 
+                      className="block h-full w-full flex items-center justify-center cursor-pointer"
+                      onClick={toggleDarkMode}
                     >
-                      <div 
-                        className="block h-full w-full flex items-center justify-center cursor-pointer"
-                        onClick={toggleDarkMode}
-                      >
-                        <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
-                        <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
-                      </div>
-                    </DockItem>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  Modo {darkMode ? 'Claro' : 'Escuro'}
-                </TooltipContent>
-              </Tooltip>
-            </Dock>
-          </div>
+                      <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
+                      <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
+                    </div>
+                  </DockItem>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Modo {darkMode ? 'Claro' : 'Escuro'}
+              </TooltipContent>
+            </Tooltip>
+          </Dock>
         </TooltipProvider>
-      )}
+      </div>
     </div>
   );
 };

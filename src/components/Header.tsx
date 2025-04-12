@@ -67,6 +67,12 @@ const Header = ({
         return "Criar Evento";
       case "/grupos":
         return "Meus Grupos";
+      case "/agenda":
+        return "Agenda";
+      case "/configuracoes":
+        return "Configurações";
+      case "/calculadora":
+        return "Calculadora de Rateio";
       default:
         return title || "Furou?!";
     }
@@ -97,7 +103,7 @@ const Header = ({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="flex items-center justify-between h-16 px-4">
         <div className="flex items-center">
           {showBack ? (
@@ -131,7 +137,7 @@ const Header = ({
                   <Hamburger onClick={() => setMenuOpen(!menuOpen)} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
                 <SheetHeader>
                   <SheetTitle className="text-left flex items-center">
                     <span className="text-2xl font-bold">Furou?!</span>
@@ -227,7 +233,7 @@ const Header = ({
                 <input
                   type="text"
                   placeholder="Buscar eventos..."
-                  className="w-full input-primary h-9 pl-8 pr-3 rounded-full"
+                  className="w-full input-primary h-9 pl-8 pr-3 rounded-full dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={searchQuery}
                   onChange={handleSearchChange}
                   autoFocus
