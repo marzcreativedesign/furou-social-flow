@@ -1,15 +1,16 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { createContext, useContext, ReactNode } from 'react';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { AuthService } from '@/services/auth.service';
+import { useAuthState } from '@/hooks/useAuthState';
 
 type AuthContextType = {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: any | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
@@ -22,89 +23,34 @@ type AuthProviderProps = {
 };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { session, user, isLoading } = useAuthState();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setIsLoading(false);
-        
-        if (event === 'SIGNED_IN' && currentSession) {
-          // Importante: usar setTimeout para evitar deadlock com o Supabase
-          setTimeout(() => {
-            navigate('/');
-          }, 0);
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          navigate('/login');
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
+  // Método de login com email e senha
   const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    setIsLoading(false);
+    const { error } = await AuthService.signInWithEmail(email, password);
     return { error };
   };
 
+  // Método de cadastro com email e senha
   const signUp = async (email: string, password: string) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin
-      }
-    });
-    setIsLoading(false);
+    const { error } = await AuthService.signUpWithEmail(email, password);
     return { error };
   };
 
+  // Método para encerrar a sessão
   const signOut = async () => {
-    setIsLoading(true);
-    await supabase.auth.signOut();
-    setIsLoading(false);
+    await AuthService.signOut();
   };
 
+  // Método de login com Google
   const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`
-      }
-    });
+    await AuthService.signInWithGoogle();
   };
 
+  // Método de login com Apple
   const signInWithApple = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/`
-      }
-    });
+    await AuthService.signInWithApple();
   };
 
   const value = {
@@ -121,6 +67,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+/**
+ * Hook para acessar o contexto de autenticação
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
