@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Edit2 } from "lucide-react";
@@ -156,8 +155,7 @@ const EventDetail = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
 
-  // Fix the type comparison by creating a boolean variable using strict equality
-  const renderCostCalculator: boolean = event.type === "private";
+  const renderCostCalculator = event.type !== "public" && event.type !== "group";
 
   return (
     <MainLayout showBack onBack={handleBack} title={event.title}>
