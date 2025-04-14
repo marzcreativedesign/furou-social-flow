@@ -54,12 +54,12 @@ export const GroupsService = {
     }
     
     // Create the group
-    const { data: groupData, error: groupError } = await supabase
+    const { data: createdGroup, error: groupError } = await supabase
       .from('groups')
       .insert(groupData)
       .select();
       
-    if (groupError || !groupData || groupData.length === 0) {
+    if (groupError || !createdGroup || createdGroup.length === 0) {
       throw new Error(groupError?.message || 'Erro ao criar grupo');
     }
     
@@ -67,7 +67,7 @@ export const GroupsService = {
     const { error: memberError } = await supabase
       .from('group_members')
       .insert({
-        group_id: groupData[0].id,
+        group_id: createdGroup[0].id,
         user_id: user.user.id,
         is_admin: true
       });
@@ -76,7 +76,7 @@ export const GroupsService = {
       throw new Error(memberError.message);
     }
     
-    return groupData;
+    return createdGroup;
   },
 
   /**

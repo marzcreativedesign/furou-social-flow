@@ -1,8 +1,4 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { EventsService } from '@/services/events.service';
-import { GroupsService } from '@/services/groups.service';
-import { NotificationsService } from '@/services/notifications.service';
 
 // Test user data
 const TEST_USER_EMAIL = 'teste@furou.com';
@@ -152,21 +148,14 @@ const NOTIFICATION_TYPES = ['info', 'event_invite', 'group_invite', 'event_updat
 export const seedTestUserData = async () => {
   try {
     // Get test user
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
+    const { data, error: userError } = await supabase.auth.getUser();
     
-    if (userError) {
-      console.error("Error fetching users:", userError);
-      return;
+    if (userError || !data.user) {
+      console.error("Error fetching user:", userError);
+      return { success: false, error: userError || new Error("User not found") };
     }
     
-    const testUser = users.find(user => user.email === TEST_USER_EMAIL);
-    
-    if (!testUser) {
-      console.error("Test user not found.");
-      return;
-    }
-    
-    const userId = testUser.id;
+    const userId = data.user.id;
     
     // Seed events
     const eventIds = [];
@@ -290,3 +279,6 @@ export const seedTestUserData = async () => {
     };
   }
 };
+
+// Default export for easier importing
+export default { seedTestUserData };

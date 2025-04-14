@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MOCK_USER = {
   id: "1",
@@ -113,8 +113,8 @@ const Profile = () => {
     if (authUser?.email === 'teste@furou.com') {
       try {
         setIsSeeding(true);
-        const { default: seedTestUserData } = await import('../utils/seedTestData');
-        const result = await seedTestUserData();
+        const seedTestData = await import('../utils/seedTestData');
+        const result = await seedTestData.seedTestUserData();
         
         if (result?.success) {
           toast({

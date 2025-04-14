@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, CalendarDays, Settings, Bell, X, Check } from "lucide-react";
@@ -64,18 +65,23 @@ const HomePage = () => {
           console.error("Error fetching events:", eventsError);
           toast.error("Erro ao carregar eventos");
         } else if (userEvents) {
-          const formattedEvents: Event[] = userEvents.map(event => ({
-            ...event,
-            confirmed: event.event_participants && event.event_participants.length > 0,
-            type: event.is_public ? "public" : (event.group_events?.length > 0 ? "group" : "private"),
-            groupName: event.group_events?.length > 0 ? event.group_events[0].groups?.name : null,
-            attendees: event.event_participants?.length || 0,
-            date: new Date(event.date).toLocaleString('pt-BR', {
-              weekday: 'long',
-              hour: 'numeric',
-              minute: 'numeric'
-            })
-          }));
+          const formattedEvents: Event[] = userEvents.map(event => {
+            // Find any group associated with this event
+            const groupInfo = event.group_events?.[0]?.groups || null;
+            
+            return {
+              ...event,
+              confirmed: event.event_participants && event.event_participants.length > 0,
+              type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+              groupName: groupInfo?.name || null,
+              attendees: event.event_participants?.length || 0,
+              date: new Date(event.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              })
+            };
+          });
           setEvents(formattedEvents);
         }
 
