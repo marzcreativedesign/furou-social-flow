@@ -25,19 +25,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Pencil, Trash2, Search, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
 
+type UserRole = "free" | "premium" | "admin";
+
 type UserWithRole = {
   id: string;
   email: string;
   full_name: string | null;
   username: string | null;
-  role: string;
+  role: UserRole;
   created_at: string | null;
 }
 
@@ -56,7 +57,14 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users with their roles
+      // Fetch users from auth.users to get emails
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        throw authError;
+      }
+
+      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
@@ -74,20 +82,28 @@ const UserManagement = () => {
         throw rolesError;
       }
 
-      // Combine profiles and roles
-      const usersWithRoles = profiles.map(profile => {
+      // Combine auth users, profiles and roles
+      const usersWithRoles: UserWithRole[] = [];
+      
+      for (const profile of profiles) {
+        // Find the corresponding auth user to get email
+        const authUser = authUsers?.find(au => au.id === profile.id);
+        if (!authUser) continue;
+        
+        // Find role information
         const userRoles = roles.filter(role => role.user_id === profile.id);
         const highestRole = userRoles.reduce((prev, current) => {
-          if (current.role === 'admin') return 'admin';
-          if (current.role === 'premium' && prev !== 'admin') return 'premium';
+          if (current.role === 'admin') return 'admin' as UserRole;
+          if (current.role === 'premium' && prev !== 'admin') return 'premium' as UserRole;
           return prev;
-        }, 'free');
+        }, 'free' as UserRole);
 
-        return {
+        usersWithRoles.push({
           ...profile,
+          email: authUser.email || "",
           role: highestRole
-        };
-      });
+        });
+      }
 
       setUsers(usersWithRoles);
     } catch (error) {
@@ -290,7 +306,7 @@ const UserManagement = () => {
                 </label>
                 <Select
                   value={editingUser.role}
-                  onValueChange={(value) => setEditingUser({...editingUser, role: value})}
+                  onValueChange={(value: UserRole) => setEditingUser({...editingUser, role: value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar função" />
