@@ -35,13 +35,17 @@ const EventsList = ({
 }: EventsListProps) => {
   const navigate = useNavigate();
 
+  const handleEventClick = (eventId: string) => {
+    navigate(`/evento/${eventId}`);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold dark:text-[#EDEDED]">{title}</h2>
         {showViewAll && viewAllLink && (
-          <Button variant="ghost" size="sm" asChild className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
-            <a href={viewAllLink}>Ver todos</a>
+          <Button variant="ghost" size="sm" onClick={() => navigate(viewAllLink)} className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
+            Ver todos
           </Button>
         )}
       </div>
@@ -49,7 +53,7 @@ const EventsList = ({
       {events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map(event => (
-            <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
+            <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
               <EventCard 
                 id={event.id}
                 title={event.title}

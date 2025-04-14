@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus, Users } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
@@ -18,39 +18,77 @@ import { useToast } from "../components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import MainLayout from "../components/MainLayout";
+import { GroupsService } from "@/services/groups.service";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Mock data for groups
-const MOCK_GROUPS = [
-  {
-    id: "1",
-    name: "Amigos da Faculdade",
-    members: 12,
-    imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80",
-    lastActivity: "Há 2 dias",
-  },
-  {
-    id: "2",
-    name: "Colegas de Trabalho",
-    members: 8,
-    imageUrl: "https://images.unsplash.com/photo-1515169067868-5387ec356754?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80",
-    lastActivity: "Há 1 semana",
-  },
-  {
-    id: "3",
-    name: "Família",
-    members: 5,
-    imageUrl: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80",
-    lastActivity: "Hoje",
-  },
-];
+interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  members?: number;
+  lastActivity?: string;
+  created_at?: string;
+}
 
 const Groups = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [newGroupName, setNewGroupName] = useState("");
-  const [groups, setGroups] = useState(MOCK_GROUPS);
+  const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [groups, setGroups] = useState<Group[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  const handleCreateGroup = () => {
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!user) return;
+      
+      setIsFetching(true);
+      try {
+        const { data, error } = await GroupsService.getUserGroups();
+        
+        if (error) {
+          console.error("Error fetching groups:", error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar seus grupos",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (data) {
+          const formattedGroups = data.map(item => ({
+            id: item.groups?.id || "",
+            name: item.groups?.name || "",
+            description: item.groups?.description || "",
+            image_url: item.groups?.image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
+            members: 1, // Placeholder until we implement member count
+            lastActivity: "Recentemente", // Placeholder
+            created_at: item.groups?.created_at
+          }));
+          
+          setGroups(formattedGroups);
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao carregar os grupos",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchGroups();
+  }, [user, toast]);
+
+  const handleCreateGroup = async () => {
     if (newGroupName.trim() === "") {
       toast({
         title: "Erro",
@@ -60,22 +98,59 @@ const Groups = () => {
       return;
     }
 
-    const newGroup = {
-      id: String(groups.length + 1),
-      name: newGroupName,
-      members: 1,
-      imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      lastActivity: "Agora",
-    };
+    setLoading(true);
 
-    setGroups([...groups, newGroup]);
-    setNewGroupName("");
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Grupo criado",
-      description: `O grupo "${newGroupName}" foi criado com sucesso!`,
-    });
+    try {
+      const { data, error } = await GroupsService.createGroup({
+        name: newGroupName,
+        description: newGroupDescription || undefined,
+        image_url: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3"
+      });
+
+      if (error) {
+        console.error("Error creating group:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar o grupo",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const newGroup: Group = {
+          id: data[0].id,
+          name: data[0].name,
+          description: data[0].description,
+          image_url: data[0].image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
+          members: 1,
+          lastActivity: "Agora",
+          created_at: data[0].created_at
+        };
+
+        setGroups(prevGroups => [...prevGroups, newGroup]);
+        
+        toast({
+          title: "Grupo criado",
+          description: `O grupo "${newGroupName}" foi criado com sucesso!`,
+        });
+
+        // Redirecionar para a página do novo grupo
+        navigate(`/grupo/${newGroup.id}`);
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao criar o grupo",
+        variant: "destructive",
+      });
+    } finally {
+      setNewGroupName("");
+      setNewGroupDescription("");
+      setIsDialogOpen(false);
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,19 +184,34 @@ const Groups = () => {
                     placeholder="Ex: Amigos da Faculdade"
                   />
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Descrição (opcional)</Label>
+                  <Input
+                    id="description"
+                    value={newGroupDescription}
+                    onChange={(e) => setNewGroupDescription(e.target.value)}
+                    placeholder="Ex: Grupo para organizar os rolês da faculdade"
+                  />
+                </div>
               </div>
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateGroup}>Criar Grupo</Button>
+                <Button onClick={handleCreateGroup} disabled={loading}>
+                  {loading ? "Criando..." : "Criar Grupo"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
         
-        {groups.length > 0 ? (
+        {isFetching ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : groups.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {groups.map((group) => (
               <Link to={`/grupo/${group.id}`} key={group.id}>
@@ -129,7 +219,7 @@ const Groups = () => {
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={group.imageUrl} alt={group.name} />
+                        <AvatarImage src={group.image_url} alt={group.name} />
                         <AvatarFallback>
                           {group.name.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -142,9 +232,11 @@ const Groups = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-xs text-muted-foreground">Última atividade: {group.lastActivity}</p>
-                  </CardContent>
+                  {group.description && (
+                    <CardContent className="pb-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">{group.description}</p>
+                    </CardContent>
+                  )}
                   <CardFooter className="pt-1">
                     <div className="flex items-center gap-1 text-xs text-primary">
                       <Users size={12} />

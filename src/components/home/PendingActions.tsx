@@ -3,6 +3,7 @@ import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
+import { useNavigate } from "react-router-dom";
 
 interface PendingAction {
   id: string;
@@ -11,6 +12,8 @@ interface PendingAction {
   eventName?: string;
   imageUrl?: string;
   created_at: string;
+  related_id: string | null;
+  type: string;
 }
 
 interface PendingActionsProps {
@@ -19,11 +22,27 @@ interface PendingActionsProps {
 }
 
 const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
-  const handleAcceptAction = async (id: string) => {
+  const navigate = useNavigate();
+
+  const handleAcceptAction = async (id: string, relatedId: string | null, type: string) => {
     try {
       await NotificationsService.markAsRead(id);
+      
+      // Realizar ação específica dependendo do tipo de notificação
+      if (type === 'event_invite' && relatedId) {
+        // Aceitar convite para evento
+        await EventsService.joinEvent(relatedId);
+        toast.success("Você aceitou participar do evento!");
+        navigate(`/evento/${relatedId}`);
+      } else if (type === 'group_invite' && relatedId) {
+        // Aceitar convite para grupo
+        toast.success("Você aceitou participar do grupo!");
+        navigate(`/grupo/${relatedId}`);
+      } else {
+        toast.success("Ação aceita com sucesso");
+      }
+      
       onActionComplete(id);
-      toast.success("Ação aceita com sucesso");
     } catch (error) {
       console.error("Error accepting action:", error);
       toast.error("Erro ao aceitar ação");
@@ -78,7 +97,7 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
               <Button 
                 size="sm" 
                 className="rounded-full w-9 h-9 p-0 dark:bg-primary dark:hover:bg-accent" 
-                onClick={() => handleAcceptAction(action.id)}
+                onClick={() => handleAcceptAction(action.id, action.related_id, action.type)}
               >
                 <Check size={16} />
               </Button>

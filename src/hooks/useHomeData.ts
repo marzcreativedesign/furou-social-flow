@@ -144,8 +144,16 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     return true;
   });
 
-  const handlePendingActionComplete = (id: string) => {
-    setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
+  const handlePendingActionComplete = async (id: string) => {
+    try {
+      // Update the notification as read in the backend
+      await NotificationsService.markAsRead(id);
+      // Update local state
+      setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
+    } catch (error) {
+      console.error("Error completing action:", error);
+      toast.error("Erro ao completar ação");
+    }
   };
 
   return {
