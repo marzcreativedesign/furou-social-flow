@@ -400,6 +400,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_event_participant: {
+        Args: { event_id: string }
+        Returns: boolean
+      }
+      is_group_admin: {
+        Args: { group_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { group_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "free" | "premium" | "admin"

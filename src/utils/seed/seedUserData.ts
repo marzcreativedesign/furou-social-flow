@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
+import type { User } from '@supabase/supabase-js';
 
 // Função para criar eventos
 const createEvents = async (userId: string): Promise<string[]> => {
@@ -78,7 +78,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Primeiro, tentar encontrar o perfil pelo email
+    // First, try to find the profile by email
     const { data: profile, error: userError } = await supabase
       .from('profiles')
       .select('id')
@@ -92,27 +92,26 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       };
     }
 
-    // Se encontrou o perfil, use o ID do perfil
+    // If found in profile, use that ID
     if (profile?.id) {
       return await seedUserData(profile.id);
     }
 
-    // Se não encontrou no perfil, tente usar a sessão atual
+    // Try to get current session
     const { data: sessionData } = await supabase.auth.getSession();
-    
-    // Fix for deep type instantiation - use explicit property checks
-    const userId = sessionData && 
-                   sessionData.session && 
-                   sessionData.session.user && 
-                   sessionData.session.user.email === email ? 
-                   sessionData.session.user.id : 
-                   null;
-    
-    if (userId) {
-      return await seedUserData(userId);
+    const currentUser = sessionData?.session?.user;
+
+    // Type guard to ensure we have a valid user with matching email
+    const isValidUser = (user: User | null): user is User => {
+      return user !== null && user.email === email;
+    };
+
+    // If we have a valid user with matching email, seed their data
+    if (isValidUser(currentUser)) {
+      return await seedUserData(currentUser.id);
     }
 
-    // Se o usuário ainda não for encontrado
+    // If no matching user found
     return {
       success: false,
       error: `Could not find user with email ${email}`,
