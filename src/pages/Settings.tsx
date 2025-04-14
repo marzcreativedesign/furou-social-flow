@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Moon, Sun, ArrowLeft, Check, Contrast, Eye, Type, ZoomOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -279,7 +280,7 @@ const Settings = () => {
 
         <div className="pt-4">
           <Button 
-            className="w-full mt-8" 
+            className="w-full mt-8 bg-cta-gradient hover:opacity-90" 
             onClick={handleSaveSettings}
           >
             <Check className="mr-2 h-4 w-4" />
@@ -296,7 +297,10 @@ const Settings = () => {
               <div className="flex flex-wrap gap-2">
                 <button className="btn-primary">Primário</button>
                 <button className="btn-secondary">Secundário</button>
-                <button className="btn-outline">Contorno</button>
+                <button className="btn-tertiary">Terciário</button>
+              </div>
+              <div className="mt-2">
+                <button className="btn-gradient">Gradiente CTA</button>
               </div>
             </div>
             

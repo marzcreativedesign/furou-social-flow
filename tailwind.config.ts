@@ -51,6 +51,15 @@ export default {
 					dark: 'hsl(var(--secondary-dark))',
 				},
 				
+				tertiary: {
+					DEFAULT: 'hsl(var(--tertiary))',
+					foreground: 'hsl(var(--tertiary-foreground))',
+					hover: 'hsl(var(--tertiary-hover))',
+					active: 'hsl(var(--tertiary-active))',
+					light: 'hsl(var(--tertiary-light))',
+					dark: 'hsl(var(--tertiary-dark))',
+				},
+				
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))',
@@ -91,8 +100,9 @@ export default {
 					background: '#000000',
 					foreground: '#FFFFFF',
 					border: '#FFFFFF',
-					primary: '#FF9B4A',
-					secondary: '#A259FF',
+					primary: '#F69B65',
+					secondary: '#F6C73C',
+					tertiary: '#F768AC',
 				},
 			},
 			borderRadius: {
@@ -139,6 +149,9 @@ export default {
 				"slide-in-right": "slide-in-right 0.5s ease-out",
 				"fade-in": "fade-in 0.5s ease-out",
 				"reduced": "none",
+			},
+			backgroundImage: {
+				'cta-gradient': 'linear-gradient(45deg, #F6C73C 0%, #F69B65 50%, #F768AC 100%)',
 			},
 		},
 	},
