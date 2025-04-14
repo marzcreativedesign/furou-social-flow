@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
@@ -7,7 +6,6 @@ import PendingActions from "@/components/home/PendingActions";
 import EventTypeFilters from "@/components/home/EventTypeFilters";
 import EventsList from "@/components/home/EventsList";
 import SearchInput from "@/components/home/SearchInput";
-import CalculatorButton from "@/components/home/CalculatorButton";
 import { useHomeData } from "@/hooks/useHomeData";
 
 type FilterType = 'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed';
@@ -19,7 +17,6 @@ const HomePage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [isContentLoaded, setIsContentLoaded] = useState(false);
   
-  // Get the first name of the user from user_metadata or set a default
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 
                    user?.user_metadata?.name?.split(' ')[0] || 
                    "Usuário";
@@ -33,7 +30,6 @@ const HomePage = () => {
   } = useHomeData(searchQuery, activeFilter);
 
   useEffect(() => {
-    // Mark content as loaded after initial data fetch
     if (!loading) {
       setIsContentLoaded(true);
     }
@@ -79,8 +75,6 @@ const HomePage = () => {
           )}
         </div>
       </div>
-
-      <CalculatorButton />
     </MainLayout>
   );
 };

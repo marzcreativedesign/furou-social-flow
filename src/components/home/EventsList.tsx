@@ -1,4 +1,3 @@
-
 import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
@@ -36,6 +35,39 @@ const EventsList = memo(({
   viewAllLink
 }: EventsListProps) => {
   const navigate = useNavigate();
+
+  const renderParticipants = (participants: any[], type: string) => {
+    const maxVisible = 5;
+    const overflow = participants.length - maxVisible;
+    const visibleParticipants = participants.slice(0, maxVisible);
+    
+    return (
+      <div className="flex flex-wrap gap-2 items-center">
+        {visibleParticipants.map(participant => (
+          <div
+            key={participant.id}
+            className="w-8 h-8 rounded-full overflow-hidden border-2"
+            style={{
+              borderColor: type === 'confirmed' ? '#4CAF50' : 
+                         type === 'pending' ? '#FFA000' : '#FF4C4C'
+            }}
+          >
+            <img 
+              src={participant.imageUrl} 
+              alt={participant.name} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+        {overflow > 0 && (
+          <span className="text-sm font-medium text-muted-foreground">
+            +{overflow} {type === 'confirmed' ? 'confirmados' : 
+                        type === 'pending' ? 'pendentes' : 'furaram'}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   const handleEventClick = (eventId: string) => {
     navigate(`/evento/${eventId}`);

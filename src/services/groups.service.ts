@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const GroupsService = {
@@ -14,7 +13,7 @@ export const GroupsService = {
         .from('groups')
         .select(`
           *,
-          group_members!inner(*)
+          group_members!inner(user_id)
         `)
         .eq('group_members.user_id', user.user.id);
         
@@ -94,9 +93,10 @@ export const GroupsService = {
       const { data: createdGroup, error: groupError } = await supabase
         .from('groups')
         .insert(data)
-        .select();
+        .select()
+        .single();
         
-      if (groupError || !createdGroup || createdGroup.length === 0) {
+      if (groupError || !createdGroup) {
         throw new Error(groupError?.message || 'Error creating group');
       }
       
@@ -104,7 +104,7 @@ export const GroupsService = {
       const { error: memberError } = await supabase
         .from('group_members')
         .insert({
-          group_id: createdGroup[0].id,
+          group_id: createdGroup.id,
           user_id: user.user.id,
           is_admin: true
         });
@@ -113,7 +113,7 @@ export const GroupsService = {
         throw new Error(memberError.message);
       }
       
-      return createdGroup;
+      return [createdGroup];
     } catch (error) {
       console.error("Error creating group:", error);
       throw error;
