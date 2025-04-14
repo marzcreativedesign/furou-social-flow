@@ -1,89 +1,81 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, CalendarPlus, Users, User } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLocation, Link } from "react-router-dom";
+import {
+  Home,
+  Calendar,
+  Users,
+  User,
+  PlusCircle,
+  Globe
+} from "lucide-react";
 
 const BottomNav = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  // Helper function to determine if a menu item is active
-  const isActive = (currentPath: string) => {
-    if (currentPath === "/" && path === "/") return true;
-    if (path.includes(currentPath) && currentPath !== "/") return true;
-    return false;
-  };
-  
-  // Bottom dock menu items
-  const menuItems = [
-    { title: 'Início', icon: <Home size={20} />, href: '/' },
-    { title: 'Agenda', icon: <Calendar size={20} />, href: '/agenda' },
-    { title: 'Grupos', icon: <Users size={20} />, href: '/grupos' },
-    { title: 'Perfil', icon: <User size={20} />, href: '/perfil' },
-  ];
-  
   return (
-    <TooltipProvider>
-      <div className="fixed bottom-0 left-0 right-0 flex justify-around items-center h-16 bg-background/80 dark:bg-[#121212]/90 backdrop-blur-md border-t border-border dark:border-[#2C2C2C] z-40 px-2">
-        {menuItems.slice(0, 2).map((item, index) => (
-          <Tooltip key={index} delayDuration={300}>
-            <TooltipTrigger asChild>
-              <Link 
-                to={item.href} 
-                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
-                  isActive(item.href) 
-                    ? "text-primary bg-primary/10 dark:bg-primary/20 dark:text-primary" 
-                    : "text-muted-foreground hover:text-foreground dark:text-[#B3B3B3] dark:hover:text-[#EDEDED]"
-                }`}
-              >
-                {item.icon}
-                <span className="text-xs mt-1">{item.title}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-              {item.title}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border dark:bg-gray-900/90 dark:border-gray-800 z-50">
+      <div className="flex items-center justify-around h-16 relative">
+        {/* Botão Início */}
+        <Link
+          to="/"
+          className={`flex flex-col items-center justify-center px-4 py-2 ${
+            path === "/" ? "text-[#FFA756]" : "text-muted-foreground"
+          }`}
+        >
+          <Home size={24} />
+          <span className="text-xs mt-1">Início</span>
+        </Link>
+
+        {/* Botão Eventos */}
+        <Link
+          to="/eventos"
+          className={`flex flex-col items-center justify-center px-4 py-2 ${
+            path === "/eventos" || path.startsWith("/evento/")
+              ? "text-[#FFA756]"
+              : "text-muted-foreground"
+          }`}
+        >
+          <Calendar size={24} />
+          <span className="text-xs mt-1">Eventos</span>
+        </Link>
+
+        {/* Botão Criar Evento - agora no centro e mais destacado */}
+        <Link
+          to="/criar"
+          className="flex flex-col items-center justify-center"
+        >
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#FFA756] text-white shadow-lg relative -top-5">
+            <PlusCircle size={30} />
+          </div>
+          <span className="text-xs mt-1 text-[#FFA756]">Criar</span>
+        </Link>
         
-        {/* Special create button in the middle */}
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <Link 
-              to="/criar" 
-              className="flex flex-col items-center justify-center bg-primary text-primary-foreground dark:bg-[#FF6B00] dark:text-white hover:bg-primary-600 dark:hover:bg-[#FF8333] rounded-full p-3 -mt-6 shadow-lg"
-              aria-label="Criar Evento"
-            >
-              <CalendarPlus size={24} />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-            Criar Evento
-          </TooltipContent>
-        </Tooltip>
-        
-        {menuItems.slice(2, 4).map((item, index) => (
-          <Tooltip key={index + 2} delayDuration={300}>
-            <TooltipTrigger asChild>
-              <Link 
-                to={item.href} 
-                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
-                  isActive(item.href) 
-                    ? "text-primary bg-primary/10 dark:bg-primary/20 dark:text-primary" 
-                    : "text-muted-foreground hover:text-foreground dark:text-[#B3B3B3] dark:hover:text-[#EDEDED]"
-                }`}
-              >
-                {item.icon}
-                <span className="text-xs mt-1">{item.title}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-              {item.title}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+        {/* Botão Grupos */}
+        <Link
+          to="/grupos"
+          className={`flex flex-col items-center justify-center px-4 py-2 ${
+            path === "/grupos" || path.startsWith("/grupo/")
+              ? "text-[#FFA756]"
+              : "text-muted-foreground"
+          }`}
+        >
+          <Users size={24} />
+          <span className="text-xs mt-1">Grupos</span>
+        </Link>
+
+        {/* Botão Explorar */}
+        <Link
+          to="/explorar"
+          className={`flex flex-col items-center justify-center px-4 py-2 ${
+            path === "/explorar" ? "text-[#FFA756]" : "text-muted-foreground"
+          }`}
+        >
+          <Globe size={24} />
+          <span className="text-xs mt-1">Explorar</span>
+        </Link>
       </div>
-    </TooltipProvider>
+    </nav>
   );
 };
 

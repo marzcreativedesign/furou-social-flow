@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -7,7 +8,7 @@ import {
   Calendar, 
   Users, 
   Bell, 
-  Settings, 
+  Accessibility, 
   Menu,
   PlusCircle,
   LogOut,
@@ -17,7 +18,8 @@ import {
   Moon,
   Sun,
   X,
-  ScrollText
+  ScrollText,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -87,10 +89,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     { title: 'Eventos', icon: <Calendar />, href: '/eventos' },
     { title: 'Agenda', icon: <ScrollText />, href: '/agenda' },
     { title: 'Grupos', icon: <Users />, href: '/grupos' },
+    { title: 'Explorar', icon: <Globe />, href: '/explorar' },
     { title: 'Notificações', icon: <Bell />, href: '/notificacoes' },
     { title: 'Calculadora', icon: <Calculator />, href: '/calculadora' },
     { title: 'Perfil', icon: <User />, href: '/perfil' },
-    { title: 'Configurações', icon: <Settings />, href: '/configuracoes' },
+    { title: 'Acessibilidade', icon: <Accessibility />, href: '/acessibilidade' },
   ];
   
   return (
@@ -107,7 +110,40 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {rightContent}
       </Header>
 
-      <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0">{children}</main>
+      <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
+        <div className="lg:flex">
+          {/* Desktop sidebar */}
+          <div className="hidden lg:block lg:w-64 p-4">
+            <div className="sticky top-20 space-y-1">
+              {dockItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant={location.pathname === item.href ? "default" : "ghost"}
+                  className="w-full justify-start mb-1"
+                  onClick={() => navigate(item.href)}
+                >
+                  {React.cloneElement(item.icon as React.ReactElement, { size: 20, className: "mr-2" })}
+                  <span>{item.title}</span>
+                </Button>
+              ))}
+              
+              <Button 
+                variant="default"
+                className="w-full justify-start mt-4 bg-[#FFA756] text-white hover:bg-[#FF8A1E]"
+                onClick={() => navigate("/criar")}
+              >
+                <PlusCircle size={20} className="mr-2" />
+                <span>Criar Evento</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Mobile and tablet content */}
+          <div className="flex-1">
+            {children}
+          </div>
+        </div>
+      </main>
 
       <div className="block lg:hidden">
         <BottomNav />
@@ -123,7 +159,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     key={idx}
                     className={`aspect-square rounded-full ${
                       location.pathname === item.href || location.pathname.startsWith(item.href + '/')
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-[#FFA756] text-primary-foreground"
                         : "bg-gray-200 hover:bg-gray-300 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]"
                     }`}
                   >
@@ -142,7 +178,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <DockItem
-                  className="aspect-square rounded-full bg-primary text-primary-foreground hover:bg-primary-600"
+                  className="aspect-square rounded-full bg-[#FFA756] text-primary-foreground hover:bg-[#FF8A1E]"
                 >
                   <Link to="/criar" className="block h-full w-full flex items-center justify-center">
                     <DockLabel>Criar Evento</DockLabel>

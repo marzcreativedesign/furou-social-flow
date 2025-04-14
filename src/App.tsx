@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import EventsPage from "./pages/EventsPage";
 import CostCalculatorPage from "./pages/CostCalculatorPage";
+import ExplorePage from "./pages/ExplorePage";
 
 const queryClient = new QueryClient();
 
@@ -52,9 +53,10 @@ const App = () => {
               <Route path="/perfil" element={<Profile />} />
               <Route path="/usuario/:id" element={<UserProfile />} />
               <Route path="/agenda" element={<CalendarView />} />
-              <Route path="/configuracoes" element={<Settings />} />
+              <Route path="/acessibilidade" element={<Settings />} />
               <Route path="/eventos" element={<EventsPage />} />
               <Route path="/calculadora" element={<CostCalculatorPage />} />
+              <Route path="/explorar" element={<ExplorePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />

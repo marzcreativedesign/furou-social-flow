@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   CalendarIcon, 
@@ -7,20 +7,30 @@ import {
   MapPin, 
   Image as ImageIcon, 
   Users,
-  Info
+  Info,
+  Link as LinkIcon
 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
+import { useToast } from "../hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import MainLayout from "../components/MainLayout";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [eventId] = useState(uuidv4().substring(0, 6).toUpperCase());
   const [eventData, setEventData] = useState({
     title: "",
     date: "",
     time: "",
     location: "",
     description: "",
-    image: null,
+    image: null as File | null,
+    imagePreview: "",
     isPublic: false
   });
   
@@ -37,28 +47,77 @@ const CreateEvent = () => {
     navigate(-1);
   };
   
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEventData(prev => ({
+          ...prev,
+          image: file,
+          imagePreview: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!eventData.title || !eventData.date || !eventData.time || !eventData.location) {
+      toast({
+        title: "Informações incompletas",
+        description: "Por favor preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     console.log("Creating event:", eventData);
+    toast({
+      title: "Evento criado com sucesso!",
+      description: "Seu evento foi criado e já está disponível.",
+    });
     navigate("/");
   };
   
   return (
-    <div className="pb-20">
-      <Header showBack onBack={handleBack} title="Criar Evento" />
-      
-      <form onSubmit={handleSubmit} className="p-4">
+    <MainLayout showBack onBack={handleBack} title="Criar Evento">
+      <form onSubmit={handleSubmit} className="p-4 max-w-3xl mx-auto">
         <div className="mb-6">
           <div className="flex justify-center mb-4">
-            <div className="w-full h-48 bg-muted rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon size={32} className="mx-auto mb-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Adicionar imagem de capa</span>
-              </div>
+            <div 
+              className="w-full h-48 bg-muted rounded-xl flex items-center justify-center cursor-pointer overflow-hidden"
+              onClick={handleImageClick}
+            >
+              {eventData.imagePreview ? (
+                <img 
+                  src={eventData.imagePreview} 
+                  alt="Preview" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center">
+                  <ImageIcon size={32} className="mx-auto mb-2 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Adicionar imagem de capa</span>
+                </div>
+              )}
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
           
-          <input
+          <Input
             type="text"
             name="title"
             value={eventData.title}
@@ -72,37 +131,37 @@ const CreateEvent = () => {
         <div className="space-y-4 mb-6">
           <div className="flex items-center border border-border rounded-xl p-3">
             <CalendarIcon size={18} className="text-primary mr-3" />
-            <input
+            <Input
               type="date"
               name="date"
               value={eventData.date}
               onChange={handleChange}
-              className="bg-transparent flex-1 focus:outline-none"
+              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
               required
             />
           </div>
           
           <div className="flex items-center border border-border rounded-xl p-3">
             <Clock size={18} className="text-primary mr-3" />
-            <input
+            <Input
               type="time"
               name="time"
               value={eventData.time}
               onChange={handleChange}
-              className="bg-transparent flex-1 focus:outline-none"
+              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
               required
             />
           </div>
           
           <div className="flex items-center border border-border rounded-xl p-3">
             <MapPin size={18} className="text-primary mr-3" />
-            <input
+            <Input
               type="text"
               name="location"
               value={eventData.location}
               onChange={handleChange}
               placeholder="Localização"
-              className="bg-transparent flex-1 focus:outline-none"
+              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
               required
             />
           </div>
@@ -143,17 +202,25 @@ const CreateEvent = () => {
             Eventos públicos podem ser descobertos por qualquer pessoa no Furou?!
           </p>
         </div>
+
+        <div className="mb-6 bg-muted/30 p-3 rounded-lg">
+          <div className="flex items-center">
+            <LinkIcon size={16} className="text-primary mr-2" />
+            <span className="text-sm">ID do evento: <strong>{eventId}</strong></span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Este ID pode ser usado para convidar pessoas para o seu evento
+          </p>
+        </div>
         
-        <button 
+        <Button 
           type="submit" 
-          className="btn-primary w-full"
+          className="w-full md:w-auto md:min-w-[200px] md:mx-auto md:block"
         >
           Criar Evento
-        </button>
+        </Button>
       </form>
-      
-      <BottomNav />
-    </div>
+    </MainLayout>
   );
 };
 

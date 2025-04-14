@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { Search, Bell, Menu } from "lucide-react";
+import { Search, Bell, Menu, Accessibility } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Hamburger } from "@/components/ui/hamburger";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,7 +21,8 @@ import {
   Calculator,
   Moon,
   Sun,
-  ScrollText
+  ScrollText,
+  Globe
 } from "lucide-react";
 
 interface HeaderProps {
@@ -69,10 +69,12 @@ const Header = ({
         return "Meus Grupos";
       case "/agenda":
         return "Agenda";
-      case "/configuracoes":
-        return "Configurações";
+      case "/acessibilidade":
+        return "Acessibilidade";
       case "/calculadora":
         return "Calculadora de Rateio";
+      case "/explorar":
+        return "Explorar";
       default:
         return title || "Furou?!";
     }
@@ -98,14 +100,15 @@ const Header = ({
     { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
     { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
     { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
+    { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
     { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
     { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
-    { title: 'Configurações', icon: <Settings size={20} />, href: '/configuracoes' },
+    { title: 'Acessibilidade', icon: <Accessibility size={20} />, href: '/acessibilidade' },
   ];
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border shadow-sm">
-      <div className="flex items-center justify-between h-16 px-4">
+      <div className="flex items-center justify-between h-16 px-4 max-w-7xl mx-auto">
         <div className="flex items-center">
           {showBack ? (
             <button
@@ -135,7 +138,7 @@ const Header = ({
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="mr-2">
-                  <Hamburger onClick={() => setMenuOpen(!menuOpen)} />
+                  <Menu size={24} />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
@@ -276,6 +279,7 @@ const Header = ({
               </span>
             </Button>
           </Link>
+          {children}
         </div>
       </div>
     </header>
