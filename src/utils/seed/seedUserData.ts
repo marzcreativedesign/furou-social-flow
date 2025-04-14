@@ -83,7 +83,7 @@ interface ProfileData {
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Usando uma abordagem sem RPC para evitar problemas de tipagem
+    // Using a more specific type to avoid excessive recursion
     const { data, error: queryError } = await supabase
       .from('profiles')
       .select('id')
