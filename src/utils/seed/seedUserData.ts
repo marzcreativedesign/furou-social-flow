@@ -58,7 +58,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Completely rewrite the function to eliminate excessive type inference
+// Fixed implementation with explicit type annotations to avoid deep type inference
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile by email
@@ -72,7 +72,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       return {
         success: false,
         error: userError.message
-      };
+      } as SeedUserDataResult;
     }
     
     if (userData && userData.id) {
@@ -90,13 +90,13 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     return {
       success: false,
       error: `Could not find user with email ${email}`
-    };
+    } as SeedUserDataResult;
   } catch (error) {
     console.error("Error seeding data for email:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error)
-    };
+    } as SeedUserDataResult;
   }
 };
 
