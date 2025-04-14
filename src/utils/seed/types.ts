@@ -6,7 +6,7 @@ export interface SeedUserDataResult {
   eventCount?: number;
   groupCount?: number;
   notificationCount?: number;
-  error?: any;
+  error?: string;
 }
 
 export interface NotificationTemplate {

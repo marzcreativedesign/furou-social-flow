@@ -5,11 +5,12 @@ import { SeedUserDataResult } from "./types";
 // Helper function to safely perform database queries
 async function safeQueryProfiles(email: string): Promise<{ id: string } | null> {
   try {
+    // Using explicit type annotation to prevent excessive recursion
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .maybeSingle();
+      .maybeSingle<{ id: string }>();
       
     if (error) {
       console.error('Error querying profile by email:', error);
