@@ -72,5 +72,31 @@ export const AuthService = {
    */
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
     return supabase.auth.onAuthStateChange(callback);
+  },
+  
+  /**
+   * Atualizar perfil de usuário
+   */
+  updateProfile: async (userId: string, data: {
+    username?: string;
+    full_name?: string;
+    bio?: string;
+    avatar_url?: string;
+  }) => {
+    return await supabase
+      .from('profiles')
+      .update(data)
+      .eq('id', userId);
+  },
+  
+  /**
+   * Obter perfil de usuário
+   */
+  getProfile: async (userId: string) => {
+    return await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
   }
 };
