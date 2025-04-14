@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
@@ -8,12 +7,13 @@ const createEvents = async (userId: string): Promise<string[]> => {
   const eventIds: string[] = [];
   const eventCount = Math.floor(Math.random() * 6) + 5; // 5-10 events
 
-  for (let i = 0; i < eventCount; i++) {
+  const eventPromises = Array.from({ length: eventCount }, async () => {
     const event = await createEvent(userId);
-    if (event && event.id) {
-      eventIds.push(event.id);
-    }
-  }
+    return event?.id;
+  });
+
+  const events = await Promise.all(eventPromises);
+  events.filter(Boolean).forEach(id => id && eventIds.push(id)); // Adiciona os IDs válidos
 
   return eventIds;
 };
@@ -23,14 +23,13 @@ const createGroups = async (userId: string, eventIds: string[]): Promise<string[
   const groupIds: string[] = [];
   const groupCount = Math.floor(Math.random() * 4) + 3; // 3-6 groups
 
-  for (let i = 0; i < groupCount; i++) {
+  const groupPromises = Array.from({ length: groupCount }, async () => {
     const randomEventId = eventIds.length > 0 ? eventIds[Math.floor(Math.random() * eventIds.length)] : undefined;
+    return await createGroup(userId, randomEventId);
+  });
 
-    const groupId = await createGroup(userId, randomEventId);
-    if (groupId) {
-      groupIds.push(groupId);
-    }
-  }
+  const groups = await Promise.all(groupPromises);
+  groups.filter(Boolean).forEach(id => id && groupIds.push(id)); // Adiciona os IDs válidos
 
   return groupIds;
 };
@@ -39,9 +38,11 @@ const createGroups = async (userId: string, eventIds: string[]): Promise<string[
 const createNotifications = async (userId: string, eventIds: string[]): Promise<void> => {
   const notifCount = Math.floor(Math.random() * 4) + 5; // 5-8 notifications
 
-  for (let i = 0; i < notifCount; i++) {
-    await createNotification(userId, i, eventIds.length > i ? eventIds[i] : null);
-  }
+  const notificationPromises = Array.from({ length: notifCount }, async (value, index) => {
+    await createNotification(userId, index, eventIds[index] ?? null); // Verifica se o ID do evento existe
+  });
+
+  await Promise.all(notificationPromises);
 };
 
 // Função principal para semear os dados
@@ -91,7 +92,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     }
 
     // Se encontrou o perfil, use o ID do perfil
-    if (profile && profile.id) {
+    if (profile?.id) {
       return await seedUserData(profile.id);
     }
 
@@ -99,11 +100,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     const { data: sessionData } = await supabase.auth.getSession();
     
     // Verificar se sessionData e suas propriedades existem antes de acessar
-    if (sessionData && 
-        sessionData.session && 
-        sessionData.session.user &&
-        sessionData.session.user.email === email && 
-        sessionData.session.user.id) {
+    if (sessionData?.session?.user?.email === email && sessionData.session.user.id) {
       return await seedUserData(sessionData.session.user.id);
     }
 
