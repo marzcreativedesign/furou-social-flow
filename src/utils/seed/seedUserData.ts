@@ -76,24 +76,29 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
 };
 
 // Definição explícita do tipo para evitar instantiação excessiva de tipos
-type ProfileData = { id: string } | null;
+interface ProfileData {
+  id: string;
+}
 
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Primeiro, tenta encontrar o perfil pelo email usando uma consulta direta
-    // Isso evita problemas de recursividade infinita nas políticas RLS
-    const { data, error: userError } = await supabase.rpc('get_profile_by_email', { user_email: email });
+    // Primeiro, tenta encontrar o perfil pelo email usando uma consulta SQL direta
+    const { data, error: queryError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
     
-    if (userError) {
-      console.error('Error in RPC call:', userError);
+    if (queryError) {
+      console.error('Error querying profile by email:', queryError);
       return {
         success: false,
-        error: userError.message,
+        error: queryError.message,
       };
     }
 
-    // Se encontrou no perfil, usa esse ID
+    // Se encontrou o perfil, usa esse ID
     if (data && data.id) {
       return await seedUserData(data.id);
     }
