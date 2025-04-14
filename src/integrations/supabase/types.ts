@@ -409,6 +409,29 @@ export type Database = {
         }
         Relationships: []
       }
+      your_related_table: {
+        Row: {
+          id: number
+          visibility: Database["public"]["Enums"]["event_visibility"] | null
+        }
+        Insert: {
+          id?: never
+          visibility?: Database["public"]["Enums"]["event_visibility"] | null
+        }
+        Update: {
+          id?: never
+          visibility?: Database["public"]["Enums"]["event_visibility"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "your_related_table_visibility_fkey"
+            columns: ["visibility"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["visibility"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

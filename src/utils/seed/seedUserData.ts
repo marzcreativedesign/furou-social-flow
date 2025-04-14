@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
@@ -74,7 +75,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Explicitly define the interface for profile data to avoid excessive recursion
+// Define a simple interface for profile data
 interface ProfileData {
   id: string;
 }
@@ -82,12 +83,12 @@ interface ProfileData {
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Specify the return type explicitly to avoid excessive recursion
+    // Use .maybeSingle() instead of .single() with explicit type casting
     const { data, error: queryError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .single<ProfileData>();
+      .maybeSingle();
     
     if (queryError) {
       console.error('Error querying profile by email:', queryError);
