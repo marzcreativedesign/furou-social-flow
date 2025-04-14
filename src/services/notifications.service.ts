@@ -60,13 +60,15 @@ export const NotificationsService = {
       .eq('is_read', false);
   },
   
+  // Fix: Ensuring user_id is properly handled as a required field
   createNotification: async (notification: {
     title: string;
     content: string;
     type: string;
     related_id?: string;
-    user_id?: string;
+    user_id: string; // Changed from optional to required
   }) => {
+    // If no user_id is provided explicitly, we'll get the current user
     if (!notification.user_id) {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
@@ -75,8 +77,15 @@ export const NotificationsService = {
       notification.user_id = user.user.id;
     }
     
+    // Now notification.user_id is guaranteed to be set
     return await supabase
       .from('notifications')
-      .insert(notification);
+      .insert({
+        title: notification.title,
+        content: notification.content,
+        type: notification.type,
+        related_id: notification.related_id,
+        user_id: notification.user_id
+      });
   }
 };
