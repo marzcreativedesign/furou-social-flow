@@ -83,12 +83,11 @@ interface ProfileData {
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Use .maybeSingle() instead of .single() with explicit type casting
+    // Using explicit type casting and avoiding .single() or .maybeSingle() methods
     const { data, error: queryError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', email)
-      .maybeSingle();
+      .eq('email', email);
     
     if (queryError) {
       console.error('Error querying profile by email:', queryError);
@@ -99,8 +98,8 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     }
 
     // Se encontrou o perfil, usa esse ID
-    if (data) {
-      return await seedUserData(data.id);
+    if (data && data.length > 0) {
+      return await seedUserData(data[0].id);
     }
 
     // Tenta obter a sessão atual
