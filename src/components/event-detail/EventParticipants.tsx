@@ -1,7 +1,5 @@
 
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -15,14 +13,14 @@ interface EventParticipantsProps {
   cancelledAttendees: Participant[];
   showAllAttendees: boolean;
   onToggleShowAll: () => void;
+  eventType?: "public" | "private" | "group";
 }
 
 const EventParticipants = ({
   confirmedAttendees,
   pendingAttendees,
   cancelledAttendees,
-  showAllAttendees,
-  onToggleShowAll
+  eventType
 }: EventParticipantsProps) => {
   const renderParticipantsList = (participants: Participant[], type: string, borderColor: string) => {
     const maxVisible = 5;
@@ -37,22 +35,18 @@ const EventParticipants = ({
         </h3>
         <div className="flex flex-wrap gap-2">
           {visibleParticipants.map(attendee => (
-            <Link 
+            <div 
               key={attendee.id}
-              to={`/usuario/${attendee.id}`}
+              className="w-10 h-10 rounded-full overflow-hidden border-2"
+              style={{ borderColor }}
+              title={attendee.name}
             >
-              <div 
-                className="w-10 h-10 rounded-full overflow-hidden border-2"
-                style={{ borderColor }}
-                title={attendee.name}
-              >
-                <img 
-                  src={attendee.imageUrl} 
-                  alt={attendee.name} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Link>
+              <img 
+                src={attendee.imageUrl} 
+                alt={attendee.name} 
+                className="w-full h-full object-cover"
+              />
+            </div>
           ))}
           {overflow > 0 && (
             <div className="flex items-center">
@@ -64,6 +58,12 @@ const EventParticipants = ({
     );
   };
 
+  // If there are no confirmed or cancelled attendees, don't show the section
+  if (confirmedAttendees.length === 0 && cancelledAttendees.length === 0 && 
+     (eventType === 'public' || pendingAttendees.length === 0)) {
+    return null;
+  }
+
   return (
     <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
       <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Quem vai</h2>
@@ -73,29 +73,22 @@ const EventParticipants = ({
           renderParticipantsList(confirmedAttendees, "Confirmados", "#4CAF50")
         )}
 
-        {pendingAttendees.length > 0 && (
-          renderParticipantsList(pendingAttendees, "Pendentes", "#FFA000")
+        {/* Only show pending count for private or group events */}
+        {(eventType === "private" || eventType === "group") && pendingAttendees.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium flex items-center mb-2 dark:text-[#EDEDED]">
+              <span className="h-3 w-3 rounded-full mr-2 bg-[#FFA000]"></span>
+              <span className="flex items-center gap-2">
+                Pendentes <span className="text-muted-foreground">({pendingAttendees.length})</span>
+              </span>
+            </h3>
+          </div>
         )}
 
         {cancelledAttendees.length > 0 && (
           renderParticipantsList(cancelledAttendees, "Furaram", "#FF4C4C")
         )}
       </div>
-      
-      {(confirmedAttendees.length + pendingAttendees.length + cancelledAttendees.length > 6) && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onToggleShowAll}
-          className="text-[#FF8A1E] dark:text-[#FF8A1E] flex gap-1 items-center mt-2"
-        >
-          {showAllAttendees ? (
-            <>Ver menos <ChevronUp size={16} /></>
-          ) : (
-            <>Ver todos <ChevronDown size={16} /></>
-          )}
-        </Button>
-      )}
     </div>
   );
 };
