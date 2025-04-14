@@ -150,6 +150,7 @@ export type Database = {
           location: string | null
           title: string
           updated_at: string | null
+          visibility: Database["public"]["Enums"]["event_visibility"] | null
         }
         Insert: {
           created_at?: string | null
@@ -162,6 +163,7 @@ export type Database = {
           location?: string | null
           title: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["event_visibility"] | null
         }
         Update: {
           created_at?: string | null
@@ -174,6 +176,7 @@ export type Database = {
           location?: string | null
           title?: string
           updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["event_visibility"] | null
         }
         Relationships: [
           {
@@ -364,6 +367,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_friends: {
+        Row: {
+          friend_id: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          friend_id: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          friend_id?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -394,10 +415,11 @@ export type Database = {
     }
     Functions: {
       has_role: {
-        Args: {
-          user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
+        Args:
+          | { user_id: string; _role: Database["public"]["Enums"]["app_role"] }
+          | { user_id: number; role_name: string }
+          | { role_name: string }
+          | { user_id: string; role_name: string }
         Returns: boolean
       }
       is_event_participant: {
@@ -405,7 +427,7 @@ export type Database = {
         Returns: boolean
       }
       is_group_admin: {
-        Args: { group_id: string }
+        Args: { group_id: string } | Record<PropertyKey, never>
         Returns: boolean
       }
       is_group_member: {
@@ -415,6 +437,7 @@ export type Database = {
     }
     Enums: {
       app_role: "free" | "premium" | "admin"
+      event_visibility: "public" | "private"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -531,6 +554,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["free", "premium", "admin"],
+      event_visibility: ["public", "private"],
     },
   },
 } as const
