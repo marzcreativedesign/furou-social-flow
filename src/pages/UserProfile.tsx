@@ -1,15 +1,10 @@
-
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CalendarDays, MessageCircle, Users, ArrowLeft, Share2 } from "lucide-react";
-import Header from "../components/Header";
-import MainLayout from "../components/MainLayout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import EventCard from "../components/EventCard";
+import MainLayout from "../components/MainLayout";
+import UserHeader from "@/components/user-profile/UserHeader";
+import UserStats from "@/components/user-profile/UserStats";
+import UserEvents from "@/components/user-profile/UserEvents";
 
 // Extended mock user data for testing
 const MOCK_USERS = {
@@ -169,8 +164,8 @@ const MOCK_USER_EVENTS = {
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState(MOCK_USERS[id as keyof typeof MOCK_USERS]);
-  const [userEvents, setUserEvents] = useState(MOCK_USER_EVENTS[id as keyof typeof MOCK_USER_EVENTS] || []);
+  const user = MOCK_USERS[id as keyof typeof MOCK_USERS];
+  const userEvents = MOCK_USER_EVENTS[id as keyof typeof MOCK_USER_EVENTS] || [];
   
   const handleBack = () => {
     navigate(-1);
@@ -182,7 +177,9 @@ const UserProfile = () => {
       <MainLayout showBack onBack={handleBack} title="Perfil">
         <div className="h-[80vh] flex flex-col items-center justify-center p-4">
           <h1 className="text-2xl font-bold mb-2 dark:text-[#EDEDED]">Usuário não encontrado</h1>
-          <p className="text-muted-foreground mb-4 dark:text-[#B3B3B3]">O usuário que você está procurando não existe.</p>
+          <p className="text-muted-foreground mb-4 dark:text-[#B3B3B3]">
+            O usuário que você está procurando não existe.
+          </p>
           <Button 
             onClick={() => navigate('/')}
             className="dark:bg-primary dark:hover:bg-accent"
@@ -197,101 +194,21 @@ const UserProfile = () => {
   return (
     <MainLayout showBack onBack={handleBack} title="Perfil">
       <div className="px-4 py-6">
-        <div className="flex flex-col items-center text-center mb-6">
-          <Avatar className="h-24 w-24 mb-4 border-4 border-background dark:border-[#121212]">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground">
-              {user.name.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <h2 className="text-xl font-bold dark:text-[#EDEDED]">{user.name}</h2>
-          
-          {user.bio && (
-            <p className="text-sm text-muted-foreground mt-2 max-w-md dark:text-[#B3B3B3]">
-              {user.bio}
-            </p>
-          )}
-          
-          <div className="flex gap-2 mt-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => alert('Função de mensagem em breve!')}
-              className="dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]"
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Mensagem
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => alert('Função de compartilhar em breve!')}
-              className="dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Compartilhar
-            </Button>
-          </div>
-        </div>
+        <UserHeader 
+          user={{
+            name: user.name,
+            bio: user.bio,
+            avatar: user.avatar
+          }}
+        />
         
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-card rounded-xl p-3 text-center shadow-sm">
-            <p className="text-lg font-bold text-primary dark:text-primary">{user.stats.eventsCreated}</p>
-            <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">Eventos criados</p>
-          </div>
-          <div className="bg-white dark:bg-card rounded-xl p-3 text-center shadow-sm">
-            <p className="text-lg font-bold text-green-500 dark:text-[#4CAF50]">{user.stats.eventsAttended}</p>
-            <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">Participações</p>
-          </div>
-          <div className="bg-white dark:bg-card rounded-xl p-3 text-center shadow-sm">
-            <p className="text-lg font-bold text-rose-500 dark:text-[#FF4C4C]">{user.stats.eventsMissed}</p>
-            <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">Furadas</p>
-          </div>
-        </div>
+        <UserStats stats={user.stats} />
         
         <Separator className="my-6 dark:bg-[#2C2C2C]" />
         
         <div className="mb-6">
           <h3 className="text-lg font-bold mb-3 dark:text-[#EDEDED]">Eventos Participados</h3>
-          
-          {userEvents.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {userEvents.map(event => (
-                <Card 
-                  key={event.id} 
-                  className="overflow-hidden cursor-pointer dark:bg-card dark:border-[#2C2C2C] dark:hover:bg-[#262626]"
-                  onClick={() => navigate(`/evento/${event.id}`)}
-                >
-                  <div className="flex h-24">
-                    <div 
-                      className="w-24 h-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${event.imageUrl})` }}
-                    ></div>
-                    <div className="flex-1 p-3 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-medium line-clamp-2 dark:text-[#EDEDED]">{event.title}</h4>
-                        <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">{event.date}</p>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs flex items-center text-muted-foreground dark:text-[#B3B3B3]">
-                          <Users size={12} className="mr-1" />
-                          <span>{event.attendees} confirmados</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
-              <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
-              <h3 className="text-lg font-medium mb-1 dark:text-[#EDEDED]">Sem histórico de eventos</h3>
-              <p className="text-sm text-muted-foreground dark:text-[#B3B3B3]">
-                Este usuário ainda não participou de nenhum evento
-              </p>
-            </div>
-          )}
+          <UserEvents events={userEvents} />
         </div>
       </div>
     </MainLayout>
