@@ -42,7 +42,7 @@ export const GroupsService = {
   /**
    * Criar um novo grupo
    */
-  createGroup: async (groupData: {
+  createGroup: async (data: {
     name: string;
     description?: string;
     image_url?: string;
@@ -56,7 +56,7 @@ export const GroupsService = {
     // Create the group
     const { data: createdGroup, error: groupError } = await supabase
       .from('groups')
-      .insert(groupData)
+      .insert(data)
       .select();
       
     if (groupError || !createdGroup || createdGroup.length === 0) {

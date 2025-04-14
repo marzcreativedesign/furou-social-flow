@@ -13,7 +13,8 @@ export const EventsService = {
       .from('events')
       .select(`
         *,
-        event_participants(*)
+        event_participants(*),
+        group_events(*, groups(*))
       `)
       .order('date', { ascending: true });
   },

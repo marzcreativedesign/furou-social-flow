@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, CalendarDays, Settings, Bell, X, Check } from "lucide-react";
@@ -25,6 +24,7 @@ interface Event {
   is_public: boolean;
   creator_id: string;
   event_participants?: any[];
+  group_events?: { groups?: { name: string } }[];
   confirmed?: boolean;
   type?: "public" | "private" | "group";
   groupName?: string | null;
