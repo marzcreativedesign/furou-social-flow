@@ -34,7 +34,7 @@ interface EventData {
   description: string;
   date: string;
   location: string;
-  address: string;
+  address?: string; // Make address optional to match database
   is_public: boolean;
   image_url: string | null;
   creator_id: string;
@@ -45,7 +45,7 @@ interface EventData {
     avatar_url: string;
   };
   event_participants: EventParticipant[];
-  estimated_budget: number | null;
+  estimated_budget?: number | null; // Make budget optional to match database
   group_events?: { group_id: string; groups?: { name: string } }[];
 }
 
@@ -90,7 +90,8 @@ const EventDetail = () => {
         }
         
         if (data) {
-          setEvent(data);
+          // Cast data to EventData to ensure type compatibility
+          setEvent(data as unknown as EventData);
           
           // Parse date for edit form
           const eventDate = parseISO(data.date);

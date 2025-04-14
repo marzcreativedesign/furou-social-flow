@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { EventsService } from "@/services/events.service";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 type FilterType = 'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed';
 type Event = {
@@ -26,7 +27,7 @@ type Event = {
 
 const EventsPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: toastUI } = useToast();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
@@ -41,17 +42,20 @@ const EventsPage = () => {
         
         if (error) {
           console.error("Error fetching events:", error);
-          toast({
-            title: "Erro ao carregar eventos",
-            description: "Não foi possível carregar seus eventos",
-            variant: "destructive",
-          });
+          toast.error("Não foi possível carregar seus eventos");
           return;
         }
         
         if (userEvents) {
           const formattedEvents: Event[] = userEvents.map((event: any) => {
             const groupInfo = event.group_events?.[0]?.groups || null;
+            
+            // Check if the user is a confirmed participant
+            const isUserConfirmed = event.event_participants && 
+              event.event_participants.some((p: any) => p.status === 'confirmed');
+            
+            // Count all participants
+            const attendeesCount = event.event_participants?.length || 0;
             
             return {
               id: event.id,
@@ -63,8 +67,8 @@ const EventsPage = () => {
               }),
               location: event.location,
               imageUrl: event.image_url,
-              attendees: event.event_participants?.length || 0,
-              confirmed: event.event_participants && event.event_participants.some((p: any) => p.status === 'confirmed'),
+              attendees: attendeesCount,
+              confirmed: isUserConfirmed,
               type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
               groupName: groupInfo?.name || null
             };
@@ -74,18 +78,14 @@ const EventsPage = () => {
         }
       } catch (error) {
         console.error("Error loading events:", error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao carregar os eventos",
-          variant: "destructive",
-        });
+        toast.error("Ocorreu um erro ao carregar os eventos");
       } finally {
         setLoading(false);
       }
     };
     
     fetchEvents();
-  }, [toast]);
+  }, [toastUI]);
   
   // Filter events based on the active filter and search/location queries
   const filteredEvents = events.filter(event => {

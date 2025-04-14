@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
 import NoGroups from "@/components/groups/NoGroups";
+import { toast } from "sonner";
 
 interface Group {
   id: string;
@@ -20,7 +21,7 @@ interface Group {
 }
 
 const Groups = () => {
-  const { toast } = useToast();
+  const { toast: toastUI } = useToast();
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -36,44 +37,51 @@ const Groups = () => {
         
         if (error) {
           console.error("Error fetching groups:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar seus grupos",
-            variant: "destructive",
-          });
+          toast.error("Não foi possível carregar seus grupos");
           return;
         }
         
         if (data) {
-          const formattedGroups = data.map(item => ({
-            id: item.groups?.id || "",
-            name: item.groups?.name || "",
-            description: item.groups?.description || "",
-            image_url: item.groups?.image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
-            members: 1, // Will be updated with actual count in future
-            lastActivity: "Recentemente",
-            created_at: item.groups?.created_at
-          }));
+          // Create a map to track unique groups and avoid duplicate keys
+          const groupsMap = new Map();
           
+          data.forEach(item => {
+            if (item.groups?.id) {
+              const groupId = item.groups.id;
+              
+              // If we haven't added this group yet, add it
+              if (!groupsMap.has(groupId)) {
+                groupsMap.set(groupId, {
+                  id: groupId,
+                  name: item.groups?.name || "",
+                  description: item.groups?.description || "",
+                  image_url: item.groups?.image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
+                  members: 1, // Will be updated with actual count in future
+                  lastActivity: "Recentemente",
+                  created_at: item.groups?.created_at
+                });
+              }
+            }
+          });
+          
+          // Convert map to array
+          const formattedGroups = Array.from(groupsMap.values());
           setGroups(formattedGroups);
         }
       } catch (error) {
         console.error("Error fetching groups:", error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao carregar os grupos",
-          variant: "destructive",
-        });
+        toast.error("Ocorreu um erro ao carregar os grupos");
       } finally {
         setIsFetching(false);
       }
     };
 
     fetchGroups();
-  }, [user, toast]);
+  }, [user, toastUI]);
 
   const handleGroupCreated = (newGroup: Group) => {
     setGroups(prevGroups => [...prevGroups, newGroup]);
+    toast.success("Grupo criado com sucesso!");
   };
 
   return (

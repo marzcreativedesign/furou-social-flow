@@ -20,10 +20,11 @@ import { Label } from "@/components/ui/label";
 import MainLayout from "../components/MainLayout";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: toastUI } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [eventId] = useState(uuidv4().substring(0, 6).toUpperCase());
@@ -77,7 +78,7 @@ const CreateEvent = () => {
     e.preventDefault();
     
     if (!eventData.title || !eventData.date || !eventData.time || !eventData.location) {
-      toast({
+      toastUI({
         title: "Informações incompletas",
         description: "Por favor preencha todos os campos obrigatórios.",
         variant: "destructive"
@@ -87,7 +88,7 @@ const CreateEvent = () => {
     
     // Validar orçamento se incluído
     if (eventData.includeEstimatedBudget && !eventData.estimatedBudget) {
-      toast({
+      toastUI({
         title: "Orçamento inválido",
         description: "Por favor insira um valor para o orçamento estimado ou desmarque a opção.",
         variant: "destructive"
@@ -106,6 +107,14 @@ const CreateEvent = () => {
       // For simplicity, we'll use a placeholder if no image is selected
       const imageUrl = eventData.imagePreview || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3";
       
+      // Parse estimated budget if included
+      let estimatedBudget = null;
+      if (eventData.includeEstimatedBudget && eventData.estimatedBudget) {
+        // Remove non-numeric characters except decimal point
+        const numericValue = eventData.estimatedBudget.replace(/[^\d.,]/g, '').replace(',', '.');
+        estimatedBudget = parseFloat(numericValue);
+      }
+      
       // Create the event
       const { data, error } = await EventsService.createEvent({
         title: eventData.title,
@@ -113,23 +122,26 @@ const CreateEvent = () => {
         date: isoDateTime,
         location: eventData.location,
         is_public: eventData.isPublic,
-        image_url: imageUrl
+        image_url: imageUrl,
+        estimated_budget: estimatedBudget
       });
       
       if (error) {
         throw error;
       }
       
-      toast({
-        title: "Evento criado com sucesso!",
-        description: "Seu evento foi criado e já está disponível.",
-      });
+      toast.success("Evento criado com sucesso!");
       
       // Redirect to the event page
-      navigate(data && data.length > 0 ? `/evento/${data[0].id}` : "/");
+      if (data && data.length > 0) {
+        navigate(`/evento/${data[0].id}`);
+      } else {
+        // Fallback to events list if we don't have the event ID
+        navigate("/eventos");
+      }
     } catch (error: any) {
       console.error("Error creating event:", error);
-      toast({
+      toastUI({
         title: "Erro ao criar evento",
         description: error.message || "Ocorreu um erro ao criar o evento. Tente novamente.",
         variant: "destructive"

@@ -1,4 +1,7 @@
 
+import { supabase } from "@/integrations/supabase/client";
+import { SeedUserDataResult } from "./types";
+
 // Tipagem explícita para os resultados das consultas
 interface ProfileQueryResult {
   data: { id: string }[] | null;
@@ -38,8 +41,9 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       error: `Could not find user with email ${email}`,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error seeding data for email:", errorMessage);
+    const errorMessage = error instanceof Error ? 
+      error.message : 'Unknown error occurred';
+    
     return {
       success: false,
       error: errorMessage,
@@ -47,57 +51,48 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
   }
 };
 
-// Import supabase client and types
-import { supabase } from '@/integrations/supabase/client';
-import { SeedUserDataResult, NotificationTemplate } from './types';
-import { getRandomItem, getRandomFutureDate, createEvent, createGroup, createNotification } from './helpers';
-
-// Função principal para semear dados do usuário
+// Implementation of seedUserData
 export const seedUserData = async (userId: string): Promise<SeedUserDataResult> => {
   try {
-    const eventIds: string[] = [];
-    const groupIds: string[] = [];
-    
-    // Criar eventos
-    const eventCount = Math.floor(Math.random() * 5) + 2; // 2-6 eventos
-    for (let i = 0; i < eventCount; i++) {
-      const event = await createEvent(userId);
-      if (event) {
-        eventIds.push(event.id);
+    // Create some basic seed data for the user
+    // For example, create some sample events
+    const { error: eventError } = await supabase.from("events").insert([
+      {
+        creator_id: userId,
+        title: "Sample Event 1",
+        description: "This is a demo event created automatically",
+        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week from now
+        location: "São Paulo",
+        is_public: true,
+        image_url: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3"
+      },
+      {
+        creator_id: userId,
+        title: "Sample Event 2",
+        description: "This is another demo event created automatically",
+        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks from now
+        location: "Rio de Janeiro",
+        is_public: false,
+        image_url: "https://images.unsplash.com/photo-1472653431158-6364773b2a56?ixlib=rb-4.0.3"
       }
+    ]);
+
+    if (eventError) {
+      return {
+        success: false,
+        error: `Failed to create sample events: ${eventError.message}`
+      };
     }
-    
-    // Criar grupos e associá-los aos eventos aleatoriamente
-    const groupCount = Math.floor(Math.random() * 3) + 1; // 1-3 grupos
-    for (let i = 0; i < groupCount; i++) {
-      const eventId = eventIds.length > 0 ? getRandomItem(eventIds) : undefined;
-      const groupId = await createGroup(userId, eventId);
-      if (groupId) {
-        groupIds.push(groupId);
-      }
-    }
-    
-    // Criar notificações
-    const notificationCount = Math.floor(Math.random() * 8) + 3; // 3-10 notificações
-    for (let i = 0; i < notificationCount; i++) {
-      const relatedId = Math.random() > 0.5 && eventIds.length > 0 
-        ? getRandomItem(eventIds) 
-        : null;
-        
-      await createNotification(userId, i, relatedId);
-    }
-    
+
     return {
       success: true,
-      eventIds,
-      groupIds,
-      eventCount: eventIds.length,
-      groupCount: groupIds.length,
-      notificationCount
+      message: "Sample data seeded successfully"
     };
+    
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error seeding data:", errorMessage);
+    const errorMessage = error instanceof Error ? 
+      error.message : 'Unknown error occurred during seeding';
+    
     return {
       success: false,
       error: errorMessage
