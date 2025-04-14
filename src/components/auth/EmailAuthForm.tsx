@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,9 @@ interface EmailAuthFormProps {
   isSignUp: boolean;
   setIsSignUp: (value: boolean) => void;
   onBackClick: () => void;
-  onSubmit: (email: string, password: string) => Promise<void>;
+  onSubmit: (email: string, password: string, fullName?: string) => Promise<void>;
   isLoading: boolean;
+  onForgotPassword?: () => void;
 }
 
 const emailSchema = z.object({
@@ -29,7 +29,8 @@ const EmailAuthForm = ({
   setIsSignUp,
   onBackClick,
   onSubmit,
-  isLoading
+  isLoading,
+  onForgotPassword
 }: EmailAuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,9 +42,13 @@ const EmailAuthForm = ({
     }
   });
 
-  const handleSubmit = async (values: z.infer<typeof emailSchema>) => {
+  const handleSubmit = async (values: z.infer<typeof emailSchema> | SignupFormValues) => {
     try {
-      await onSubmit(values.email, values.password);
+      if (isSignUp && 'fullName' in values) {
+        await onSubmit(values.email, values.password, values.fullName);
+      } else {
+        await onSubmit(values.email, values.password);
+      }
     } catch (error: any) {
       toast.error(`Erro: ${error.message}`);
     }
@@ -56,6 +61,26 @@ const EmailAuthForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {isSignUp && (
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome completo</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Seu nome completo"
+                    disabled={isLoading}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        
         <FormField
           control={form.control}
           name="email"
@@ -112,11 +137,15 @@ const EmailAuthForm = ({
           )}
         />
 
-        {!isSignUp && (
+        {!isSignUp && onForgotPassword && (
           <div className="flex justify-end">
-            <Link to="/resetar-senha" className="text-sm text-primary hover:underline">
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-sm text-primary hover:underline"
+            >
               Esqueceu a senha?
-            </Link>
+            </button>
           </div>
         )}
 
