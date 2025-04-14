@@ -58,48 +58,47 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Completely rewritten with explicit return types to avoid TypeScript inference issues
+// Completely restructured to avoid TypeScript inference issues
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile by email
-    const { data: userData, error: userError } = await supabase
+    const { data, error: userError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
       .maybeSingle();
       
     if (userError) {
-      const result: SeedUserDataResult = {
+      console.error("Error finding profile:", userError);
+      return {
         success: false,
         error: userError.message
       };
-      return result;
     }
     
-    if (userData && userData.id) {
-      return await seedUserData(userData.id);
+    if (data && data.id) {
+      return await seedUserData(data.id);
     }
     
     // If not found in profiles, try using the current session
     const { data: sessionData } = await supabase.auth.getSession();
     
-    if (sessionData && sessionData.session?.user && sessionData.session.user.email === email) {
-      return await seedUserData(sessionData.session.user.id);
+    if (sessionData?.session?.user?.email === email) {
+      const userId = sessionData.session.user.id;
+      return await seedUserData(userId);
     }
     
     // If user still not found
-    const notFoundResult: SeedUserDataResult = {
+    return {
       success: false,
       error: `Could not find user with email ${email}`
     };
-    return notFoundResult;
   } catch (error) {
     console.error("Error seeding data for email:", error);
-    const errorResult: SeedUserDataResult = {
+    return {
       success: false,
       error: error instanceof Error ? error.message : String(error)
     };
-    return errorResult;
   }
 };
 
