@@ -5,7 +5,7 @@ import { SeedUserDataResult } from "./types";
 // Helper function to safely perform database queries
 async function safeQueryProfiles(email: string): Promise<{ id: string } | null> {
   try {
-    // Using type assertion instead of generic parameter to avoid recursive type issues
+    // Using explicit type annotation to avoid recursive type issues
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
@@ -17,6 +17,7 @@ async function safeQueryProfiles(email: string): Promise<{ id: string } | null> 
       return null;
     }
     
+    // Use a simpler type assertion to prevent deep type instantiation
     return data as { id: string } | null;
   } catch (error) {
     console.error('Unexpected error querying profiles:', error);
