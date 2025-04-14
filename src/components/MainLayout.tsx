@@ -62,11 +62,56 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
+    const isHighContrast = localStorage.getItem('highContrast') === 'true';
+    const isReducedMotion = localStorage.getItem('reducedMotion') === 'true';
+    const fontSize = localStorage.getItem('fontSize');
+    const fontFamily = localStorage.getItem('fontFamily');
+    
     setDarkMode(isDark);
+    
+    // Apply dark mode
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+    
+    // Apply high contrast if enabled
+    if (isHighContrast) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+    
+    // Apply reduced motion if enabled
+    if (isReducedMotion) {
+      document.documentElement.classList.add('reduce-motion');
+    } else {
+      document.documentElement.classList.remove('reduce-motion');
+    }
+    
+    // Apply font size if set
+    if (fontSize) {
+      document.documentElement.style.fontSize = `${fontSize}%`;
+    }
+    
+    // Apply font family if set
+    if (fontFamily) {
+      document.documentElement.classList.remove('font-sans', 'font-serif', 'font-mono', 'font-dyslexic');
+      
+      switch (fontFamily) {
+        case 'serif':
+          document.documentElement.classList.add('font-serif');
+          break;
+        case 'mono':
+          document.documentElement.classList.add('font-mono');
+          break;
+        case 'dyslexic':
+          document.documentElement.classList.add('font-dyslexic');
+          break;
+        default:
+          document.documentElement.classList.add('font-sans');
+      }
     }
   }, []);
 
@@ -97,7 +142,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-[#121212] dark:text-[#EDEDED]">
+    <div className="min-h-screen flex flex-col">
       <Header 
         title={title}
         showBack={showBack}
@@ -110,7 +155,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {rightContent}
       </Header>
 
-      <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
+      <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
         <div className="lg:flex">
           {/* Desktop sidebar */}
           {isDesktop && (
@@ -125,14 +170,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                   { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
                   { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
                   { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
-                  { title: 'Configurações', icon: <Settings size={20} />, href: '/acessibilidade' }
+                  { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' }
                 ].map((item) => (
                   <Button
                     key={item.href}
                     variant={isActive(item.href) ? "default" : "ghost"}
                     className={`w-full justify-start mb-1 ${
                       isActive(item.href) 
-                        ? "bg-[#FF8A1E] hover:bg-[#FF7A00] text-white" 
+                        ? "bg-primary hover:bg-primary-hover text-primary-foreground" 
                         : "text-muted-foreground hover:bg-muted"
                     }`}
                     onClick={() => navigate(item.href)}
@@ -147,7 +192,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 
                 <Button 
                   variant="outline"
-                  className="w-full justify-start mt-4 border-[#FF8A1E] text-[#FF8A1E] hover:bg-[#FF8A1E]/10"
+                  className="w-full justify-start mt-4 border-primary text-primary hover:bg-primary/10"
                   onClick={() => navigate("/criar")}
                 >
                   <PlusCircle size={20} className="mr-2" />
