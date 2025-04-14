@@ -58,7 +58,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Use explicit typing to avoid recursive type references
+// Fix the deep type instantiation by using explicit return type and simplifying error handling
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile directly
@@ -72,7 +72,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       console.error("Error fetching profile:", userError);
       return {
         success: false,
-        error: userError
+        error: userError.message
       };
     }
     
@@ -96,7 +96,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     console.error("Error seeding data for email:", error);
     return {
       success: false,
-      error: typeof error === 'object' ? (error as Error).message : String(error)
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 };
