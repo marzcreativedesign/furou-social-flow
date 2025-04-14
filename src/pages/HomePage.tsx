@@ -17,7 +17,9 @@ const HomePage = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || "Usuário";
+  
+  // Get the first name of the user from user_metadata or set a default
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || "Usuário";
 
   const {
     loading,
@@ -31,7 +33,7 @@ const HomePage = () => {
     <MainLayout title="Furou?!" showSearch onSearch={setSearchQuery} showDock>
       <div className="p-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-3 dark:text-[#EDEDED]">Olá, {userName} 👋</h1>
+          <h1 className="text-2xl font-bold mb-3 dark:text-[#EDEDED]">Olá, {firstName} 👋</h1>
           <SearchInput value={searchQuery} onChange={setSearchQuery} />
         </div>
 

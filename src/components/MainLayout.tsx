@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
+import { useAuth } from "@/contexts/AuthContext"; // Added missing import
 import { 
   Home, 
   Calendar, 
@@ -22,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client"; // Added for user profile data
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -49,6 +51,55 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const { user } = useAuth(); // Get the authenticated user
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    avatarUrl: string;
+    initials: string;
+  }>({
+    name: "Usuário",
+    email: "usuario@exemplo.com",
+    avatarUrl: "",
+    initials: "U"
+  });
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error fetching user profile:", error);
+            return;
+          }
+
+          const fullName = profileData?.full_name || user.user_metadata?.full_name || "Usuário";
+          const nameParts = fullName.split(' ');
+          const initials = nameParts.length > 1 
+            ? `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}` 
+            : fullName.charAt(0);
+          
+          setUserProfile({
+            name: fullName,
+            email: user.email || "usuario@exemplo.com",
+            avatarUrl: profileData?.avatar_url || "",
+            initials: initials.toUpperCase()
+          });
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -99,13 +150,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     return location.pathname.startsWith(path);
   };
 
-  // Mock user data - em uma implementação real seria obtido do contexto de autenticação
-  const userData = {
-    name: "Carlos Oliveira",
-    email: "carlos@exemplo.com",
-    avatarUrl: "https://i.pravatar.cc/150?u=1"
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
@@ -125,19 +169,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           {isDesktop && (
             <div className="hidden lg:block lg:w-64 p-4 border-r border-border dark:border-gray-800 min-h-[calc(100vh-64px)] fixed">
               <div className="sticky top-20 space-y-4 flex flex-col h-[calc(100vh-100px)]">
-                {/* Perfil do Usuário - Transformado em link clicável */}
+                {/* Updated user profile section */}
                 <Button
                   variant="ghost"
                   className="flex items-center gap-3 p-2 mb-2 justify-start w-full hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                   onClick={() => navigate('/perfil')}
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userData.avatarUrl} />
-                    <AvatarFallback>CO</AvatarFallback>
+                    <AvatarImage src={userProfile.avatarUrl} />
+                    <AvatarFallback>{userProfile.initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start">
-                    <span className="font-medium text-sm truncate">{userData.name}</span>
-                    <span className="text-xs text-muted-foreground truncate">{userData.email}</span>
+                    <span className="font-medium text-sm truncate">{userProfile.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{userProfile.email}</span>
                   </div>
                 </Button>
                 

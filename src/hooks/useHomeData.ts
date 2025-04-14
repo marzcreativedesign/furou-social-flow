@@ -30,6 +30,7 @@ export interface Event {
   type?: "public" | "private" | "group";
   groupName?: string | null;
   attendees?: number;
+  profiles?: any; // Add this to handle the profiles relation
 }
 
 export interface Notification {
@@ -58,6 +59,8 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        if (!user) return;
+        
         const { data: userEvents, error: eventsError } = await EventsService.getUserEvents();
         
         if (eventsError) {
@@ -65,7 +68,8 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
           toast.error("Error loading events");
         } else if (userEvents) {
           const formattedEvents: Event[] = userEvents.map(event => {
-            const groupInfo = event.group_events?.[0]?.groups || null;
+            // Safely access group_events that might be undefined
+            const groupInfo = event.group_events && event.group_events[0]?.groups ? event.group_events[0].groups : null;
             
             return {
               ...event,
@@ -89,10 +93,11 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
           console.error("Error fetching public events:", publicEventsError);
         } else if (publicEventsData) {
           const formattedPublicEvents: Event[] = publicEventsData
-            .filter(event => event.creator_id !== user?.id)
+            .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
               ...event,
-              confirmed: false,
+              // Safely access event_participants that might be undefined
+              confirmed: event.event_participants ? event.event_participants.some(p => p.status === 'confirmed') : false,
               type: "public",
               attendees: event.event_participants?.length || 0,
               date: new Date(event.date).toLocaleString('pt-BR', {

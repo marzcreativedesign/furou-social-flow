@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -45,9 +44,8 @@ export const EventsService = {
    * Listar eventos públicos
    */
   getPublicEvents: async () => {
-    const { data: user } = await supabase.auth.getUser();
-    
-    const query = supabase
+    // Updated to simply get public events without filtering by user
+    return await supabase
       .from('events')
       .select(`
         *,
@@ -56,13 +54,6 @@ export const EventsService = {
       `)
       .eq('is_public', true)
       .order('date', { ascending: true });
-      
-    // Se o usuário estiver logado, não retornar eventos criados por ele
-    if (user.user) {
-      query.neq('creator_id', user.user.id);
-    }
-    
-    return await query;
   },
 
   /**

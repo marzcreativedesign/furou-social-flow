@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -8,10 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Hamburger } from "@/components/ui/hamburger";
+import { useAuth } from "@/contexts/AuthContext"; // Added import for auth
+import { supabase } from "@/integrations/supabase/client"; // Added import for supabase
 import { 
   Home, Calendar, Users, PlusCircle, LogOut,
   User, Calculator, Moon, Sun, ScrollText,
-  Globe, Settings, Bell  // Added Bell import here
+  Globe, Settings, Bell
 } from "lucide-react";
 
 interface MobileMenuProps {
@@ -23,6 +25,52 @@ const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get the authenticated user
+  
+  // State for user profile
+  const [userProfile, setUserProfile] = useState({
+    name: "Usuário",
+    email: user?.email || "usuario@exemplo.com",
+    avatarUrl: "",
+    initials: "U"
+  });
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error fetching user profile:", error);
+            return;
+          }
+
+          const fullName = profileData?.full_name || user.user_metadata?.full_name || "Usuário";
+          const nameParts = fullName.split(' ');
+          const initials = nameParts.length > 1 
+            ? `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}` 
+            : fullName.charAt(0);
+          
+          setUserProfile({
+            name: fullName,
+            email: user.email || "usuario@exemplo.com",
+            avatarUrl: profileData?.avatar_url || "",
+            initials: initials.toUpperCase()
+          });
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const menuItems = [
     { title: 'Início', icon: <Home size={20} />, href: '/' },
@@ -58,12 +106,12 @@ const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
           className="flex items-center mb-6 px-2 hover:bg-muted/50 dark:hover:bg-gray-800/50 rounded-md p-2"
         >
           <Avatar className="h-10 w-10">
-            <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-            <AvatarFallback>CO</AvatarFallback>
+            <AvatarImage src={userProfile.avatarUrl} />
+            <AvatarFallback>{userProfile.initials}</AvatarFallback>
           </Avatar>
           <div className="ml-3">
-            <p className="font-medium">Carlos Oliveira</p>
-            <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
+            <p className="font-medium">{userProfile.name}</p>
+            <p className="text-sm text-muted-foreground">{userProfile.email}</p>
           </div>
         </Link>
         <ScrollArea className="h-[calc(100vh-180px)]">

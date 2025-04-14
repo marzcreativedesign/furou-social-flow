@@ -60,7 +60,7 @@ const App = () => {
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
               
-              {/* Default route redirects to /home */}
+              {/* Default route redirects to /home (for authenticated) or /auth (for guests) */}
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

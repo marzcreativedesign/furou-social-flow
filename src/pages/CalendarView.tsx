@@ -1,46 +1,36 @@
 
-import React, { useState, useEffect } from "react";
-import MainLayout from "../components/MainLayout";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import MainLayout from "@/components/MainLayout";
+import { 
+  Calendar as CalendarIcon, 
+  ChevronLeft, 
+  ChevronRight, 
+  List, 
+  ArrowLeft, 
+  ArrowRight
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { format, isBefore, isToday, startOfDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Event {
-  id: string;
-  title: string;
-  date: Date;
-  time: string;
-  location: string | null;
-  type: string;
-  group_events?: {
-    id: string;
-    group_id: string;
-    groups?: { 
-      id: string;
-      name: string 
-    };
-  }[];
-}
+import { Event } from "@/hooks/useHomeData"; // Reuse the Event interface
 
 const CalendarView = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date>(new Date());
+  const [view, setView] = useState<"calendar" | "list">("calendar");
   const [events, setEvents] = useState<Event[]>([]);
-  const [selectedDateEvents, setSelectedDateEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Function to format date to string in Brazilian Portuguese
-  const formatDatePtBR = (date: Date) => {
-    return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+  const handleDateSelect = (day: Date | undefined) => {
+    if (day) {
+      setDate(day);
+    }
   };
 
   useEffect(() => {
@@ -62,23 +52,19 @@ const CalendarView = () => {
         }
         
         if (data) {
-          const formattedEvents = data.map(event => {
-            const eventDate = new Date(event.date);
-            const timeString = eventDate.toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            
-            const groupInfo = event.group_events?.[0]?.groups || null;
+          const formattedEvents: Event[] = data.map(event => {
+            // Safely access group_events that might be undefined
+            const groupInfo = event.group_events && event.group_events[0]?.groups 
+              ? event.group_events[0].groups 
+              : null;
             
             return {
-              id: event.id,
-              title: event.title,
-              date: eventDate,
-              time: timeString,
-              location: event.location,
-              group_events: event.group_events,
-              type: event.is_public ? "public" : (groupInfo ? "group" : "private")
+              ...event,
+              confirmed: event.event_participants && event.event_participants.some(p => p.status === 'confirmed'),
+              type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+              groupName: groupInfo?.name || null,
+              attendees: event.event_participants?.length || 0,
+              date: event.date // Keep original date for calendar
             };
           });
           
@@ -88,7 +74,7 @@ const CalendarView = () => {
         console.error("Error loading events:", error);
         toast({
           title: "Erro",
-          description: "Ocorreu um erro ao carregar os eventos",
+          description: "Ocorreu um erro ao carregar seus eventos",
           variant: "destructive",
         });
       } finally {
@@ -99,160 +85,237 @@ const CalendarView = () => {
     fetchEvents();
   }, [user, toast]);
 
-  // Get events for a specific date
-  const getEventsForDate = (date: Date | undefined) => {
+  // Format events for the selected day
+  const selectedDateEvents = useMemo(() => {
     if (!date) return [];
     
-    return events.filter(event => 
-      event.date.getDate() === date.getDate() &&
-      event.date.getMonth() === date.getMonth() &&
-      event.date.getFullYear() === date.getFullYear()
-    );
-  };
-
-  // Get dates that have events
-  const getEventDates = () => {
-    return events.map(event => event.date);
-  };
-
-  // Update selected date events when date changes
-  React.useEffect(() => {
-    setSelectedDateEvents(getEventsForDate(date));
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      return (
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear()
+      );
+    }).sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
   }, [date, events]);
 
-  // Get badge color based on event type
-  const getEventTypeBadge = (type: string) => {
-    switch(type) {
-      case 'public':
-        return 'bg-blue-500';
-      case 'private':
-        return 'bg-green-500';
-      case 'group':
-        return 'bg-purple-500';
-      default:
-        return 'bg-gray-500';
+  // Get dates with events for highlighting on the calendar
+  const datesWithEvents = useMemo(() => {
+    return events.map(event => new Date(event.date));
+  }, [events]);
+
+  // Function to get events for each month day (for list view)
+  const getEventsForMonth = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    const daysWithEvents: {date: Date, events: Event[]}[] = [];
+    
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const currentDate = new Date(year, month, day);
+      
+      const eventsOnDay = events.filter(event => {
+        const eventDate = new Date(event.date);
+        return (
+          eventDate.getDate() === currentDate.getDate() &&
+          eventDate.getMonth() === currentDate.getMonth() &&
+          eventDate.getFullYear() === currentDate.getFullYear()
+        );
+      });
+      
+      if (eventsOnDay.length > 0) {
+        daysWithEvents.push({
+          date: currentDate,
+          events: eventsOnDay.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        });
+      }
     }
+    
+    return daysWithEvents;
   };
 
-  // Determine if a date has events
-  const dateHasEvent = (day: Date) => {
-    return getEventDates().some(eventDate => 
-      eventDate.getDate() === day.getDate() && 
-      eventDate.getMonth() === day.getMonth() && 
-      eventDate.getFullYear() === day.getFullYear()
-    );
+  const monthDaysWithEvents = useMemo(() => {
+    return getEventsForMonth();
+  }, [currentMonth, events]);
+
+  const navigateToEvent = (eventId: string) => {
+    navigate(`/evento/${eventId}`);
   };
 
-  // Function to style past dates
-  const modifiersStyles = {
-    pastDate: {
-      color: "rgb(176, 176, 176)", // #B0B0B0
-      opacity: 0.6,
-    },
-    hasEvent: { 
-      fontWeight: 'bold', 
-      textDecoration: 'underline', 
-      color: 'var(--accent)' 
-    }
+  const handlePreviousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
   };
-
-  // Function to check if a date is in the past
-  const isPastDate = (date: Date) => {
-    return isBefore(startOfDay(date), startOfDay(new Date())) && !isToday(date);
+  
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
   };
 
   return (
-    <MainLayout title="Agenda">
+    <MainLayout title="Agenda" showDock>
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-4">Sua Agenda</h2>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Calendário</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center items-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="border rounded-md pointer-events-auto"
-                    modifiers={{
-                      hasEvent: (day) => dateHasEvent(day),
-                      pastDate: (day) => isPastDate(day)
-                    }}
-                    modifiersStyles={modifiersStyles}
-                  />
-                )}
-              </CardContent>
-            </Card>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 opacity-70" />
+            <h2 className="text-xl font-semibold">
+              {view === "calendar" ? "Calendário" : "Lista de Eventos"}
+            </h2>
           </div>
           
-          {/* Selected date events list */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
-                  {date ? formatDatePtBR(date) : 'Selecione uma data'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          <div className="flex gap-2">
+            <Button
+              variant={view === "calendar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("calendar")}
+            >
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              Calendário
+            </Button>
+            <Button
+              variant={view === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("list")}
+            >
+              <List className="h-4 w-4 mr-1" />
+              Lista
+            </Button>
+          </div>
+        </div>
+
+        {view === "calendar" ? (
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="md:w-1/2">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={handleDateSelect}
+                className="border rounded-md p-3"
+                modifiers={{ hasEvent: datesWithEvents }}
+                modifiersStyles={{
+                  hasEvent: { 
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(255, 138, 30, 0.1)',
+                    color: '#FF8A1E',
+                    borderRadius: '4px'
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="md:w-1/2">
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium text-lg mb-3">
+                  {date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </h3>
+                
                 {loading ? (
-                  <div className="flex justify-center items-center py-10">
+                  <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                   </div>
                 ) : selectedDateEvents.length > 0 ? (
-                  <div className="space-y-4">
-                    {selectedDateEvents.map((event) => (
+                  <div className="space-y-3">
+                    {selectedDateEvents.map(event => (
                       <div 
                         key={event.id}
-                        className={`p-4 border rounded-lg hover:bg-accent/10 transition-colors cursor-pointer ${
-                          isPastDate(event.date) ? 'opacity-60' : ''
-                        }`}
-                        onClick={() => navigate(`/evento/${event.id}`)}
+                        className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigateToEvent(event.id)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-medium">{event.title}</h3>
-                            <div className="flex items-center text-sm text-muted-foreground mt-1">
-                              <Clock className="h-4 w-4 mr-1" />
-                              <span>{event.time}</span>
-                              <span className="mx-2">•</span>
-                              <span>{event.location || 'Local não definido'}</span>
-                            </div>
-                          </div>
-                          <Badge className={`${getEventTypeBadge(event.type)} text-white`}>
-                            {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                          </Badge>
+                        <div className={`w-2 h-10 rounded-full ${
+                          event.confirmed ? 'bg-green-500' : 'bg-orange-500'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="font-medium">{event.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                            {event.location && ` • ${event.location}`}
+                          </p>
                         </div>
+                        <ChevronRight className="h-5 w-5 opacity-50" />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8 text-center">
-                    <p className="text-muted-foreground">
-                      Não há eventos agendados para esta data.
-                    </p>
-                    <button 
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Nenhum evento nesta data</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
                       onClick={() => navigate('/criar')}
-                      className="mt-4 text-sm text-primary hover:underline"
                     >
-                      + Adicionar novo evento
-                    </button>
+                      Criar evento
+                    </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              
+              <h3 className="text-lg font-medium">
+                {currentMonth.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})}
+              </h3>
+              
+              <Button variant="outline" size="icon" onClick={handleNextMonth}>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : monthDaysWithEvents.length > 0 ? (
+              monthDaysWithEvents.map(day => (
+                <div key={day.date.toString()} className="border rounded-md">
+                  <div className="bg-muted p-3 font-medium">
+                    {day.date.toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})}
+                  </div>
+                  <div className="p-2">
+                    {day.events.map(event => (
+                      <div 
+                        key={event.id}
+                        className="flex items-center gap-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigateToEvent(event.id)}
+                      >
+                        <div className={`w-2 h-10 rounded-full ${
+                          event.confirmed ? 'bg-green-500' : 'bg-orange-500'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="font-medium">{event.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                            {event.location && ` • ${event.location}`}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 opacity-50" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <p className="mb-2">Nenhum evento em {currentMonth.toLocaleDateString('pt-BR', {month: 'long'})}</p>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/criar')}
+                >
+                  Criar evento
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </MainLayout>
   );
