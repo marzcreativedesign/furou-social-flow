@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/MainLayout";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +50,7 @@ const Groups = () => {
             name: item.groups?.name || "",
             description: item.groups?.description || "",
             image_url: item.groups?.image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
-            members: 1,
+            members: 1, // Will be updated with actual count in future
             lastActivity: "Recentemente",
             created_at: item.groups?.created_at
           }));

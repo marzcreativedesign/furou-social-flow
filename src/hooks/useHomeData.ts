@@ -58,7 +58,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
             
             return {
               ...event,
-              confirmed: event.event_participants && event.event_participants.length > 0,
+              confirmed: event.event_participants && event.event_participants.some(p => p.status === 'confirmed'),
               type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
               groupName: groupInfo?.name || null,
               attendees: event.event_participants?.length || 0,

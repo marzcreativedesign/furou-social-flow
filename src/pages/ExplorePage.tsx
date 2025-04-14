@@ -1,73 +1,99 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, CalendarIcon, Filter } from "lucide-react";
 import MainLayout from "../components/MainLayout";
 import EventCard from "../components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EventsService } from "@/services/events.service";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock events para demonstração
-const MOCK_EVENTS = [
-  {
-    id: "1",
-    title: "Festival de Música ao Vivo",
-    date: "Próximo sábado, 19:00",
-    location: "Parque Villa-Lobos",
-    imageUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    attendees: 120,
-    type: "public",
-  },
-  {
-    id: "2",
-    title: "Feira Gastronômica",
-    date: "Domingo, 11:00",
-    location: "Praça Charles Miller",
-    imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    attendees: 75,
-    type: "public",
-  },
-  {
-    id: "3",
-    title: "Corrida Beneficente",
-    date: "Próximo sábado, 8:00",
-    location: "Parque Ibirapuera",
-    imageUrl: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    attendees: 200,
-    type: "public",
-  },
-  {
-    id: "4",
-    title: "Exposição de Arte",
-    date: "Todos os dias, 9:00 - 18:00",
-    location: "MASP",
-    imageUrl: "https://images.unsplash.com/photo-1605429523419-d828acb941d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    attendees: 45,
-    type: "public",
-  },
-  {
-    id: "5",
-    title: "Workshop de Fotografia",
-    date: "Sexta-feira, 14:00",
-    location: "Centro Cultural São Paulo",
-    imageUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1164&q=80",
-    attendees: 30,
-    type: "public",
-  }
-];
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  location: string | null;
+  imageUrl?: string;
+  image_url?: string | null;
+  attendees: number;
+  type: "public" | "private" | "group";
+}
 
 const ExplorePage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [isSearchByLocation, setIsSearchByLocation] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const filteredEvents = MOCK_EVENTS.filter(event => {
-    if (!searchQuery) return true;
+  useEffect(() => {
+    const fetchPublicEvents = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await EventsService.getPublicEvents();
+        
+        if (error) {
+          console.error("Error fetching public events:", error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar os eventos públicos",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (data) {
+          const formattedEvents: Event[] = data.map(event => ({
+            id: event.id,
+            title: event.title,
+            date: new Date(event.date).toLocaleString('pt-BR', {
+              weekday: 'long',
+              hour: 'numeric',
+              minute: 'numeric'
+            }),
+            location: event.location,
+            imageUrl: event.image_url,
+            attendees: event.event_participants?.length || 0,
+            type: "public"
+          }));
+          
+          setEvents(formattedEvents);
+        }
+      } catch (error) {
+        console.error("Error loading public events:", error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao carregar os eventos",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    const query = searchQuery.toLowerCase();
-    return event.title.toLowerCase().includes(query) || 
-           event.location.toLowerCase().includes(query);
+    fetchPublicEvents();
+  }, [toast]);
+  
+  const filteredEvents = events.filter(event => {
+    if (!searchQuery && !zipCode) return true;
+    
+    if (isSearchByLocation && zipCode) {
+      // Simple implementation - in a real app, we would use a CEP API
+      return event.location?.includes(zipCode) || false;
+    }
+    
+    if (!isSearchByLocation && searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        event.title.toLowerCase().includes(query) || 
+        (event.location && event.location.toLowerCase().includes(query))
+      );
+    }
+    
+    return true;
   });
   
   const handleEventClick = (id: string) => {
@@ -138,7 +164,11 @@ const ExplorePage = () => {
 
         <h2 className="font-bold text-xl mb-4">Eventos públicos</h2>
         
-        {filteredEvents.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredEvents.map((event) => (
               <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
@@ -146,8 +176,8 @@ const ExplorePage = () => {
                   id={event.id}
                   title={event.title}
                   date={event.date}
-                  location={event.location}
-                  imageUrl={event.imageUrl}
+                  location={event.location || ""}
+                  imageUrl={event.imageUrl || event.image_url || ""}
                   attendees={event.attendees}
                   type="public"
                   size="large"
@@ -160,10 +190,11 @@ const ExplorePage = () => {
             <Search className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium mb-1">Nenhum evento encontrado</h3>
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? 
+              {searchQuery || zipCode ? 
                 "Não encontramos eventos com esses termos de busca." : 
                 "Não há eventos públicos disponíveis no momento."}
             </p>
+            <Button onClick={() => navigate('/criar')}>Criar um evento</Button>
           </div>
         )}
       </div>

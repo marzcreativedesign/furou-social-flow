@@ -12,20 +12,22 @@ import {
   DollarSign
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
 import { useToast } from "../hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import MainLayout from "../components/MainLayout";
+import { EventsService } from "@/services/events.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [eventId] = useState(uuidv4().substring(0, 6).toUpperCase());
+  const [loading, setLoading] = useState(false);
   const [eventData, setEventData] = useState({
     title: "",
     date: "",
@@ -71,7 +73,7 @@ const CreateEvent = () => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!eventData.title || !eventData.date || !eventData.time || !eventData.location) {
@@ -93,12 +95,48 @@ const CreateEvent = () => {
       return;
     }
     
-    console.log("Creating event:", eventData);
-    toast({
-      title: "Evento criado com sucesso!",
-      description: "Seu evento foi criado e já está disponível.",
-    });
-    navigate("/");
+    setLoading(true);
+    try {
+      // Combine date and time into an ISO date string
+      const dateTimeStr = `${eventData.date}T${eventData.time}`;
+      const dateTime = new Date(dateTimeStr);
+      const isoDateTime = dateTime.toISOString();
+      
+      // In a real app, we'd upload the image first to storage and then get the URL
+      // For simplicity, we'll use a placeholder if no image is selected
+      const imageUrl = eventData.imagePreview || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3";
+      
+      // Create the event
+      const { data, error } = await EventsService.createEvent({
+        title: eventData.title,
+        description: eventData.description,
+        date: isoDateTime,
+        location: eventData.location,
+        is_public: eventData.isPublic,
+        image_url: imageUrl
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Evento criado com sucesso!",
+        description: "Seu evento foi criado e já está disponível.",
+      });
+      
+      // Redirect to the event page
+      navigate(data ? `/evento/${data[0].id}` : "/");
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast({
+        title: "Erro ao criar evento",
+        description: "Ocorreu um erro ao criar o evento. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -285,8 +323,16 @@ const CreateEvent = () => {
         <Button 
           type="submit" 
           className="w-full md:w-auto md:min-w-[200px] md:mx-auto md:block"
+          disabled={loading}
         >
-          Criar Evento
+          {loading ? (
+            <span className="flex items-center">
+              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+              Criando...
+            </span>
+          ) : (
+            "Criar Evento"
+          )}
         </Button>
       </form>
     </MainLayout>

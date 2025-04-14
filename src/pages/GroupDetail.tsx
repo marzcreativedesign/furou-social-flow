@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -9,100 +8,169 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Info, Map, MessageCircle, Plus, Settings, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { GroupsService } from '@/services/groups.service';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-// Simulação de dados de um grupo
-const mockGroup = {
-  id: '123',
-  name: 'Amigos da Faculdade',
-  description: 'Grupo para combinar os rolês da galera da faculdade',
-  membersCount: 15,
-  eventsCount: 8,
-  coverImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2232&q=80',
-  isOwner: true,
-  isAdmin: true
-};
+interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+}
 
-// Dados mock dos membros com informações de participação
-const mockMembers = [
-  {
-    id: "1",
-    name: "Carlos Oliveira",
-    image: "https://i.pravatar.cc/150?u=1",
-    isAdmin: true,
-    stats: { participated: 12, missed: 2, pending: 1 }
-  },
-  {
-    id: "2",
-    name: "Ana Silva",
-    image: "https://i.pravatar.cc/150?u=2",
-    isAdmin: false,
-    stats: { participated: 10, missed: 3, pending: 2 }
-  },
-  {
-    id: "3",
-    name: "Marcos Pereira",
-    image: "https://i.pravatar.cc/150?u=3",
-    isAdmin: false,
-    stats: { participated: 8, missed: 5, pending: 0 }
-  },
-  {
-    id: "4",
-    name: "Julia Santos",
-    image: "https://i.pravatar.cc/150?u=4",
-    isAdmin: false,
-    stats: { participated: 5, missed: 7, pending: 1 }
-  },
-  {
-    id: "5",
-    name: "Ricardo Almeida",
-    image: "https://i.pravatar.cc/150?u=5",
-    isAdmin: false,
-    stats: { participated: 11, missed: 1, pending: 3 }
-  }
-];
+interface GroupMember {
+  id: string;
+  user_id: string;
+  group_id: string;
+  is_admin: boolean;
+  joined_at: string;
+  profiles?: {
+    id: string;
+    full_name?: string;
+    username?: string;
+    avatar_url?: string;
+  };
+}
 
-// Simulação de eventos do grupo
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Happy Hour na Vila',
-    date: 'Sexta, 19:00',
-    location: 'Vila Madalena',
-    imageUrl: 'https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-    attendees: 12
-  },
-  {
-    id: '2',
-    title: 'Churrasco de Final de Semestre',
-    date: 'Domingo, 12:00',
-    location: 'Casa do João',
-    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-    attendees: 15
-  },
-  {
-    id: '3',
-    title: 'Apresentação de TCC',
-    date: 'Segunda, 14:00',
-    location: 'Universidade',
-    imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-    attendees: 8
-  }
-];
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  location?: string;
+  image_url?: string;
+  attendees?: number;
+}
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [group, setGroup] = useState(mockGroup);
-  const [events, setEvents] = useState(mockEvents);
-  const [members, setMembers] = useState(mockMembers);
+  const { toast } = useToast();
+  const [group, setGroup] = useState<Group | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('eventos');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Em uma implementação real, buscaríamos os dados do grupo a partir do ID
   useEffect(() => {
-    // Aqui seria uma chamada para uma API para buscar os dados do grupo
-    console.log(`Buscando dados do grupo ${id}`);
-    // Usar os dados mockados por enquanto
-  }, [id]);
+    const fetchGroupData = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      try {
+        // Fetch group details
+        const { data: groupData, error: groupError } = await GroupsService.getGroupById(id);
+        
+        if (groupError) {
+          console.error('Error fetching group:', groupError);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível carregar os dados do grupo',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        if (groupData) {
+          setGroup(groupData);
+          
+          // Check if user is admin
+          const { data: user } = await supabase.auth.getUser();
+          const isUserAdmin = groupData.group_members?.some(
+            (member: any) => member.user_id === user.user?.id && member.is_admin
+          );
+          setIsAdmin(isUserAdmin);
+          
+          // For simplicity, assuming the first admin is the owner
+          const firstAdmin = groupData.group_members?.find((member: any) => member.is_admin);
+          setIsOwner(firstAdmin?.user_id === user.user?.id);
+          
+          // Get group events
+          const { data: groupEvents, error: eventsError } = await GroupsService.getGroupEvents(id);
+          
+          if (!eventsError && groupEvents) {
+            const formattedEvents = groupEvents.map((item: any) => ({
+              id: item.events.id,
+              title: item.events.title,
+              date: new Date(item.events.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              }),
+              location: item.events.location,
+              image_url: item.events.image_url,
+              attendees: 0 // Will update with actual count
+            }));
+            
+            setEvents(formattedEvents);
+          }
+          
+          // Get group members
+          const { data: groupMembers, error: membersError } = await GroupsService.getGroupMembers(id);
+          
+          if (!membersError && groupMembers) {
+            // Convert to the format expected by GroupRanking
+            const formattedMembers = groupMembers.map((member: GroupMember) => ({
+              id: member.user_id,
+              name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
+              image: member.profiles?.avatar_url || 'https://i.pravatar.cc/150?u=' + member.user_id,
+              isAdmin: member.is_admin,
+              stats: { 
+                participated: Math.floor(Math.random() * 10), // Mock stats for now
+                missed: Math.floor(Math.random() * 5),
+                pending: Math.floor(Math.random() * 3)
+              }
+            }));
+            
+            setMembers(formattedMembers);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching group data:', error);
+        toast({
+          title: 'Erro',
+          description: 'Ocorreu um erro ao carregar os dados do grupo',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroupData();
+  }, [id, toast]);
+
+  if (loading) {
+    return (
+      <MainLayout 
+        title="Carregando..." 
+        showBack 
+        onBack={() => navigate('/grupos')}
+      >
+        <div className="flex justify-center items-center h-[calc(100vh-64px)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!group) {
+    return (
+      <MainLayout 
+        title="Grupo não encontrado" 
+        showBack 
+        onBack={() => navigate('/grupos')}
+      >
+        <div className="p-4 text-center">
+          <p className="mb-4">O grupo que você está procurando não foi encontrado.</p>
+          <Button onClick={() => navigate('/grupos')}>Voltar para grupos</Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout 
@@ -114,7 +182,7 @@ const GroupDetail = () => {
         {/* Header do grupo com imagem de capa */}
         <div className="relative w-full h-40 rounded-xl overflow-hidden mb-6">
           <img 
-            src={group.coverImage} 
+            src={group.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac'} 
             alt={group.name} 
             className="w-full h-full object-cover"
           />
@@ -128,15 +196,17 @@ const GroupDetail = () => {
         {/* Estatísticas do grupo */}
         <div className="flex gap-4 mb-6">
           <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">{group.membersCount}</div>
+            <div className="text-lg font-bold">{members.length}</div>
             <div className="text-sm text-muted-foreground">Membros</div>
           </div>
           <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">{group.eventsCount}</div>
+            <div className="text-lg font-bold">{events.length}</div>
             <div className="text-sm text-muted-foreground">Eventos</div>
           </div>
           <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">2</div>
+            <div className="text-lg font-bold">
+              {events.filter(e => new Date(e.date) > new Date()).length}
+            </div>
             <div className="text-sm text-muted-foreground">Ativos</div>
           </div>
         </div>
@@ -178,34 +248,46 @@ const GroupDetail = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {events.map(event => (
-                <div 
-                  key={event.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-border dark:border-gray-700"
-                  onClick={() => navigate(`/evento/${event.id}`)}
-                >
-                  <div className="h-32 overflow-hidden">
-                    <img 
-                      src={event.imageUrl} 
-                      alt={event.title} 
-                      className="w-full h-full object-cover transition-transform hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{event.title}</h3>
-                      <Badge variant="outline" className="text-xs">
-                        {event.attendees} confirmados
-                      </Badge>
+              {events.length > 0 ? (
+                events.map(event => (
+                  <div 
+                    key={event.id}
+                    className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-border dark:border-gray-700"
+                    onClick={() => navigate(`/evento/${event.id}`)}
+                  >
+                    <div className="h-32 overflow-hidden">
+                      <img 
+                        src={event.image_url || 'https://images.unsplash.com/photo-1506157786151-b8491531f063'} 
+                        alt={event.title} 
+                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground mb-1">{event.date}</p>
-                    <p className="text-sm text-muted-foreground flex items-center">
-                      <Map className="h-3 w-3 mr-1" />
-                      {event.location}
-                    </p>
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold">{event.title}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {event.attendees || 0} confirmados
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">{event.date}</p>
+                      <p className="text-sm text-muted-foreground flex items-center">
+                        <Map className="h-3 w-3 mr-1" />
+                        {event.location || 'Local não definido'}
+                      </p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-span-3 py-10 text-center">
+                  <p className="text-muted-foreground mb-4">Este grupo ainda não possui eventos.</p>
+                  {isAdmin && (
+                    <Button onClick={() => navigate('/criar')}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar primeiro evento
+                    </Button>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           </TabsContent>
           
@@ -213,8 +295,8 @@ const GroupDetail = () => {
           <TabsContent value="membros">
             <GroupMembersManagement 
               groupId={id || '0'}
-              isOwner={group.isOwner}
-              isAdmin={group.isAdmin}
+              isOwner={isOwner}
+              isAdmin={isAdmin}
             />
           </TabsContent>
           
@@ -230,22 +312,32 @@ const GroupDetail = () => {
           <TabsContent value="sobre" className="space-y-4">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
               <h3 className="font-semibold mb-2">Sobre o grupo</h3>
-              <p className="text-muted-foreground text-sm mb-4">{group.description}</p>
+              <p className="text-muted-foreground text-sm mb-4">{group.description || 'Sem descrição'}</p>
               
               <h4 className="font-medium mb-2">Criado em</h4>
-              <p className="text-muted-foreground text-sm mb-4">01 de Janeiro de 2023</p>
+              <p className="text-muted-foreground text-sm mb-4">
+                {group.created_at 
+                  ? new Date(group.created_at).toLocaleDateString('pt-BR') 
+                  : 'Data desconhecida'}
+              </p>
               
               <h4 className="font-medium mb-2">Criado por</h4>
-              <div className="flex items-center">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                  <AvatarFallback>CO</AvatarFallback>
-                </Avatar>
-                <span className="text-sm">Carlos Oliveira</span>
-              </div>
+              {members.filter(m => m.isAdmin).length > 0 ? (
+                <div className="flex items-center">
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarImage src={members.find(m => m.isAdmin)?.image} />
+                    <AvatarFallback>
+                      {members.find(m => m.isAdmin)?.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">{members.find(m => m.isAdmin)?.name}</span>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">Informação não disponível</p>
+              )}
             </div>
             
-            {group.isOwner && (
+            {isOwner && (
               <div className="mt-4">
                 <Button variant="outline" className="w-full" onClick={() => {}}>
                   <Settings className="h-4 w-4 mr-2" />

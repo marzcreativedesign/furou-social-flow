@@ -30,6 +30,26 @@ export const GroupsService = {
       .single();
   },
 
+  getGroupMembers: async (groupId: string) => {
+    return await supabase
+      .from('group_members')
+      .select(`
+        *,
+        profiles:user_id(*)
+      `)
+      .eq('group_id', groupId);
+  },
+  
+  getGroupEvents: async (groupId: string) => {
+    return await supabase
+      .from('group_events')
+      .select(`
+        *,
+        events(*)
+      `)
+      .eq('group_id', groupId);
+  },
+
   createGroup: async (data: {
     name: string;
     description?: string;
@@ -65,5 +85,40 @@ export const GroupsService = {
     }
     
     return createdGroup;
+  },
+  
+  addMemberToGroup: async (groupId: string, userId: string, isAdmin: boolean = false) => {
+    return await supabase
+      .from('group_members')
+      .insert({
+        group_id: groupId,
+        user_id: userId,
+        is_admin: isAdmin
+      });
+  },
+  
+  updateMember: async (groupId: string, userId: string, isAdmin: boolean) => {
+    return await supabase
+      .from('group_members')
+      .update({ is_admin: isAdmin })
+      .eq('group_id', groupId)
+      .eq('user_id', userId);
+  },
+  
+  removeMember: async (groupId: string, userId: string) => {
+    return await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', userId);
+  },
+  
+  addEventToGroup: async (groupId: string, eventId: string) => {
+    return await supabase
+      .from('group_events')
+      .insert({
+        group_id: groupId,
+        event_id: eventId
+      });
   }
 };

@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarIcon, Filter, MapPin, Search } from "lucide-react";
 import MainLayout from "../components/MainLayout";
@@ -6,70 +7,96 @@ import EventCard from "../components/EventCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { EventsService } from "@/services/events.service";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock events
-const MOCK_EVENTS = [{
-  id: "1",
-  title: "Happy Hour no Bar do Zé",
-  date: "Hoje, 19:00",
-  location: "Bar do Zé",
-  imageUrl: "https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-  attendees: 8,
-  confirmed: true,
-  type: "public",
-  groupName: null
-}, {
-  id: "2",
-  title: "Aniversário da Marina",
-  date: "Amanhã, 20:00",
-  location: "Alameda Santos, 1000",
-  imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-  attendees: 15,
-  confirmed: false,
-  type: "private",
-  groupName: null
-}, {
-  id: "3",
-  title: "Churrasco de Domingo",
-  date: "Domingo, 12:00",
-  location: "Av. Paulista, 1000",
-  imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-  attendees: 12,
-  confirmed: true,
-  type: "group",
-  groupName: "Amigos da Faculdade"
-}, {
-  id: "4",
-  title: "Festival de Música",
-  date: "Próx. Sábado, 16:00",
-  location: "Parque Ibirapuera",
-  imageUrl: "https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-  attendees: 50,
-  confirmed: true,
-  type: "public",
-  groupName: null
-}, {
-  id: "5",
-  title: "Exposição de Arte",
-  date: "Próx. Sábado, 10:00",
-  location: "MASP",
-  imageUrl: "https://images.unsplash.com/photo-1605429523419-d828acb941d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-  attendees: 30,
-  confirmed: false,
-  type: "public",
-  groupName: null
-}];
 type FilterType = 'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed';
+type Event = {
+  id: string;
+  title: string;
+  date: string;
+  location: string | null;
+  imageUrl?: string;
+  image_url?: string | null;
+  attendees: number;
+  confirmed?: boolean;
+  type: "public" | "private" | "group";
+  groupName?: string | null;
+};
+
 const EventsPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter events based on the active filter and search query
-  const filteredEvents = MOCK_EVENTS.filter(event => {
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        const { data: userEvents, error } = await EventsService.getUserEvents();
+        
+        if (error) {
+          console.error("Error fetching events:", error);
+          toast({
+            title: "Erro ao carregar eventos",
+            description: "Não foi possível carregar seus eventos",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (userEvents) {
+          const formattedEvents: Event[] = userEvents.map((event: any) => {
+            const groupInfo = event.group_events?.[0]?.groups || null;
+            
+            return {
+              id: event.id,
+              title: event.title,
+              date: new Date(event.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              }),
+              location: event.location,
+              imageUrl: event.image_url,
+              attendees: event.event_participants?.length || 0,
+              confirmed: event.event_participants && event.event_participants.some((p: any) => p.status === 'confirmed'),
+              type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+              groupName: groupInfo?.name || null
+            };
+          });
+          
+          setEvents(formattedEvents);
+        }
+      } catch (error) {
+        console.error("Error loading events:", error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao carregar os eventos",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEvents();
+  }, [toast]);
+  
+  // Filter events based on the active filter and search/location queries
+  const filteredEvents = events.filter(event => {
     // Filter by event type
-    if (activeFilter === 'public' && event.type !== 'public' || activeFilter === 'private' && event.type !== 'private' || activeFilter === 'group' && event.type !== 'group' || activeFilter === 'confirmed' && !event.confirmed || activeFilter === 'missed' && event.confirmed !== false) {
+    if (
+      (activeFilter === 'public' && event.type !== 'public') || 
+      (activeFilter === 'private' && event.type !== 'private') || 
+      (activeFilter === 'group' && event.type !== 'group') || 
+      (activeFilter === 'confirmed' && !event.confirmed) || 
+      (activeFilter === 'missed' && event.confirmed !== false)
+    ) {
       return false;
     }
 
@@ -77,7 +104,7 @@ const EventsPage = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesTitle = event.title.toLowerCase().includes(query);
-      const matchesLocation = event.location.toLowerCase().includes(query);
+      const matchesLocation = event.location?.toLowerCase().includes(query) || false;
       const matchesGroup = event.groupName?.toLowerCase().includes(query) || false;
       if (!matchesTitle && !matchesLocation && !matchesGroup) {
         return false;
@@ -85,24 +112,38 @@ const EventsPage = () => {
     }
 
     // Filter by location
-    if (locationQuery && !event.location.toLowerCase().includes(locationQuery.toLowerCase())) {
+    if (locationQuery && !event.location?.toLowerCase().includes(locationQuery.toLowerCase())) {
       return false;
     }
+    
     return true;
   });
+
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
+
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocationQuery(e.target.value);
   };
+
   const handleEventClick = (id: string) => {
     navigate(`/evento/${id}`);
   };
+
   const handleBackToHome = () => {
     navigate('/');
   };
-  return <MainLayout title="Eventos" showBack onBack={handleBackToHome} showSearch onSearch={handleSearchChange} rightContent={<>
+
+  return (
+    <MainLayout
+      title="Eventos" 
+      showBack 
+      onBack={handleBackToHome} 
+      showSearch 
+      onSearch={handleSearchChange}
+      rightContent={
+        <>
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -146,9 +187,9 @@ const EventsPage = () => {
               </DrawerFooter>
             </DrawerContent>
           </Drawer>
-
-          
-        </>}>
+        </>
+      }
+    >
       <div className="px-4 py-4">
         {/* Filter pills */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none">
@@ -173,7 +214,8 @@ const EventsPage = () => {
         </div>
         
         {/* Location filter info */}
-        {locationQuery && <div className="bg-muted/30 p-3 rounded-lg mb-4 flex items-center justify-between">
+        {locationQuery && (
+          <div className="bg-muted/30 p-3 rounded-lg mb-4 flex items-center justify-between">
             <div className="flex items-center">
               <MapPin size={18} className="text-primary mr-2" />
               <span>Eventos em: <strong>{locationQuery}</strong></span>
@@ -181,22 +223,46 @@ const EventsPage = () => {
             <Button variant="ghost" size="sm" onClick={() => setLocationQuery("")}>
               Limpar
             </Button>
-          </div>}
+          </div>
+        )}
         
         {/* Events grid */}
-        {filteredEvents.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredEvents.map(event => <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
-                <EventCard id={event.id} title={event.title} date={event.date} location={event.location} imageUrl={event.imageUrl} attendees={event.attendees} confirmed={event.confirmed} type={event.type as "public" | "private" | "group"} groupName={event.groupName} size="large" />
-              </div>)}
-          </div> : <div className="text-center py-12">
+        {loading ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredEvents.map(event => (
+              <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
+                <EventCard 
+                  id={event.id} 
+                  title={event.title} 
+                  date={event.date} 
+                  location={event.location || ''} 
+                  imageUrl={event.imageUrl || event.image_url || ''} 
+                  attendees={event.attendees} 
+                  confirmed={event.confirmed} 
+                  type={event.type} 
+                  groupName={event.groupName} 
+                  size="large" 
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
             <Search className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium mb-1">Nenhum evento encontrado</h3>
             <p className="text-muted-foreground mb-4">
               {searchQuery || locationQuery ? "Não encontramos eventos com esses filtros." : "Não há eventos disponíveis no momento."}
             </p>
             <Button onClick={() => navigate('/criar')}>Criar um evento</Button>
-          </div>}
+          </div>
+        )}
       </div>
-    </MainLayout>;
+    </MainLayout>
+  );
 };
+
 export default EventsPage;
