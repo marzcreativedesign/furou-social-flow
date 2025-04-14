@@ -66,7 +66,7 @@ const IMAGE_URLS = [
   "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1514525253161-d06e58bcb0e0?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1551958219-acbc608c6377?ixlib=rb-4.0.3",
@@ -235,8 +235,16 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Modified to fix the infinite type instantiation issue
-export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
+// Completely rewrite the seedDataForEmail function to fix the infinite type instantiation issue
+export const seedDataForEmail = async (email: string): Promise<{
+  success: boolean;
+  eventIds?: string[];
+  groupIds?: string[];
+  eventCount?: number;
+  groupCount?: number;
+  notificationCount?: number;
+  error?: any;
+}> => {
   try {
     // First try to find the profile directly
     const { data: userData, error: userError } = await supabase
