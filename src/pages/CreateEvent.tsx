@@ -126,12 +126,12 @@ const CreateEvent = () => {
       });
       
       // Redirect to the event page
-      navigate(data ? `/evento/${data[0].id}` : "/");
-    } catch (error) {
+      navigate(data && data.length > 0 ? `/evento/${data[0].id}` : "/");
+    } catch (error: any) {
       console.error("Error creating event:", error);
       toast({
         title: "Erro ao criar evento",
-        description: "Ocorreu um erro ao criar o evento. Tente novamente.",
+        description: error.message || "Ocorreu um erro ao criar o evento. Tente novamente.",
         variant: "destructive"
       });
     } finally {

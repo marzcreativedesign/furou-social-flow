@@ -3,51 +3,79 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const GroupsService = {
   getUserGroups: async () => {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user.user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          group_members!inner(*)
+        `)
+        .eq('group_members.user_id', user.user.id);
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error fetching user groups:", error);
+      return { data: null, error };
     }
-    
-    return await supabase
-      .from('group_members')
-      .select(`
-        *,
-        groups(*)
-      `)
-      .eq('user_id', user.user.id);
   },
 
   getGroupById: async (groupId: string) => {
-    return await supabase
-      .from('groups')
-      .select(`
-        *,
-        group_members(*),
-        group_events(*, events(*))
-      `)
-      .eq('id', groupId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          group_members(*),
+          group_events(*, events(*))
+        `)
+        .eq('id', groupId)
+        .single();
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error fetching group:", error);
+      return { data: null, error };
+    }
   },
 
   getGroupMembers: async (groupId: string) => {
-    return await supabase
-      .from('group_members')
-      .select(`
-        *,
-        profiles:user_id(*)
-      `)
-      .eq('group_id', groupId);
+    try {
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          *,
+          profiles:user_id(*)
+        `)
+        .eq('group_id', groupId);
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      return { data: null, error };
+    }
   },
   
   getGroupEvents: async (groupId: string) => {
-    return await supabase
-      .from('group_events')
-      .select(`
-        *,
-        events(*)
-      `)
-      .eq('group_id', groupId);
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          group_events!inner(*)
+        `)
+        .eq('group_events.group_id', groupId);
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error fetching group events:", error);
+      return { data: null, error };
+    }
   },
 
   createGroup: async (data: {
@@ -55,70 +83,103 @@ export const GroupsService = {
     description?: string;
     image_url?: string;
   }) => {
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Create the group
-    const { data: createdGroup, error: groupError } = await supabase
-      .from('groups')
-      .insert(data)
-      .select();
+    try {
+      const { data: user } = await supabase.auth.getUser();
       
-    if (groupError || !createdGroup || createdGroup.length === 0) {
-      throw new Error(groupError?.message || 'Error creating group');
-    }
-    
-    // Add the creator as an admin member
-    const { error: memberError } = await supabase
-      .from('group_members')
-      .insert({
-        group_id: createdGroup[0].id,
-        user_id: user.user.id,
-        is_admin: true
-      });
+      if (!user.user) {
+        throw new Error('User not authenticated');
+      }
       
-    if (memberError) {
-      throw new Error(memberError.message);
+      // Create the group
+      const { data: createdGroup, error: groupError } = await supabase
+        .from('groups')
+        .insert(data)
+        .select();
+        
+      if (groupError || !createdGroup || createdGroup.length === 0) {
+        throw new Error(groupError?.message || 'Error creating group');
+      }
+      
+      // Add the creator as an admin member
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: createdGroup[0].id,
+          user_id: user.user.id,
+          is_admin: true
+        });
+        
+      if (memberError) {
+        throw new Error(memberError.message);
+      }
+      
+      return createdGroup;
+    } catch (error) {
+      console.error("Error creating group:", error);
+      throw error;
     }
-    
-    return createdGroup;
   },
   
   addMemberToGroup: async (groupId: string, userId: string, isAdmin: boolean = false) => {
-    return await supabase
-      .from('group_members')
-      .insert({
-        group_id: groupId,
-        user_id: userId,
-        is_admin: isAdmin
-      });
+    try {
+      const { data, error } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: groupId,
+          user_id: userId,
+          is_admin: isAdmin
+        });
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error adding member to group:", error);
+      return { data: null, error };
+    }
   },
   
   updateMember: async (groupId: string, userId: string, isAdmin: boolean) => {
-    return await supabase
-      .from('group_members')
-      .update({ is_admin: isAdmin })
-      .eq('group_id', groupId)
-      .eq('user_id', userId);
+    try {
+      const { data, error } = await supabase
+        .from('group_members')
+        .update({ is_admin: isAdmin })
+        .eq('group_id', groupId)
+        .eq('user_id', userId);
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error updating group member:", error);
+      return { data: null, error };
+    }
   },
   
   removeMember: async (groupId: string, userId: string) => {
-    return await supabase
-      .from('group_members')
-      .delete()
-      .eq('group_id', groupId)
-      .eq('user_id', userId);
+    try {
+      const { data, error } = await supabase
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', userId);
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error removing group member:", error);
+      return { data: null, error };
+    }
   },
   
   addEventToGroup: async (groupId: string, eventId: string) => {
-    return await supabase
-      .from('group_events')
-      .insert({
-        group_id: groupId,
-        event_id: eventId
-      });
+    try {
+      const { data, error } = await supabase
+        .from('group_events')
+        .insert({
+          group_id: groupId,
+          event_id: eventId
+        });
+        
+      return { data, error };
+    } catch (error) {
+      console.error("Error adding event to group:", error);
+      return { data: null, error };
+    }
   }
 };

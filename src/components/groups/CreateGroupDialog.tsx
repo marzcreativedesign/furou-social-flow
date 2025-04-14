@@ -70,11 +70,11 @@ const CreateGroupDialog = ({ onGroupCreated }: CreateGroupDialogProps) => {
       });
 
       navigate(`/grupo/${newGroup.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating group:", error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao criar o grupo",
+        description: error.message || "Ocorreu um erro ao criar o grupo",
         variant: "destructive",
       });
     } finally {
