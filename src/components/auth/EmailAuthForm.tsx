@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,20 @@ interface EmailAuthFormProps {
   onForgotPassword?: () => void;
 }
 
-const emailSchema = z.object({
+// Base schema for validation
+const baseSchema = z.object({
   email: z.string().email("Por favor, insira um e-mail válido"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
 });
+
+// Extended schema for signup that includes fullName
+const signupSchema = baseSchema.extend({
+  fullName: z.string().min(3, "O nome completo deve ter pelo menos 3 caracteres")
+});
+
+// Define types from the schemas
+type LoginFormValues = z.infer<typeof baseSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 const EmailAuthForm = ({
   isSignUp,
@@ -34,15 +45,28 @@ const EmailAuthForm = ({
 }: EmailAuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
-  const form = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(emailSchema),
+  // Use the appropriate schema and form type based on whether it's signup or login
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(baseSchema),
     defaultValues: {
       email: "",
       password: ""
     }
   });
 
-  const handleSubmit = async (values: z.infer<typeof emailSchema> | SignupFormValues) => {
+  const signupForm = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: ""
+    }
+  });
+
+  // Use the appropriate form based on isSignUp
+  const form = isSignUp ? signupForm : loginForm;
+
+  const handleSubmit = async (values: LoginFormValues | SignupFormValues) => {
     try {
       if (isSignUp && 'fullName' in values) {
         await onSubmit(values.email, values.password, values.fullName);
@@ -63,7 +87,7 @@ const EmailAuthForm = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {isSignUp && (
           <FormField
-            control={form.control}
+            control={signupForm.control}
             name="fullName"
             render={({ field }) => (
               <FormItem>
