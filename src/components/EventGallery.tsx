@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Image as ImageIcon, X, Plus } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import OptimizedImage from "./OptimizedImage";
 
 type GalleryImageType = {
   id: string;
@@ -62,10 +63,11 @@ const EventGallery = ({ eventId, initialImages = [] }: EventGalleryProps) => {
               className="aspect-square bg-muted cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setSelectedImage(image)}
             >
-              <img 
+              <OptimizedImage 
                 src={image.src} 
                 alt="Event gallery" 
                 className="w-full h-full object-cover"
+                aspectRatio="1/1"
               />
             </div>
           ))}
@@ -81,7 +83,7 @@ const EventGallery = ({ eventId, initialImages = [] }: EventGalleryProps) => {
       )}
       
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-screen-md p-0 overflow-hidden">
+        <DialogContent className="max-w-screen-md p-0 overflow-hidden" aria-describedby="gallery-image-description">
           {selectedImage && (
             <div className="relative">
               <button 
@@ -90,14 +92,14 @@ const EventGallery = ({ eventId, initialImages = [] }: EventGalleryProps) => {
               >
                 <X size={20} />
               </button>
-              <img 
+              <OptimizedImage 
                 src={selectedImage.src} 
                 alt="Gallery fullscreen" 
                 className="w-full max-h-[80vh] object-contain"
               />
               <div className="p-4 bg-background">
                 <p className="font-medium">{selectedImage.userName}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground" id="gallery-image-description">
                   {new Date(selectedImage.timestamp).toLocaleDateString()}
                 </p>
               </div>

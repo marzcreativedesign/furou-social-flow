@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
@@ -83,20 +84,20 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       .maybeSingle();
 
     if (userError) {
-      console.error('Error finding profile:', userError);
       return {
         success: false,
         error: userError.message,
       };
     }
 
+    // Se encontrou o perfil, use o ID do perfil
     if (profile && profile.id) {
       return await seedUserData(profile.id);
     }
 
-    // Se não encontrado no perfil, tenta usar a sessão atual
+    // Se não encontrou no perfil, tente usar a sessão atual
     const { data: sessionData } = await supabase.auth.getSession();
-
+    
     if (sessionData?.session?.user?.email === email && sessionData?.session?.user?.id) {
       return await seedUserData(sessionData.session.user.id);
     }
@@ -107,7 +108,6 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       error: `Could not find user with email ${email}`,
     };
   } catch (error) {
-    console.error('Error seeding data for email:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,

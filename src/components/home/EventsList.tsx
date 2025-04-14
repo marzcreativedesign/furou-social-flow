@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
 import { useNavigate } from "react-router-dom";
+import { memo } from "react";
 
 interface Event {
   id: string;
@@ -25,7 +26,8 @@ interface EventsListProps {
   viewAllLink?: string;
 }
 
-const EventsList = ({ 
+// Using memo to prevent unnecessary re-renders when parent components update
+const EventsList = memo(({ 
   title, 
   events, 
   showViewAll = false,
@@ -53,7 +55,12 @@ const EventsList = ({
       {events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map(event => (
-            <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
+            <div 
+              key={event.id} 
+              onClick={() => handleEventClick(event.id)} 
+              className="cursor-pointer"
+              style={{ minHeight: "200px" }} // Prevent layout shift by reserving space
+            >
               <EventCard 
                 id={event.id}
                 title={event.title}
@@ -83,6 +90,8 @@ const EventsList = ({
       )}
     </div>
   );
-};
+});
+
+EventsList.displayName = "EventsList";
 
 export default EventsList;

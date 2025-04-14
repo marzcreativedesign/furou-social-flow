@@ -245,4 +245,29 @@
     animation: none !important;
     transform: none !important;
   }
+
+  /* Image placeholders to prevent layout shift */
+  img {
+    @apply transition-opacity;
+    height: auto;
+    content-visibility: auto;
+  }
+  
+  .img-placeholder {
+    @apply bg-muted/30;
+    min-height: 100px;
+    width: 100%;
+  }
+  
+  /* Prevent layout shift for dynamic content */
+  .content-placeholder {
+    min-height: 1.5rem;
+  }
+  
+  /* Font display swap to reduce CLS */
+  .font-sans,
+  .font-display,
+  .font-dyslexic {
+    font-display: swap;
+  }
 }
