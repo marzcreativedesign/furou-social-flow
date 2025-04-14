@@ -125,17 +125,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           {isDesktop && (
             <div className="hidden lg:block lg:w-64 p-4 border-r border-border dark:border-gray-800 min-h-[calc(100vh-64px)] fixed">
               <div className="sticky top-20 space-y-4 flex flex-col h-[calc(100vh-100px)]">
-                {/* Perfil do Usuário */}
-                <div className="flex items-center gap-3 p-2 mb-2">
+                {/* Perfil do Usuário - Transformado em link clicável */}
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-3 p-2 mb-2 justify-start w-full hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  onClick={() => navigate('/perfil')}
+                >
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userData.avatarUrl} />
                     <AvatarFallback>CO</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col items-start">
                     <span className="font-medium text-sm truncate">{userData.name}</span>
                     <span className="text-xs text-muted-foreground truncate">{userData.email}</span>
                   </div>
-                </div>
+                </Button>
                 
                 <Separator className="my-2" />
                 

@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
@@ -12,7 +13,8 @@ import {
   Edit2,
   Copy,
   Info,
-  Tag
+  Tag,
+  AlertCircle
 } from "lucide-react";
 import MainLayout from "../components/MainLayout";
 import ConfirmationButton from "../components/ConfirmationButton";
@@ -38,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const MOCK_EVENT = {
   id: "1",
@@ -66,8 +69,7 @@ const MOCK_EVENT = {
   type: "public", // public, private, group
   groupId: null,
   groupName: null,
-  totalContribution: 200,
-  targetContribution: 400,
+  estimatedBudget: 400, // Novo campo para orçamento estimado
   offers: [
     { id: "1", title: "15% OFF na primeira rodada", businessName: "Bar do Zé", imageUrl: "https://i.pravatar.cc/150?u=business1" },
     { id: "2", title: "Porção de batata frita grátis", businessName: "Bar do Zé", imageUrl: "https://i.pravatar.cc/150?u=business2" },
@@ -117,6 +119,8 @@ const EventDetail = () => {
     startTime: "19:00", // Would be extracted from event.fullDate in a real app
     endTime: "23:00", // Would be extracted from event.fullDate in a real app
     type: event.type,
+    includeEstimatedBudget: event.estimatedBudget ? true : false,
+    estimatedBudget: event.estimatedBudget ? event.estimatedBudget.toString() : "",
   });
   
   const visibleAttendees = showAllAttendees 
@@ -176,7 +180,8 @@ const EventDetail = () => {
       location: editEventData.location,
       address: editEventData.address,
       fullDate: `${formattedDate} • ${editEventData.startTime} - ${editEventData.endTime}`,
-      type: editEventData.type as "public" | "private" | "group"
+      type: editEventData.type as "public" | "private" | "group",
+      estimatedBudget: editEventData.includeEstimatedBudget ? parseFloat(editEventData.estimatedBudget) : null,
     }));
     
     setEditDialogOpen(false);
@@ -193,6 +198,11 @@ const EventDetail = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const formatCurrency = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
 
   // Check if current user is the event host (for edit button display)
@@ -337,6 +347,24 @@ const EventDetail = () => {
           />
         </div>
         
+        {/* Seção de orçamento estimado (substitui a vaquinha) */}
+        {event.estimatedBudget && (
+          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
+            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Orçamento do Evento</h2>
+            <div className="bg-muted dark:bg-[#262626] rounded-xl p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="dark:text-[#EDEDED]">Orçamento estimado:</span>
+                <span className="font-bold dark:text-[#EDEDED]">{formatCurrency(event.estimatedBudget)}</span>
+              </div>
+              
+              <div className="flex items-start mt-4 text-sm text-muted-foreground bg-background/50 dark:bg-[#1A1A1A]/50 p-3 rounded-lg">
+                <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+                <p>Este é apenas um valor previsto. Os custos finais podem variar de acordo com as decisões dos participantes e atualizações do evento.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
           <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Quem vai</h2>
           
@@ -446,28 +474,6 @@ const EventDetail = () => {
           <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
             <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Calculadora de Custos</h2>
             <EventCostCalculator attendeesCount={event.attendees.length} />
-          </div>
-        )}
-        
-        {event.type === "public" && (
-          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
-            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Vaquinha</h2>
-            <div className="bg-muted dark:bg-[#262626] rounded-xl p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="dark:text-[#EDEDED]">Meta: R$ {event.targetContribution.toFixed(2)}</span>
-                <span className="font-bold dark:text-[#EDEDED]">R$ {event.totalContribution.toFixed(2)}</span>
-              </div>
-              <div className="w-full bg-background dark:bg-[#121212] rounded-full h-3 mb-3">
-                <div 
-                  className="bg-secondary h-3 rounded-full dark:bg-secondary"
-                  style={{ width: `${(event.totalContribution / event.targetContribution) * 100}%` }}
-                />
-              </div>
-              <Button className="w-full flex items-center justify-center dark:bg-primary dark:hover:bg-accent">
-                <DollarSign size={18} className="mr-2" />
-                Contribuir
-              </Button>
-            </div>
           </div>
         )}
         
@@ -622,6 +628,57 @@ const EventDetail = () => {
                 className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
               />
             </div>
+            
+            {/* Campo para orçamento estimado */}
+            <div className="flex items-start space-x-2 pt-2">
+              <Checkbox 
+                id="includeEstimatedBudget"
+                checked={editEventData.includeEstimatedBudget}
+                onCheckedChange={(checked) => {
+                  setEditEventData(prev => ({
+                    ...prev,
+                    includeEstimatedBudget: checked === true
+                  }));
+                }}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="includeEstimatedBudget"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Incluir orçamento estimado para o evento
+                </Label>
+              </div>
+            </div>
+            
+            {editEventData.includeEstimatedBudget && (
+              <div className="grid gap-2">
+                <Label htmlFor="estimatedBudget" className="dark:text-[#EDEDED]">
+                  Valor do orçamento estimado
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    R$
+                  </span>
+                  <Input 
+                    id="estimatedBudget" 
+                    name="estimatedBudget"
+                    type="text"
+                    value={editEventData.estimatedBudget}
+                    onChange={(e) => {
+                      // Allow only numbers and dot
+                      const value = e.target.value.replace(/[^\d.,]/g, '');
+                      setEditEventData(prev => ({
+                        ...prev,
+                        estimatedBudget: value
+                      }));
+                    }}
+                    placeholder="500,00"
+                    className="pl-9 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           
           <DialogFooter>

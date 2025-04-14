@@ -8,7 +8,8 @@ import {
   Image as ImageIcon, 
   Users,
   Info,
-  Link as LinkIcon
+  Link as LinkIcon,
+  DollarSign
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import Header from "../components/Header";
@@ -16,6 +17,8 @@ import BottomNav from "../components/BottomNav";
 import { useToast } from "../hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import MainLayout from "../components/MainLayout";
 
 const CreateEvent = () => {
@@ -31,7 +34,9 @@ const CreateEvent = () => {
     description: "",
     image: null as File | null,
     imagePreview: "",
-    isPublic: false
+    isPublic: false,
+    includeEstimatedBudget: false,
+    estimatedBudget: ""
   });
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -73,6 +78,16 @@ const CreateEvent = () => {
       toast({
         title: "Informações incompletas",
         description: "Por favor preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validar orçamento se incluído
+    if (eventData.includeEstimatedBudget && !eventData.estimatedBudget) {
+      toast({
+        title: "Orçamento inválido",
+        description: "Por favor insira um valor para o orçamento estimado ou desmarque a opção.",
         variant: "destructive"
       });
       return;
@@ -201,6 +216,60 @@ const CreateEvent = () => {
             <Info size={14} className="mr-1 mt-0.5" />
             Eventos públicos podem ser descobertos por qualquer pessoa no Furou?!
           </p>
+        </div>
+        
+        {/* Seção de orçamento estimado */}
+        <div className="mb-6">
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="includeEstimatedBudget"
+              checked={eventData.includeEstimatedBudget}
+              onCheckedChange={(checked) => {
+                setEventData(prev => ({
+                  ...prev,
+                  includeEstimatedBudget: checked === true
+                }));
+              }}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="includeEstimatedBudget"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Incluir orçamento estimado para o evento
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Defina um valor aproximado para os custos do evento
+              </p>
+            </div>
+          </div>
+          
+          {eventData.includeEstimatedBudget && (
+            <div className="mt-4">
+              <div className="relative">
+                <DollarSign size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  name="estimatedBudget"
+                  value={eventData.estimatedBudget}
+                  onChange={(e) => {
+                    // Permitir apenas números e pontos/vírgulas
+                    const value = e.target.value.replace(/[^\d.,]/g, '');
+                    setEventData(prev => ({
+                      ...prev,
+                      estimatedBudget: value
+                    }));
+                  }}
+                  placeholder="R$ 500,00"
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
+                <Info size={12} className="flex-shrink-0 mt-0.5" />
+                Este valor é apenas uma estimativa e será exibido para os participantes.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mb-6 bg-muted/30 p-3 rounded-lg">

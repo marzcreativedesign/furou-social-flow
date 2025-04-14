@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import GroupMembersManagement from '../components/GroupMembersManagement';
+import GroupRanking from '../components/GroupRanking';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Info, Map, MessageCircle, Plus, Settings, Users } from 'lucide-react';
@@ -20,6 +21,45 @@ const mockGroup = {
   isOwner: true,
   isAdmin: true
 };
+
+// Dados mock dos membros com informações de participação
+const mockMembers = [
+  {
+    id: "1",
+    name: "Carlos Oliveira",
+    image: "https://i.pravatar.cc/150?u=1",
+    isAdmin: true,
+    stats: { participated: 12, missed: 2, pending: 1 }
+  },
+  {
+    id: "2",
+    name: "Ana Silva",
+    image: "https://i.pravatar.cc/150?u=2",
+    isAdmin: false,
+    stats: { participated: 10, missed: 3, pending: 2 }
+  },
+  {
+    id: "3",
+    name: "Marcos Pereira",
+    image: "https://i.pravatar.cc/150?u=3",
+    isAdmin: false,
+    stats: { participated: 8, missed: 5, pending: 0 }
+  },
+  {
+    id: "4",
+    name: "Julia Santos",
+    image: "https://i.pravatar.cc/150?u=4",
+    isAdmin: false,
+    stats: { participated: 5, missed: 7, pending: 1 }
+  },
+  {
+    id: "5",
+    name: "Ricardo Almeida",
+    image: "https://i.pravatar.cc/150?u=5",
+    isAdmin: false,
+    stats: { participated: 11, missed: 1, pending: 3 }
+  }
+];
 
 // Simulação de eventos do grupo
 const mockEvents = [
@@ -54,6 +94,7 @@ const GroupDetail = () => {
   const navigate = useNavigate();
   const [group, setGroup] = useState(mockGroup);
   const [events, setEvents] = useState(mockEvents);
+  const [members, setMembers] = useState(mockMembers);
   const [activeTab, setActiveTab] = useState('eventos');
 
   // Em uma implementação real, buscaríamos os dados do grupo a partir do ID
@@ -116,9 +157,9 @@ const GroupDetail = () => {
               <Users className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Membros</span>
             </TabsTrigger>
-            <TabsTrigger value="chat">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Chat</span>
+            <TabsTrigger value="ranking">
+              <Badge className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Ranking</span>
             </TabsTrigger>
             <TabsTrigger value="sobre">
               <Info className="h-4 w-4 mr-2" />
@@ -177,18 +218,11 @@ const GroupDetail = () => {
             />
           </TabsContent>
           
-          {/* Conteúdo da aba Chat */}
-          <TabsContent value="chat" className="h-[400px] flex items-center justify-center">
-            <div className="text-center p-4">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Chat do grupo</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Em breve você poderá conversar com todos do grupo aqui.
-              </p>
-              <Button variant="outline">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Ativar notificações
-              </Button>
+          {/* Conteúdo da aba Ranking */}
+          <TabsContent value="ranking">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold mb-4">Ranking de Participação</h2>
+              <GroupRanking members={members} />
             </div>
           </TabsContent>
           
