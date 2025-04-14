@@ -151,14 +151,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         onSearch={handleSearchChange}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
-        isDesktop={isDesktop}
       >
         {rightContent}
       </Header>
 
       <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
         <div className="lg:flex">
-          {/* Desktop sidebar - Always show on desktop */}
+          {/* Desktop sidebar */}
           {isDesktop && (
             <div className="hidden lg:block lg:w-64 p-4">
               <div className="sticky top-20 space-y-1">
@@ -225,7 +224,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </main>
 
-      {/* Only show bottom nav on mobile */}
       {!isDesktop && (
         <BottomNav />
       )}
