@@ -33,6 +33,7 @@ interface HeaderProps {
   onSearch?: (query: string) => void;
   darkMode?: boolean;
   toggleDarkMode?: () => void;
+  isDesktop?: boolean;
 }
 
 const Header = ({
@@ -44,6 +45,7 @@ const Header = ({
   onSearch,
   darkMode = false,
   toggleDarkMode,
+  isDesktop = false
 }: HeaderProps) => {
   const location = useLocation();
   const path = location.pathname;
@@ -51,7 +53,6 @@ const Header = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const isDesktop = window.innerWidth >= 1024; // Modo desktop acima de 1024px
 
   const getTitleFromPath = () => {
     switch (path) {
@@ -106,7 +107,7 @@ const Header = ({
     { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' },
   ];
 
-  // Renderiza o botão voltar ou o botão do menu hamburguer
+  // Renderiza o botão voltar ou o botão do menu hambúrguer
   const renderLeftButton = () => {
     if (showBack) {
       return (
@@ -118,7 +119,8 @@ const Header = ({
           <ArrowLeft size={24} />
         </button>
       );
-    } else {
+    } else if (!isDesktop) {
+      // Only show hamburger menu on mobile
       return (
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
@@ -126,7 +128,7 @@ const Header = ({
               <Menu size={24} />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
+          <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-card">
             <SheetHeader>
               <SheetTitle className="text-left flex items-center">
                 <span className="text-2xl font-bold">Furou?!</span>
@@ -136,7 +138,7 @@ const Header = ({
             <Link 
               to="/perfil" 
               onClick={() => setMenuOpen(false)}
-              className="flex items-center mb-6 px-2 hover:bg-muted/50 dark:hover:bg-gray-800/50 rounded-md p-2"
+              className="flex items-center mb-6 px-2 hover:bg-muted/50 dark:hover:bg-muted rounded-md p-2"
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src="https://i.pravatar.cc/150?u=1" />
@@ -152,7 +154,7 @@ const Header = ({
                 {menuItems.map((item) => (
                   <Button
                     key={item.href}
-                    variant={location.pathname === item.href ? "secondary" : "ghost"}
+                    variant={location.pathname === item.href ? "default" : "ghost"}
                     className="w-full justify-start"
                     onClick={() => { 
                       navigate(item.href); 
@@ -201,11 +203,14 @@ const Header = ({
           </SheetContent>
         </Sheet>
       );
+    } else {
+      // On desktop we don't need a left button since we have the sidebar
+      return null;
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 bg-background/95 dark:bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 max-w-7xl mx-auto">
         <div className="flex items-center">
           {renderLeftButton()}
@@ -228,7 +233,7 @@ const Header = ({
           )}
 
           {isSearchActive && (
-            <div className="fixed inset-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md">
+            <div className="fixed inset-0 z-50 bg-background/95 dark:bg-card/95 backdrop-blur-md">
               <div className="flex items-center p-4">
                 <button
                   onClick={handleSearchClick}
@@ -243,7 +248,7 @@ const Header = ({
                     <input
                       type="text"
                       placeholder="Buscar eventos..."
-                      className="w-full h-12 pl-10 pr-4 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-colors dark:bg-gray-800 dark:text-white dark:border-gray-700"
+                      className="w-full h-12 pl-10 pr-4 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-colors dark:bg-muted"
                       value={searchQuery}
                       onChange={handleSearchChange}
                       autoFocus
@@ -257,7 +262,7 @@ const Header = ({
           <Link to="/notificacoes" className="relative">
             <Button variant="ghost" size="icon" className="relative">
               <Bell size={20} />
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
                 3
               </span>
             </Button>
