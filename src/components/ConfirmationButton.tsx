@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,13 +16,43 @@ interface ConfirmationButtonProps {
 const ConfirmationButton = ({
   onConfirm,
   onDecline,
-  initialState = null,
   eventId,
 }: ConfirmationButtonProps) => {
-  const [confirmed, setConfirmed] = useState<boolean | null>(initialState);
+  const [confirmed, setConfirmed] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check the initial status when the component mounts
+    const checkInitialStatus = async () => {
+      if (!user || !eventId) return;
+      
+      try {
+        const { data, error } = await EventsService.getEventById(eventId);
+        
+        if (error) {
+          console.error("Error getting event:", error);
+          return;
+        }
+        
+        if (data?.event_participants) {
+          const userParticipation = data.event_participants.find(
+            (p) => p.user_id === user.id
+          );
+          
+          if (userParticipation) {
+            setConfirmed(userParticipation.status === 'confirmed' ? true : 
+                        userParticipation.status === 'declined' ? false : null);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking participant status:", error);
+      }
+    };
+    
+    checkInitialStatus();
+  }, [user, eventId]);
 
   const handleAuthRequired = () => {
     toast.error("Faça login para participar deste evento");
@@ -37,16 +67,29 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const { error } = await EventsService.updateParticipantStatus(eventId, user.id, 'confirmed');
+      let result;
+      if (confirmed === true) {
+        // User is already confirmed, do nothing
+        setLoading(false);
+        return;
+      } else if (confirmed === null) {
+        // User has not responded yet, join the event
+        result = await EventsService.joinEvent(eventId);
+      } else {
+        // User previously declined, update to confirmed
+        result = await EventsService.updateParticipationStatus(eventId, 'confirmed');
+      }
       
-      if (error) {
-        console.error("Error confirming event:", error);
+      if (result.error) {
+        console.error("Error confirming event:", result.error);
         toast.error("Erro ao confirmar presença");
         return;
       }
       
       setConfirmed(true);
       toast.success("Presença confirmada!");
+      // Reload the page to update participants lists
+      window.location.reload();
       onConfirm();
     } catch (error) {
       console.error("Error confirming event:", error);
@@ -64,16 +107,32 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const { error } = await EventsService.updateParticipantStatus(eventId, user.id, 'declined');
+      let result;
+      if (confirmed === false) {
+        // User is already declined, do nothing
+        setLoading(false);
+        return;
+      } else if (confirmed === null) {
+        // User has not responded yet, join with declined status
+        result = await EventsService.joinEvent(eventId);
+        if (!result.error) {
+          result = await EventsService.updateParticipationStatus(eventId, 'declined');
+        }
+      } else {
+        // User previously confirmed, update to declined
+        result = await EventsService.updateParticipationStatus(eventId, 'declined');
+      }
       
-      if (error) {
-        console.error("Error declining event:", error);
+      if (result.error) {
+        console.error("Error declining event:", result.error);
         toast.error("Erro ao cancelar presença");
         return;
       }
       
       setConfirmed(false);
       toast.success("Presença cancelada");
+      // Reload the page to update participants lists
+      window.location.reload();
       onDecline();
     } catch (error) {
       console.error("Error declining event:", error);

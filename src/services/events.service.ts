@@ -68,7 +68,14 @@ export const EventsService = {
       .select(`
         *,
         profiles:creator_id(*),
-        event_participants(*),
+        event_participants!inner(
+          *,
+          profiles(*)
+        ),
+        group_events(
+          *,
+          groups(*)
+        ),
         comments(*)
       `)
       .eq("id", id)
