@@ -4,24 +4,20 @@ import {
   MapPin, 
   Calendar, 
   Users, 
-  Share2, 
   MessageCircle, 
   DollarSign,
   Image as ImageIcon,
-  Copy,
-  Link as LinkIcon,
-  Facebook,
-  Mail,
-  Twitter,
   ChevronDown,
   ChevronUp,
   Edit2,
-  MoreVertical
+  Copy,
+  Info,
+  Tag
 } from "lucide-react";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
 import MainLayout from "../components/MainLayout";
 import ConfirmationButton from "../components/ConfirmationButton";
+import EventShareButton from "../components/EventShareButton";
+import EventMapButton from "../components/EventMapButton";
 import { useToast } from "../hooks/use-toast";
 import EventTag from "../components/EventTag";
 import EventDiscussion from "../components/EventDiscussion";
@@ -30,7 +26,7 @@ import EventCostCalculator from "../components/EventCostCalculator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +37,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MOCK_EVENT = {
   id: "1",
@@ -110,7 +107,6 @@ const EventDetail = () => {
   const [event, setEvent] = useState(MOCK_EVENT);
   const { toast } = useToast();
   const [showAllAttendees, setShowAllAttendees] = useState(false);
-  const shareButtonRef = useRef<HTMLButtonElement>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editEventData, setEditEventData] = useState({
     title: event.title,
@@ -154,58 +150,16 @@ const EventDetail = () => {
     });
   };
   
-  const handleShareLink = () => {
-    const eventURL = `${window.location.origin}/evento/${id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: `Junte-se a mim no evento: ${event.title}`,
-        url: eventURL
-      })
-      .catch((error) => console.log('Erro ao compartilhar:', error));
-    } else {
-      navigator.clipboard.writeText(eventURL).then(() => {
-        toast({
-          title: "Link copiado!",
-          description: "O link do evento foi copiado para sua área de transferência"
-        });
-      });
-    }
-  };
-  
-  const handleCopyLink = () => {
-    const eventURL = `${window.location.origin}/evento/${id}`;
-    navigator.clipboard.writeText(eventURL).then(() => {
+  const handleCopyEventId = () => {
+    navigator.clipboard.writeText(event.id).then(() => {
       toast({
-        title: "Link copiado!",
-        description: "O link do evento foi copiado para sua área de transferência"
+        title: "ID copiado!",
+        description: "O ID do evento foi copiado para sua área de transferência"
       });
     });
   };
-  
-  const handleShareVia = (platform: string) => {
-    const eventURL = `${window.location.origin}/evento/${id}`;
-    let shareURL = '';
-    
-    switch (platform) {
-      case 'facebook':
-        shareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventURL)}`;
-        break;
-      case 'twitter':
-        shareURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Junte-se a mim no evento: ${event.title}`)}&url=${encodeURIComponent(eventURL)}`;
-        break;
-      case 'email':
-        shareURL = `mailto:?subject=${encodeURIComponent(`Convite para: ${event.title}`)}&body=${encodeURIComponent(`Olá! Venha participar deste evento comigo: ${event.title}\n\n${eventURL}`)}`;
-        break;
-      default:
-        break;
-    }
-    
-    if (shareURL) {
-      window.open(shareURL, '_blank');
-    }
-  };
+
+  const eventUrl = `${window.location.origin}/evento/${id}`;
 
   const handleEditEvent = () => {
     setEditDialogOpen(true);
@@ -276,40 +230,41 @@ const EventDetail = () => {
             </Button>
           )}
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="bg-white/80 backdrop-blur-sm p-2 rounded-full dark:bg-card/80"
-                size="icon"
-                variant="ghost"
-              >
-                <Share2 size={20} className="text-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white dark:bg-card dark:border-[#2C2C2C]" align="end">
-              <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer dark:hover:bg-muted">
-                <Copy className="mr-2 h-4 w-4" />
-                <span className="dark:text-[#EDEDED]">Copiar link</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShareVia('facebook')} className="cursor-pointer dark:hover:bg-muted">
-                <Facebook className="mr-2 h-4 w-4" />
-                <span className="dark:text-[#EDEDED]">Facebook</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShareVia('twitter')} className="cursor-pointer dark:hover:bg-muted">
-                <Twitter className="mr-2 h-4 w-4" />
-                <span className="dark:text-[#EDEDED]">Twitter</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShareVia('email')} className="cursor-pointer dark:hover:bg-muted">
-                <Mail className="mr-2 h-4 w-4" />
-                <span className="dark:text-[#EDEDED]">Email</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <EventShareButton 
+            eventId={event.id}
+            eventTitle={event.title}
+            eventUrl={eventUrl}
+            variant="prominent"
+            size="icon"
+            showText={false}
+          />
         </div>
       </div>
       
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-2xl font-bold">{event.title}</h1>
+        </div>
+        
+        <div className="flex items-center gap-2 mb-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="outline" 
+                  className="flex items-center gap-1 cursor-pointer border-[#FF8A1E] bg-[#FF8A1E]/5 hover:bg-[#FF8A1E]/10"
+                  onClick={handleCopyEventId}
+                >
+                  <Tag size={12} className="text-[#FF8A1E]" />
+                  <span className="text-xs font-medium text-[#FF8A1E]">ID: {event.id}</span>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Clique para copiar o ID</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         
         <div className="flex items-center mb-4">
           <Link to={`/usuario/${event.host.id}`}>
@@ -329,24 +284,42 @@ const EventDetail = () => {
             </Link>
             <p className="text-xs text-muted-foreground dark:text-[#B3B3B3]">Organizador</p>
           </div>
+          
+          <div className="ml-auto">
+            <EventShareButton
+              eventId={event.id}
+              eventTitle={event.title}
+              eventUrl={eventUrl}
+              variant="secondary"
+              size="sm"
+            />
+          </div>
         </div>
         
         <div className="space-y-4 mb-6">
           <div className="flex items-center">
-            <Calendar size={18} className="text-primary dark:text-primary mr-3" />
+            <Calendar size={18} className="text-[#FF8A1E] dark:text-[#FF8A1E] mr-3 flex-shrink-0" />
             <span className="dark:text-[#EDEDED]">{event.fullDate}</span>
           </div>
           
           <div className="flex items-center">
-            <MapPin size={18} className="text-primary dark:text-primary mr-3" />
-            <div>
-              <div className="dark:text-[#EDEDED]">{event.location}</div>
-              <div className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{event.address}</div>
+            <MapPin size={18} className="text-[#FF8A1E] dark:text-[#FF8A1E] mr-3 flex-shrink-0" />
+            <div className="flex items-center justify-between w-full">
+              <div>
+                <div className="dark:text-[#EDEDED]">{event.location}</div>
+                <div className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{event.address}</div>
+              </div>
+              <EventMapButton 
+                address={event.address} 
+                location={event.location}
+                variant="outline"
+                size="sm"
+              />
             </div>
           </div>
           
           <div className="flex items-center">
-            <Users size={18} className="text-primary dark:text-primary mr-3" />
+            <Users size={18} className="text-[#FF8A1E] dark:text-[#FF8A1E] mr-3 flex-shrink-0" />
             <span className="dark:text-[#EDEDED]">{event.attendees.length} confirmados</span>
           </div>
         </div>
@@ -458,7 +431,7 @@ const EventDetail = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => setShowAllAttendees(!showAllAttendees)}
-              className="text-primary dark:text-[#FFA756] flex gap-1 items-center mt-2"
+              className="text-[#FF8A1E] dark:text-[#FF8A1E] flex gap-1 items-center mt-2"
             >
               {showAllAttendees ? (
                 <>Ver menos <ChevronUp size={16} /></>
@@ -652,19 +625,8 @@ const EventDetail = () => {
           </div>
           
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setEditDialogOpen(false)}
-              className="dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSaveEditedEvent}
-              className="dark:bg-primary dark:text-white dark:hover:bg-accent"
-            >
-              Salvar alterações
-            </Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSaveEditedEvent}>Salvar alterações</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

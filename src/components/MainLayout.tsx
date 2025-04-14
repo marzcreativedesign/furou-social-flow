@@ -8,8 +8,7 @@ import {
   Calendar, 
   Users, 
   Bell, 
-  Accessibility, 
-  Menu,
+  Settings,
   PlusCircle,
   LogOut,
   Search,
@@ -17,17 +16,10 @@ import {
   Calculator,
   Moon,
   Sun,
-  X,
   ScrollText,
   Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
-import { Dock, DockIcon, DockItem, DockLabel } from "@/components/ui/dock";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -54,6 +46,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
@@ -84,18 +89,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
-  const dockItems = [
-    { title: 'Início', icon: <Home />, href: '/' },
-    { title: 'Eventos', icon: <Calendar />, href: '/eventos' },
-    { title: 'Agenda', icon: <ScrollText />, href: '/agenda' },
-    { title: 'Grupos', icon: <Users />, href: '/grupos' },
-    { title: 'Explorar', icon: <Globe />, href: '/explorar' },
-    { title: 'Notificações', icon: <Bell />, href: '/notificacoes' },
-    { title: 'Calculadora', icon: <Calculator />, href: '/calculadora' },
-    { title: 'Perfil', icon: <User />, href: '/perfil' },
-    { title: 'Acessibilidade', icon: <Accessibility />, href: '/acessibilidade' },
-  ];
-  
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <div className="min-h-screen flex flex-col dark:bg-[#121212] dark:text-[#EDEDED]">
       <Header 
@@ -113,30 +113,64 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <main className="flex-1 dark:bg-[#121212] pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
         <div className="lg:flex">
           {/* Desktop sidebar */}
-          <div className="hidden lg:block lg:w-64 p-4">
-            <div className="sticky top-20 space-y-1">
-              {dockItems.map((item) => (
-                <Button
-                  key={item.href}
-                  variant={location.pathname === item.href ? "default" : "ghost"}
-                  className="w-full justify-start mb-1"
-                  onClick={() => navigate(item.href)}
+          {isDesktop && (
+            <div className="hidden lg:block lg:w-64 p-4">
+              <div className="sticky top-20 space-y-1">
+                {[
+                  { title: 'Início', icon: <Home size={20} />, href: '/' },
+                  { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
+                  { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
+                  { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
+                  { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
+                  { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
+                  { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
+                  { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
+                  { title: 'Configurações', icon: <Settings size={20} />, href: '/acessibilidade' }
+                ].map((item) => (
+                  <Button
+                    key={item.href}
+                    variant={isActive(item.href) ? "default" : "ghost"}
+                    className={`w-full justify-start mb-1 ${
+                      isActive(item.href) 
+                        ? "bg-[#FF8A1E] hover:bg-[#FF7A00] text-white" 
+                        : "text-muted-foreground hover:bg-muted"
+                    }`}
+                    onClick={() => navigate(item.href)}
+                  >
+                    {React.cloneElement(item.icon as React.ReactElement, { 
+                      size: 20, 
+                      className: "mr-2" 
+                    })}
+                    <span>{item.title}</span>
+                  </Button>
+                ))}
+                
+                <Button 
+                  variant="outline"
+                  className="w-full justify-start mt-4 border-[#FF8A1E] text-[#FF8A1E] hover:bg-[#FF8A1E]/10"
+                  onClick={() => navigate("/criar")}
                 >
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 20, className: "mr-2" })}
-                  <span>{item.title}</span>
+                  <PlusCircle size={20} className="mr-2" />
+                  <span>Criar Evento</span>
                 </Button>
-              ))}
-              
-              <Button 
-                variant="default"
-                className="w-full justify-start mt-4 bg-[#FFA756] text-white hover:bg-[#FF8A1E]"
-                onClick={() => navigate("/criar")}
-              >
-                <PlusCircle size={20} className="mr-2" />
-                <span>Criar Evento</span>
-              </Button>
+
+                <div className="flex items-center justify-between mt-8 px-2">
+                  <div className="flex items-center">
+                    {darkMode ? <Moon size={18} className="mr-2" /> : <Sun size={18} className="mr-2" />}
+                    <span className="text-sm">Tema escuro</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="p-1" 
+                    onClick={toggleDarkMode}
+                  >
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Mobile and tablet content */}
           <div className="flex-1">
@@ -145,75 +179,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </main>
 
-      <div className="block lg:hidden">
+      {!isDesktop && (
         <BottomNav />
-      </div>
-
-      <div className="hidden lg:block fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
-        <TooltipProvider delayDuration={0}>
-          <Dock className="items-end pb-3">
-            {dockItems.map((item, idx) => (
-              <Tooltip key={idx} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <DockItem
-                    key={idx}
-                    className={`aspect-square rounded-full ${
-                      location.pathname === item.href || location.pathname.startsWith(item.href + '/')
-                        ? "bg-[#FFA756] text-primary-foreground"
-                        : "bg-gray-200 hover:bg-gray-300 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]"
-                    }`}
-                  >
-                    <Link to={item.href} className="block h-full w-full flex items-center justify-center">
-                      <DockLabel>{item.title}</DockLabel>
-                      <DockIcon>{item.icon}</DockIcon>
-                    </Link>
-                  </DockItem>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-                  {item.title}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <DockItem
-                  className="aspect-square rounded-full bg-[#FFA756] text-primary-foreground hover:bg-[#FF8A1E]"
-                >
-                  <Link to="/criar" className="block h-full w-full flex items-center justify-center">
-                    <DockLabel>Criar Evento</DockLabel>
-                    <DockIcon><PlusCircle /></DockIcon>
-                  </Link>
-                </DockItem>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-                Criar Evento
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <div className="cursor-pointer">
-                  <DockItem
-                    className="aspect-square rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]"
-                  >
-                    <div 
-                      className="block h-full w-full flex items-center justify-center cursor-pointer"
-                      onClick={toggleDarkMode}
-                    >
-                      <DockLabel>Modo {darkMode ? 'Claro' : 'Escuro'}</DockLabel>
-                      <DockIcon>{darkMode ? <Sun /> : <Moon />}</DockIcon>
-                    </div>
-                  </DockItem>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs dark:bg-[#1E1E1E] dark:text-[#EDEDED] dark:border-[#2C2C2C]">
-                Modo {darkMode ? 'Claro' : 'Escuro'}
-              </TooltipContent>
-            </Tooltip>
-          </Dock>
-        </TooltipProvider>
-      </div>
+      )}
     </div>
   );
 };

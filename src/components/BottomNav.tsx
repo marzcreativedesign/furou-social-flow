@@ -4,7 +4,6 @@ import {
   Home,
   Calendar,
   Users,
-  User,
   PlusCircle,
   Globe
 } from "lucide-react";
@@ -20,7 +19,7 @@ const BottomNav = () => {
         <Link
           to="/"
           className={`flex flex-col items-center justify-center px-4 py-2 ${
-            path === "/" ? "text-[#FFA756]" : "text-muted-foreground"
+            path === "/" ? "text-[#FF8A1E]" : "text-muted-foreground"
           }`}
         >
           <Home size={24} />
@@ -32,7 +31,7 @@ const BottomNav = () => {
           to="/eventos"
           className={`flex flex-col items-center justify-center px-4 py-2 ${
             path === "/eventos" || path.startsWith("/evento/")
-              ? "text-[#FFA756]"
+              ? "text-[#FF8A1E]"
               : "text-muted-foreground"
           }`}
         >
@@ -45,10 +44,9 @@ const BottomNav = () => {
           to="/criar"
           className="flex flex-col items-center justify-center"
         >
-          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#FFA756] text-white shadow-lg relative -top-5">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#FF8A1E] text-white shadow-lg relative -top-5 hover:bg-[#FF7A00] transition-colors">
             <PlusCircle size={30} />
           </div>
-          <span className="text-xs mt-1 text-[#FFA756]">Criar</span>
         </Link>
         
         {/* Botão Grupos */}
@@ -56,7 +54,7 @@ const BottomNav = () => {
           to="/grupos"
           className={`flex flex-col items-center justify-center px-4 py-2 ${
             path === "/grupos" || path.startsWith("/grupo/")
-              ? "text-[#FFA756]"
+              ? "text-[#FF8A1E]"
               : "text-muted-foreground"
           }`}
         >
@@ -68,7 +66,7 @@ const BottomNav = () => {
         <Link
           to="/explorar"
           className={`flex flex-col items-center justify-center px-4 py-2 ${
-            path === "/explorar" ? "text-[#FFA756]" : "text-muted-foreground"
+            path === "/explorar" ? "text-[#FF8A1E]" : "text-muted-foreground"
           }`}
         >
           <Globe size={24} />

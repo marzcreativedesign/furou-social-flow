@@ -1,10 +1,9 @@
 
 import { useState } from "react";
-import { Search, Bell, Menu, Accessibility } from "lucide-react";
+import { Search, Bell, Menu, ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Hamburger } from "@/components/ui/hamburger";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +13,6 @@ import {
   Home, 
   Calendar, 
   Users, 
-  Settings, 
   PlusCircle,
   LogOut,
   User,
@@ -22,7 +20,8 @@ import {
   Moon,
   Sun,
   ScrollText,
-  Globe
+  Globe,
+  Settings
 } from "lucide-react";
 
 interface HeaderProps {
@@ -52,6 +51,7 @@ const Header = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const isDesktop = window.innerWidth >= 1024; // Modo desktop acima de 1024px
 
   const getTitleFromPath = () => {
     switch (path) {
@@ -103,115 +103,112 @@ const Header = ({
     { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
     { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
     { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
-    { title: 'Acessibilidade', icon: <Accessibility size={20} />, href: '/acessibilidade' },
+    { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' },
   ];
+
+  // Renderiza o botão voltar ou o botão do menu hamburguer
+  const renderLeftButton = () => {
+    if (showBack) {
+      return (
+        <button
+          onClick={onBack || (() => navigate(-1))}
+          className="p-2 mr-2 rounded-full hover:bg-muted flex items-center"
+          aria-label="Voltar"
+        >
+          <ArrowLeft size={24} />
+        </button>
+      );
+    } else {
+      return (
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="mr-2">
+              <Menu size={24} />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
+            <SheetHeader>
+              <SheetTitle className="text-left flex items-center">
+                <span className="text-2xl font-bold">Furou?!</span>
+              </SheetTitle>
+            </SheetHeader>
+            <Separator className="my-4" />
+            <Link 
+              to="/perfil" 
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center mb-6 px-2 hover:bg-muted/50 dark:hover:bg-gray-800/50 rounded-md p-2"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src="https://i.pravatar.cc/150?u=1" />
+                <AvatarFallback>CO</AvatarFallback>
+              </Avatar>
+              <div className="ml-3">
+                <p className="font-medium">Carlos Oliveira</p>
+                <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
+              </div>
+            </Link>
+            <ScrollArea className="h-[calc(100vh-180px)]">
+              <div className="space-y-1 px-2">
+                {menuItems.map((item) => (
+                  <Button
+                    key={item.href}
+                    variant={location.pathname === item.href ? "secondary" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => { 
+                      navigate(item.href); 
+                      setMenuOpen(false); 
+                    }}
+                  >
+                    {item.icon}
+                    <span className="ml-2">{item.title}</span>
+                  </Button>
+                ))}
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="px-4 py-2 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
+                    <span>Modo escuro</span>
+                  </div>
+                  <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => { 
+                    navigate("/criar"); 
+                    setMenuOpen(false); 
+                  }}
+                >
+                  <PlusCircle className="mr-2" size={20} />
+                  <span>Criar evento</span>
+                </Button>
+                
+                <Button 
+                  variant="destructive"
+                  className="w-full justify-start"
+                  onClick={() => navigate("/login")}
+                >
+                  <LogOut className="mr-2" size={20} />
+                  <span>Sair</span>
+                </Button>
+              </div>
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 max-w-7xl mx-auto">
         <div className="flex items-center">
-          {showBack ? (
-            <button
-              onClick={onBack || (() => navigate(-1))}
-              className="p-2 mr-2 rounded-full hover:bg-muted flex items-center"
-              aria-label="Voltar"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="mr-1"
-              >
-                <path
-                  d="M15 18L9 12L15 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="hidden sm:inline">Voltar</span>
-            </button>
-          ) : (
-            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="mr-2">
-                  <Menu size={24} />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
-                <SheetHeader>
-                  <SheetTitle className="text-left flex items-center">
-                    <span className="text-2xl font-bold">Furou?!</span>
-                  </SheetTitle>
-                </SheetHeader>
-                <Separator className="my-4" />
-                <div className="flex items-center mb-6 px-2">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://i.pravatar.cc/150?u=1" />
-                    <AvatarFallback>CO</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-3">
-                    <p className="font-medium">Carlos Oliveira</p>
-                    <p className="text-sm text-muted-foreground">carlos@exemplo.com</p>
-                  </div>
-                </div>
-                <ScrollArea className="h-[calc(100vh-180px)]">
-                  <div className="space-y-1 px-2">
-                    {menuItems.map((item) => (
-                      <Button
-                        key={item.href}
-                        variant={location.pathname === item.href ? "secondary" : "ghost"}
-                        className="w-full justify-start"
-                        onClick={() => { 
-                          navigate(item.href); 
-                          setMenuOpen(false); 
-                        }}
-                      >
-                        {item.icon}
-                        <span className="ml-2">{item.title}</span>
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="px-4 py-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
-                        <span>Modo escuro</span>
-                      </div>
-                      <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => { 
-                        navigate("/criar"); 
-                        setMenuOpen(false); 
-                      }}
-                    >
-                      <PlusCircle className="mr-2" size={20} />
-                      <span>Criar evento</span>
-                    </Button>
-                    
-                    <Button 
-                      variant="destructive"
-                      className="w-full justify-start"
-                      onClick={() => navigate("/login")}
-                    >
-                      <LogOut className="mr-2" size={20} />
-                      <span>Sair</span>
-                    </Button>
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-          )}
+          {renderLeftButton()}
           {!isSearchActive && (
             <h1 className="text-lg font-bold text-center">
               {path === '/' ? 'Furou?!' : getTitleFromPath()}
@@ -238,21 +235,7 @@ const Header = ({
                   className="p-2 mr-2 rounded-full hover:bg-muted"
                   aria-label="Voltar"
                 >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M15 18L9 12L15 6"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <ArrowLeft size={24} />
                 </button>
                 <div className="flex-1">
                   <div className="relative">
