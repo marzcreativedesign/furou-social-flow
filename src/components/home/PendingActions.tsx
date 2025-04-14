@@ -3,6 +3,7 @@ import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
+import { EventsService } from "@/services/events.service"; // Add the missing import
 import { useNavigate } from "react-router-dom";
 
 interface PendingAction {

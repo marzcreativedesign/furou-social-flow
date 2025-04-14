@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
@@ -344,6 +343,7 @@ const EventDetail = () => {
           <ConfirmationButton 
             onConfirm={handleConfirm}
             onDecline={handleDecline}
+            eventId={id || ""}
           />
         </div>
         

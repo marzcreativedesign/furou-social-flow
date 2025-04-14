@@ -101,14 +101,14 @@ const Groups = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await GroupsService.createGroup({
+      const result = await GroupsService.createGroup({
         name: newGroupName,
         description: newGroupDescription || undefined,
         image_url: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3"
       });
 
-      if (error) {
-        console.error("Error creating group:", error);
+      if (result.error) {
+        console.error("Error creating group:", result.error);
         toast({
           title: "Erro",
           description: "Não foi possível criar o grupo",
@@ -117,15 +117,15 @@ const Groups = () => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (result.data && result.data.length > 0) {
         const newGroup: Group = {
-          id: data[0].id,
-          name: data[0].name,
-          description: data[0].description,
-          image_url: data[0].image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
+          id: result.data[0].id,
+          name: result.data[0].name,
+          description: result.data[0].description,
+          image_url: result.data[0].image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
           members: 1,
           lastActivity: "Agora",
-          created_at: data[0].created_at
+          created_at: result.data[0].created_at
         };
 
         setGroups(prevGroups => [...prevGroups, newGroup]);
