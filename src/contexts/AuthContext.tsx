@@ -1,9 +1,9 @@
 
-import { createContext, useContext, ReactNode } from 'react';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '@/services/auth.service';
-import { useAuthState } from '@/hooks/useAuthState';
+import { toast } from "sonner";
 
 type AuthContextType = {
   session: Session | null;
@@ -12,45 +12,70 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-type AuthProviderProps = {
-  children: ReactNode;
-};
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { session, user, isLoading } = useAuthState();
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Método de login com email e senha
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = AuthService.onAuthStateChange((event, currentSession) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsLoading(false);
+    });
+
+    // THEN check for existing session
+    AuthService.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const signIn = async (email: string, password: string) => {
-    const { error } = await AuthService.signInWithEmail(email, password);
-    return { error };
+    try {
+      const { error } = await AuthService.signInWithEmail(email, password);
+      if (!error) {
+        toast.success("Login realizado com sucesso!");
+        navigate('/home');
+      }
+      return { error };
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      return { error };
+    }
   };
 
-  // Método de cadastro com email e senha
   const signUp = async (email: string, password: string) => {
-    const { error } = await AuthService.signUpWithEmail(email, password);
-    return { error };
+    try {
+      const { error } = await AuthService.signUpWithEmail(email, password);
+      if (!error) {
+        toast.success("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
+      }
+      return { error };
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      return { error };
+    }
   };
 
-  // Método para encerrar a sessão
   const signOut = async () => {
-    await AuthService.signOut();
-  };
-
-  // Método de login com Google
-  const signInWithGoogle = async () => {
-    await AuthService.signInWithGoogle();
-  };
-
-  // Método de login com Apple
-  const signInWithApple = async () => {
-    await AuthService.signInWithApple();
+    try {
+      await AuthService.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   const value = {
@@ -60,16 +85,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signUp,
     signOut,
-    signInWithGoogle,
-    signInWithApple
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-/**
- * Hook para acessar o contexto de autenticação
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
