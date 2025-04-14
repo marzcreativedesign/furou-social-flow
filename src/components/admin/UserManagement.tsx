@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Pencil, Trash2, Search, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
+import { User } from "@supabase/supabase-js";
 
 type UserRole = "free" | "premium" | "admin";
 
@@ -58,11 +59,14 @@ const UserManagement = () => {
     setLoading(true);
     try {
       // Fetch users from auth.users to get emails
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw authError;
       }
+
+      // Extract users array from the response to ensure it's always an array
+      const authUsers = authUsersData?.users || [];
 
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -87,7 +91,7 @@ const UserManagement = () => {
       
       for (const profile of profiles) {
         // Find the corresponding auth user to get email
-        const authUser = authUsers?.find(au => au.id === profile.id);
+        const authUser = authUsers.find(au => au.id === profile.id);
         if (!authUser) continue;
         
         // Find role information
