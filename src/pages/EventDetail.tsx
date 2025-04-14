@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { AlertCircle, CalendarDays } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import MainLayout from "../components/MainLayout";
 import ConfirmationButton from "../components/ConfirmationButton";
 import { useToast } from "../hooks/use-toast";
@@ -12,42 +13,12 @@ import EventHeader from "@/components/event-detail/EventHeader";
 import EventInfo from "@/components/event-detail/EventInfo";
 import EventParticipants from "@/components/event-detail/EventParticipants";
 import EventEditDialog from "@/components/event-detail/EventEditDialog";
+import EventDetailSkeleton from "@/components/event-detail/EventDetailSkeleton";
+import EventNotFound from "@/components/event-detail/EventNotFound";
+import EventBudget from "@/components/event-detail/EventBudget";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-interface EventParticipant {
-  id: string;
-  user_id: string;
-  status: string;
-  profiles?: {
-    id: string;
-    full_name: string;
-    avatar_url: string;
-  };
-}
-
-interface EventData {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  address?: string; // Make address optional to match database
-  is_public: boolean;
-  image_url: string | null;
-  creator_id: string;
-  comments: any[];
-  profiles: {
-    id: string;
-    full_name: string;
-    avatar_url: string;
-  };
-  event_participants: EventParticipant[];
-  estimated_budget?: number | null; // Make budget optional to match database
-  group_events?: { group_id: string; groups?: { name: string } }[];
-}
+import type { EventData } from "@/types/event";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -70,7 +41,7 @@ const EventDetail = () => {
     includeEstimatedBudget: false,
     estimatedBudget: "",
   });
-  
+
   useEffect(() => {
     const fetchEventData = async () => {
       if (!id) return;
@@ -90,14 +61,13 @@ const EventDetail = () => {
         }
         
         if (data) {
-          // Cast data to EventData to ensure type compatibility
           setEvent(data as unknown as EventData);
           
           // Parse date for edit form
           const eventDate = parseISO(data.date);
           const formattedDate = format(eventDate, 'yyyy-MM-dd');
           const startTime = format(eventDate, 'HH:mm');
-          const endTime = format(new Date(eventDate.getTime() + 3 * 60 * 60 * 1000), 'HH:mm'); // Default 3 hours
+          const endTime = format(new Date(eventDate.getTime() + 3 * 60 * 60 * 1000), 'HH:mm');
           
           setEditEventData({
             title: data.title,
@@ -130,14 +100,6 @@ const EventDetail = () => {
   const handleBack = () => {
     navigate(-1);
   };
-  
-  const handleConfirm = async () => {
-    // Toast already handled in ConfirmationButton component
-  };
-  
-  const handleDecline = async () => {
-    // Toast already handled in ConfirmationButton component
-  };
 
   const handleEditEventDataChange = (changes: Partial<typeof editEventData>) => {
     setEditEventData(prev => ({
@@ -147,14 +109,22 @@ const EventDetail = () => {
   };
 
   const handleSaveEditedEvent = async () => {
-    // This would normally update the event in the database
-    // For now just update the local state and show toast
     toast({
       title: "Evento atualizado",
       description: "As alterações no evento foram salvas com sucesso",
     });
-    
     setEditDialogOpen(false);
+  };
+
+  const formatEventDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    return format(date, "EEEE, d 'de' MMMM • HH:mm", { locale: ptBR });
+  };
+  
+  const formatCurrency = (value: number | string | null) => {
+    if (value === null) return "";
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
 
   // Process participants into appropriate arrays for the EventParticipants component
@@ -186,53 +156,18 @@ const EventDetail = () => {
     return { confirmedAttendees: confirmed, pendingAttendees: pending, cancelledAttendees: cancelled };
   };
 
-  const { confirmedAttendees, pendingAttendees, cancelledAttendees } = processParticipants();
-  
-  // Format date for display
-  const formatEventDate = (dateString: string) => {
-    const date = parseISO(dateString);
-    return format(date, "EEEE, d 'de' MMMM • HH:mm", { locale: ptBR });
-  };
-  
-  const isEventHost = event?.creator_id === user?.id;
-  const eventType = event?.is_public ? "public" : (event?.group_events && event?.group_events.length > 0 ? "group" : "private");
-  const groupName = event?.group_events?.[0]?.groups?.name || null;
-  
-  const formatCurrency = (value: number | string | null) => {
-    if (value === null) return "";
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
-  };
-
   if (loading) {
-    return (
-      <MainLayout showBack onBack={handleBack} title="Carregando evento...">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </MainLayout>
-    );
+    return <EventDetailSkeleton onBack={handleBack} />;
   }
   
   if (!event) {
-    return (
-      <MainLayout showBack onBack={handleBack} title="Evento não encontrado">
-        <div className="flex flex-col items-center justify-center p-4 h-64">
-          <CalendarDays className="h-16 w-16 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-bold mb-2">Evento não encontrado</h2>
-          <p className="text-muted-foreground mb-4 text-center">
-            O evento que você está procurando não existe ou foi removido.
-          </p>
-          <button 
-            className="bg-primary text-white px-4 py-2 rounded-md"
-            onClick={() => navigate('/eventos')}
-          >
-            Ver todos os eventos
-          </button>
-        </div>
-      </MainLayout>
-    );
+    return <EventNotFound onBack={handleBack} />;
   }
+
+  const { confirmedAttendees, pendingAttendees, cancelledAttendees } = processParticipants();
+  const isEventHost = event.creator_id === user?.id;
+  const eventType = event.is_public ? "public" : (event.group_events && event.group_events.length > 0 ? "group" : "private");
+  const groupName = event.group_events?.[0]?.groups?.name || null;
 
   return (
     <MainLayout showBack onBack={handleBack} title={event.title}>
@@ -271,27 +206,17 @@ const EventDetail = () => {
         <div className="bg-muted dark:bg-[#262626] p-4 rounded-xl mb-6">
           <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Você vai?</h2>
           <ConfirmationButton 
-            onConfirm={handleConfirm}
-            onDecline={handleDecline}
+            onConfirm={() => {}}
+            onDecline={() => {}}
             eventId={id || ""}
           />
         </div>
         
         {event.estimated_budget && (
-          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
-            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Orçamento do Evento</h2>
-            <div className="bg-muted dark:bg-[#262626] rounded-xl p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="dark:text-[#EDEDED]">Orçamento estimado:</span>
-                <span className="font-bold dark:text-[#EDEDED]">{formatCurrency(event.estimated_budget)}</span>
-              </div>
-              
-              <div className="flex items-start mt-4 text-sm text-muted-foreground bg-background/50 dark:bg-[#1A1A1A]/50 p-3 rounded-lg">
-                <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
-                <p>Este é apenas um valor previsto. Os custos finais podem variar de acordo com as decisões dos participantes e atualizações do evento.</p>
-              </div>
-            </div>
-          </div>
+          <EventBudget 
+            budget={event.estimated_budget} 
+            formatCurrency={formatCurrency} 
+          />
         )}
         
         <EventParticipants
@@ -322,7 +247,7 @@ const EventDetail = () => {
           <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Galeria</h2>
           <EventGallery 
             eventId={event.id}
-            initialImages={[]} // No gallery images in the current API structure
+            initialImages={[]}
           />
         </div>
       </div>
