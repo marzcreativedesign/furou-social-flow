@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import EventsPage from "./pages/EventsPage";
 import CostCalculatorPage from "./pages/CostCalculatorPage";
 import ExplorePage from "./pages/ExplorePage";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -48,9 +49,10 @@ const App = () => {
         <AuthProvider>
           <TooltipProvider>
             <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={<HomePage />} />
               <Route path="/evento/:id" element={<EventDetail />} />
               <Route path="/criar" element={<CreateEvent />} />
               <Route path="/grupos" element={<Groups />} />
