@@ -58,7 +58,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Fixed implementation with explicit type annotations to avoid deep type inference
+// Completely rewritten with explicit return types to avoid TypeScript inference issues
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile by email
@@ -69,10 +69,11 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       .maybeSingle();
       
     if (userError) {
-      return {
+      const result: SeedUserDataResult = {
         success: false,
         error: userError.message
-      } as SeedUserDataResult;
+      };
+      return result;
     }
     
     if (userData && userData.id) {
@@ -87,16 +88,18 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     }
     
     // If user still not found
-    return {
+    const notFoundResult: SeedUserDataResult = {
       success: false,
       error: `Could not find user with email ${email}`
-    } as SeedUserDataResult;
+    };
+    return notFoundResult;
   } catch (error) {
     console.error("Error seeding data for email:", error);
-    return {
+    const errorResult: SeedUserDataResult = {
       success: false,
       error: error instanceof Error ? error.message : String(error)
-    } as SeedUserDataResult;
+    };
+    return errorResult;
   }
 };
 
