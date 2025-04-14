@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -6,8 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { UserWithRole } from "@/hooks/useUsers";
-import type { UserRole } from "@/hooks/useUsers";
+import type { UserWithRole, UserRole } from "@/hooks/useUsers";
 
 interface UserEditDialogProps {
   user: UserWithRole | null;
