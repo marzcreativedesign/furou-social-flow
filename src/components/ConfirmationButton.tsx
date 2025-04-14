@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { EventsService } from "@/services/events.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface ConfirmationButtonProps {
@@ -19,8 +21,20 @@ const ConfirmationButton = ({
 }: ConfirmationButtonProps) => {
   const [confirmed, setConfirmed] = useState<boolean | null>(initialState);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthRequired = () => {
+    toast.error("Faça login para participar deste evento");
+    navigate("/auth");
+  };
 
   const handleConfirm = async () => {
+    if (!user) {
+      handleAuthRequired();
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await EventsService.updateParticipationStatus(eventId, 'confirmed');
@@ -43,6 +57,11 @@ const ConfirmationButton = ({
   };
 
   const handleDecline = async () => {
+    if (!user) {
+      handleAuthRequired();
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await EventsService.updateParticipationStatus(eventId, 'declined');

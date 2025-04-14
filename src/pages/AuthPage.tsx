@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,9 +26,10 @@ const AuthPage = () => {
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
-      navigate('/home');
+      const returnPath = location.state?.from || '/home';
+      navigate(returnPath);
     }
-  }, [user, navigate]);
+  }, [user, navigate, location]);
 
   // Check if we need to show login or signup tab based on URL
   useEffect(() => {
