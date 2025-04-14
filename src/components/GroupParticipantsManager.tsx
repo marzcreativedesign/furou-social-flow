@@ -1,357 +1,332 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { 
-  User,
-  UserPlus,
-  Mail,
-  CheckCircle,
-  XCircle,
-  Users,
-  AlertCircle,
-  Send,
-  Crown,
-  UserCog
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { Search, MoreHorizontal, UserPlus, Mail } from "lucide-react";
+import { toast } from "./ui/use-toast";
 
-// Mock data
-const mockParticipants = [
-  { id: "1", name: "Carlos Oliveira", email: "carlos@exemplo.com", avatar: "https://i.pravatar.cc/150?img=1", status: "confirmed", isAdmin: true },
-  { id: "2", name: "Ana Silva", email: "ana@exemplo.com", avatar: "https://i.pravatar.cc/150?img=5", status: "confirmed", isAdmin: false },
-  { id: "3", name: "Bruno Santos", email: "bruno@exemplo.com", avatar: "https://i.pravatar.cc/150?img=12", status: "pending", isAdmin: false },
-  { id: "4", name: "Carla Mendes", email: "carla@exemplo.com", avatar: "https://i.pravatar.cc/150?img=9", status: "confirmed", isAdmin: false },
-  { id: "5", name: "Daniel Costa", email: "daniel@exemplo.com", avatar: "https://i.pravatar.cc/150?img=11", status: "rejected", isAdmin: false },
-  { id: "6", name: "Fernanda Gomes", email: "fernanda@exemplo.com", avatar: "https://i.pravatar.cc/150?img=3", status: "pending", isAdmin: false },
-];
+// Definindo type para consistência
+type ParticipantStatus = 'pending' | 'confirmed' | 'declined';
 
-type ParticipantStatus = "confirmed" | "pending" | "rejected";
-
-interface Participant {
+type Participant = {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
+  avatar: string;
   status: ParticipantStatus;
   isAdmin: boolean;
-}
+};
 
-interface GroupParticipantsManagerProps {
+type GroupParticipantsManagerProps = {
   groupId: string;
-  isGroupCreator?: boolean;
-}
+  isAdmin: boolean;
+};
 
-const GroupParticipantsManager = ({ groupId, isGroupCreator = true }: GroupParticipantsManagerProps) => {
-  const { toast } = useToast();
-  const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [reminderMessage, setReminderMessage] = useState("Olá! Este é um lembrete amigável para confirmar sua participação no nosso grupo.");
+const GroupParticipantsManager = ({ groupId, isAdmin }: GroupParticipantsManagerProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+  
+  // Mock data for participants - in real app this would come from an API
+  const [participants, setParticipants] = useState<Participant[]>([
+    { 
+      id: "1", 
+      name: "Carlos Oliveira", 
+      email: "carlos@exemplo.com", 
+      avatar: "https://i.pravatar.cc/150?u=1", 
+      status: "confirmed", 
+      isAdmin: true 
+    },
+    { 
+      id: "2", 
+      name: "Ana Silva", 
+      email: "ana@exemplo.com", 
+      avatar: "https://i.pravatar.cc/150?u=2", 
+      status: "confirmed", 
+      isAdmin: false 
+    },
+    { 
+      id: "3", 
+      name: "Paulo Santos", 
+      email: "paulo@exemplo.com", 
+      avatar: "https://i.pravatar.cc/150?u=3", 
+      status: "pending", 
+      isAdmin: false 
+    },
+    { 
+      id: "4", 
+      name: "Mariana Ferreira", 
+      email: "mariana@exemplo.com", 
+      avatar: "https://i.pravatar.cc/150?u=4", 
+      status: "declined", 
+      isAdmin: false 
+    },
+  ]);
 
-  const handleRemoveParticipant = (id: string) => {
-    if (!isGroupCreator) return;
-    
-    setParticipants(participants.filter(p => p.id !== id));
-    toast({
-      title: "Participante removido",
-      description: "O participante foi removido do grupo com sucesso."
-    });
-  };
+  const filteredParticipants = participants.filter(participant => 
+    participant.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    participant.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const handlePromoteToAdmin = (id: string) => {
-    if (!isGroupCreator) return;
-    
-    setParticipants(participants.map(p => 
-      p.id === id ? { ...p, isAdmin: true } : p
-    ));
-    toast({
-      title: "Co-administrador adicionado",
-      description: "O participante agora é um co-administrador do grupo."
-    });
-  };
-
-  const handleDemoteFromAdmin = (id: string) => {
-    if (!isGroupCreator) return;
-    
-    setParticipants(participants.map(p => 
-      p.id === id ? { ...p, isAdmin: false } : p
-    ));
-    toast({
-      title: "Co-administrador removido",
-      description: "O participante não é mais um co-administrador do grupo."
-    });
-  };
-
-  const handleInviteByEmail = () => {
-    if (!inviteEmail.trim() || !isGroupCreator) return;
-    
-    // Check if email is valid
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(inviteEmail)) {
+  const handleAddParticipant = () => {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
       toast({
         title: "E-mail inválido",
-        description: "Por favor, insira um endereço de e-mail válido.",
-        variant: "destructive"
+        description: "Por favor, insira um endereço de e-mail válido",
+        variant: "destructive",
       });
       return;
     }
-    
-    // Check if email already exists
-    if (participants.some(p => p.email === inviteEmail)) {
+
+    // Check if participant already exists
+    if (participants.some(p => p.email === newEmail)) {
       toast({
         title: "Participante já existe",
-        description: "Este e-mail já está registrado no grupo.",
-        variant: "destructive"
+        description: "Este e-mail já foi adicionado ao grupo",
+        variant: "destructive",
       });
       return;
     }
 
     // Add new participant
     const newParticipant: Participant = {
-      id: `new-${Date.now()}`,
-      name: inviteEmail.split("@")[0], // Using email username as temporary name
-      email: inviteEmail,
+      id: `${participants.length + 1}`,
+      name: newEmail.split('@')[0], // Simple name from email
+      email: newEmail,
+      avatar: `https://i.pravatar.cc/150?u=${participants.length + 5}`,
       status: "pending",
       isAdmin: false
     };
-    
+
     setParticipants([...participants, newParticipant]);
-    setInviteEmail("");
+    setNewEmail("");
+    setShowAddParticipant(false);
     
     toast({
       title: "Convite enviado",
-      description: "Um convite foi enviado para o e-mail informado."
+      description: `Um convite foi enviado para ${newEmail}`,
     });
   };
 
-  const handleSendReminder = (id: string) => {
-    if (!isGroupCreator) return;
+  const handleRemoveParticipant = () => {
+    if (selectedParticipantId) {
+      setParticipants(participants.filter(p => p.id !== selectedParticipantId));
+      setShowRemoveDialog(false);
+      setSelectedParticipantId(null);
+      
+      toast({
+        title: "Participante removido",
+        description: "O participante foi removido com sucesso",
+      });
+    }
+  };
+
+  const handleToggleAdmin = (participantId: string) => {
+    setParticipants(
+      participants.map(p => 
+        p.id === participantId 
+          ? { ...p, isAdmin: !p.isAdmin } 
+          : p
+      )
+    );
     
-    toast({
-      title: "Lembrete enviado",
-      description: "Um lembrete foi enviado para o participante."
-    });
+    const participant = participants.find(p => p.id === participantId);
+    if (participant) {
+      toast({
+        title: participant.isAdmin 
+          ? "Permissão de administrador removida" 
+          : "Permissão de administrador adicionada",
+        description: `${participant.name} agora ${participant.isAdmin ? 'não é mais' : 'é'} um administrador do grupo`,
+      });
+    }
   };
 
-  const getStatusBadge = (status: ParticipantStatus) => {
-    switch (status) {
-      case "confirmed":
-        return <Badge className="bg-success text-success-foreground">Confirmado</Badge>;
-      case "pending":
-        return <Badge variant="outline" className="bg-warning/20 text-warning-foreground border-warning">Pendente</Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive">Recusado</Badge>;
-      default:
-        return null;
+  const handleSendReminder = (participantId: string) => {
+    const participant = participants.find(p => p.id === participantId);
+    if (participant) {
+      toast({
+        title: "Lembrete enviado",
+        description: `Um lembrete foi enviado para ${participant.name}`,
+      });
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Users size={16} />
-          <span>Gerenciar Participantes</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md md:max-w-2xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users size={20} className="text-primary" />
-            Gerenciar Participantes do Grupo
-          </DialogTitle>
-          <DialogDescription>
-            {isGroupCreator ? 
-              "Adicione, remova ou gerencie os participantes deste grupo." : 
-              "Lista de participantes deste grupo."}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="mt-4">
-          <Tabs defaultValue="participants">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="participants">
-                <Users size={16} className="mr-2" />
-                Participantes ({participants.length})
-              </TabsTrigger>
-              {isGroupCreator && (
-                <TabsTrigger value="invite">
-                  <UserPlus size={16} className="mr-2" />
-                  Convidar
-                </TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="participants" className="space-y-4 mt-4">
-              {participants.length > 0 ? (
-                participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={participant.avatar} />
-                        <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{participant.name}</p>
-                          {participant.isAdmin && (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
-                              <Crown size={12} className="mr-1" />
-                              Admin
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{participant.email}</p>
-                        <div className="mt-1">{getStatusBadge(participant.status)}</div>
-                      </div>
-                    </div>
-                    
-                    {isGroupCreator && participant.id !== "1" && (
-                      <div className="flex gap-2">
-                        {participant.status === "pending" && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="h-8"
-                            onClick={() => handleSendReminder(participant.id)}
-                          >
-                            <Send size={14} className="mr-1" />
-                            Lembrar
-                          </Button>
-                        )}
-                        
-                        {!participant.isAdmin ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="h-8"
-                            onClick={() => handlePromoteToAdmin(participant.id)}
-                          >
-                            <UserCog size={14} className="mr-1" />
-                            Promover
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="h-8"
-                            onClick={() => handleDemoteFromAdmin(participant.id)}
-                          >
-                            <User size={14} className="mr-1" />
-                            Remover Admin
-                          </Button>
-                        )}
-                        
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          className="h-8"
-                          onClick={() => handleRemoveParticipant(participant.id)}
-                        >
-                          <XCircle size={14} className="mr-1" />
-                          Remover
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <User className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-2 font-medium">Nenhum participante</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Este grupo ainda não possui participantes.
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-            
-            {isGroupCreator && (
-              <TabsContent value="invite" className="space-y-4 mt-4">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Convidar por e-mail</h3>
-                    <div className="flex gap-2 items-center">
-                      <div className="relative flex-1">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                        <Input 
-                          placeholder="Digite o e-mail do participante" 
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          className="pl-10"
-                          type="email"
-                        />
-                      </div>
-                      <Button onClick={handleInviteByEmail}>Convidar</Button>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Enviar lembretes de participação</h3>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        Personalize a mensagem que será enviada para os participantes pendentes.
-                      </p>
-                      <textarea 
-                        className="w-full h-24 p-3 rounded-md border border-input bg-background resize-none"
-                        value={reminderMessage}
-                        onChange={(e) => setReminderMessage(e.target.value)}
-                      />
-                      <div className="flex justify-end">
-                        <Button 
-                          variant="outline"
-                          onClick={() => {
-                            toast({
-                              title: "Lembretes enviados",
-                              description: "Lembretes enviados para todos os participantes pendentes."
-                            });
-                          }}
-                        >
-                          <Send size={14} className="mr-2" />
-                          Enviar para todos pendentes
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted/30 p-4 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle size={16} className="text-muted-foreground" />
-                      <h3 className="text-sm font-medium">Dica para gerenciamento</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Você pode promover participantes para co-administradores para ajudar a gerenciar o grupo.
-                      Co-administradores podem adicionar e remover participantes, mas não podem remover outros administradores.
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-            )}
-          </Tabs>
-        </div>
-        
-        <DialogFooter className="mt-4">
-          <Button variant="outline" type="button" className="w-full sm:w-auto">
-            Fechar
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Participantes</h2>
+        {isAdmin && (
+          <Button 
+            onClick={() => setShowAddParticipant(true)} 
+            variant="outline" 
+            size="sm"
+            className="gap-1"
+          >
+            <UserPlus size={16} />
+            Adicionar
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        )}
+      </div>
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+        <Input
+          placeholder="Buscar participante..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+      
+      {showAddParticipant && (
+        <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+          <Label htmlFor="email">E-mail do participante</Label>
+          <div className="flex gap-2">
+            <Input
+              id="email"
+              type="email"
+              placeholder="email@exemplo.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+            />
+            <Button onClick={handleAddParticipant} size="sm">Convidar</Button>
+          </div>
+          <div className="flex gap-2 text-sm">
+            <Button onClick={() => setShowAddParticipant(false)} variant="ghost" size="sm">
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        {filteredParticipants.length > 0 ? (
+          filteredParticipants.map((participant) => (
+            <div 
+              key={participant.id}
+              className="flex items-center justify-between p-3 border rounded-lg bg-background"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage src={participant.avatar} alt={participant.name} />
+                  <AvatarFallback>{participant.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-foreground">{participant.name}</p>
+                  <p className="text-sm text-muted-foreground">{participant.email}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {participant.isAdmin && (
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                    Admin
+                  </span>
+                )}
+                <span 
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    participant.status === 'confirmed' 
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                      : participant.status === 'declined' 
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' 
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                  }`}
+                >
+                  {participant.status === 'confirmed' 
+                    ? 'Confirmado' 
+                    : participant.status === 'declined' 
+                    ? 'Recusou' 
+                    : 'Pendente'}
+                </span>
+                
+                {isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleToggleAdmin(participant.id)}>
+                        {participant.isAdmin ? "Remover administrador" : "Tornar administrador"}
+                      </DropdownMenuItem>
+                      {participant.status === 'pending' && (
+                        <DropdownMenuItem onClick={() => handleSendReminder(participant.id)}>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Enviar lembrete
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedParticipantId(participant.id);
+                          setShowRemoveDialog(true);
+                        }}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        Remover do grupo
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Nenhum participante encontrado</p>
+          </div>
+        )}
+      </div>
+      
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover participante</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este participante do grupo? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-red-600 hover:bg-red-700">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 

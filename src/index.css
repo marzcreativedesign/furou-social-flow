@@ -1,18 +1,18 @@
 
 @layer base {
   :root {
-    // Ajustando valores de contraste para texto
-    --muted-foreground: 0 0% 40%; // Cinza mais escuro para texto de baixa prioridade
-    --foreground: 0 0% 20%; // Texto principal mais escuro
+    /* Ajustando valores de contraste para texto */
+    --muted-foreground: 0 0% 40%; /* Cinza mais escuro para texto de baixa prioridade */
+    --foreground: 0 0% 20%; /* Texto principal mais escuro */
   }
 
   .dark {
-    // No modo escuro, ajustando para clareza
-    --muted-foreground: 0 0% 70%; // Cinza claro no dark mode
-    --foreground: 0 0% 95%; // Texto quase branco para máximo contraste
+    /* No modo escuro, ajustando para clareza */
+    --muted-foreground: 0 0% 70%; /* Cinza claro no dark mode */
+    --foreground: 0 0% 95%; /* Texto quase branco para máximo contraste */
   }
 
-  // Classes de texto utilitárias para acessibilidade
+  /* Classes de texto utilitárias para acessibilidade */
   .text-low-contrast {
     @apply text-muted-foreground;
   }
