@@ -11,7 +11,7 @@ import { Hamburger } from "@/components/ui/hamburger";
 import { 
   Home, Calendar, Users, PlusCircle, LogOut,
   User, Calculator, Moon, Sun, ScrollText,
-  Globe, Settings
+  Globe, Settings, Bell  // Added Bell import here
 } from "lucide-react";
 
 interface MobileMenuProps {
