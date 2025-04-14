@@ -19,14 +19,14 @@ const LandingHeader = () => {
             className="mr-2"
             asChild
           >
-            <Link to="/login">Entrar</Link>
+            <Link to="/auth">Entrar</Link>
           </Button>
           
           <Button 
             className=""
             asChild
           >
-            <Link to="/onboarding">Cadastre-se</Link>
+            <Link to="/auth">Cadastre-se</Link>
           </Button>
           
           <Button 

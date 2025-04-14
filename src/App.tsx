@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,7 +12,7 @@ import AdminRoute from "./components/AdminRoute";
 // Import all page components
 import LandingPage from "./pages/LandingPage";
 import Onboarding from "./pages/Onboarding";
-import Login from "./pages/Login";
+import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
@@ -53,7 +54,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<AuthPage />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/home" element={<HomePage />} />
