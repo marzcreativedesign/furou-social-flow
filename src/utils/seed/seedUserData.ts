@@ -75,16 +75,17 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Define a simple interface for profile data
-interface ProfileData {
-  id: string;
-}
-
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Using explicit type casting and avoiding .single() or .maybeSingle() methods
-    const { data, error: queryError } = await supabase
+    // Explicitly type the response to avoid deep instantiation
+    interface ProfileQueryResult {
+      data: { id: string }[] | null;
+      error: any;
+    }
+    
+    // Using explicit type annotation to prevent deep type instantiation
+    const { data, error: queryError }: ProfileQueryResult = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email);
