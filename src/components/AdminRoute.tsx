@@ -35,7 +35,7 @@ const AdminRoute = () => {
     return <Navigate to="/home" replace />;
   }
 
-  // Render admin content if authenticated and authorized
+  // Render admin content directly without MainLayout
   return <Outlet />;
 };
 
