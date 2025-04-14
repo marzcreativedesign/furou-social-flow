@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Database } from "lucide-react"; // Changed import to use lucide-react instead of non-existent file
-import { useToast } from "@/hooks/use-toast"; // Fixed import to the correct location
-import { seedUserData } from "@/utils/seedUserData";
+import { Database } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { seedUserData } from "@/utils/seed/seedUserData";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const SeedDataButton = () => {
