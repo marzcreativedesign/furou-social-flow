@@ -98,7 +98,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     // Se não encontrou no perfil, tente usar a sessão atual
     const { data: sessionData } = await supabase.auth.getSession();
     
-    if (sessionData?.session?.user?.email === email && sessionData?.session?.user?.id) {
+    if (sessionData?.session?.user?.email === email && sessionData.session.user.id) {
       return await seedUserData(sessionData.session.user.id);
     }
 
