@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
+import { TOAST_MESSAGES } from '@/constants/toastMessages';
 
 interface Settings {
   darkMode: boolean;
@@ -79,13 +79,13 @@ export function useSettings() {
       let message = '';
       switch (key) {
         case 'darkMode':
-          message = value ? "Modo escuro ativado" : "Modo claro ativado";
+          message = value ? TOAST_MESSAGES.SETTINGS.DARK_MODE_ENABLED : TOAST_MESSAGES.SETTINGS.DARK_MODE_DISABLED;
           break;
         case 'highContrast':
-          message = value ? "Alto contraste ativado" : "Alto contraste desativado";
+          message = value ? TOAST_MESSAGES.SETTINGS.HIGH_CONTRAST_ENABLED : TOAST_MESSAGES.SETTINGS.HIGH_CONTRAST_DISABLED;
           break;
         case 'reducedMotion':
-          message = value ? "Animações reduzidas" : "Animações normais";
+          message = value ? TOAST_MESSAGES.SETTINGS.REDUCED_MOTION_ENABLED : TOAST_MESSAGES.SETTINGS.REDUCED_MOTION_DISABLED;
           break;
       }
       
@@ -101,8 +101,8 @@ export function useSettings() {
   const saveAllSettings = () => {
     applySettings();
     toast({
-      title: "Configurações salvas",
-      description: "Suas preferências de acessibilidade foram aplicadas",
+      title: TOAST_MESSAGES.SETTINGS.SAVED,
+      description: TOAST_MESSAGES.SETTINGS.SAVED_DESCRIPTION,
     });
   };
 
