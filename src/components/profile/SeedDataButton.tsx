@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Database } from "lucide-react";
@@ -27,7 +28,7 @@ export const SeedDataButton = () => {
       if (result.success) {
         toast({
           title: "Dados gerados com sucesso!",
-          description: `Foram criados ${result.eventCount} eventos, ${result.groupCount} grupos e ${result.notificationCount} notificações.`,
+          description: `Foram criados ${result.eventCount} eventos de teste.`,
         });
       } else {
         toast({
