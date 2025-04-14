@@ -65,7 +65,6 @@ const IMAGE_URLS = [
   "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3",
@@ -242,25 +241,18 @@ export const seedDataForEmail = async (email: string) => {
       return result;
     }
     
-    try {
-      const { data: authData } = await supabase.auth.admin.listUsers();
-      
-      if (!authData || !authData.users) {
-        throw new Error(`No users found in auth system`);
-      }
-      
-      const user = authData.users.find(u => u.email === email);
-      
-      if (!user) {
-        throw new Error(`No user found with email ${email}`);
-      }
-      
-      const result = await seedUserData(user.id);
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (sessionData && sessionData.session && sessionData.session.user && 
+        sessionData.session.user.email === email) {
+      const result = await seedUserData(sessionData.session.user.id);
       return result;
-    } catch (authError) {
-      console.error("Error accessing auth users:", authError);
-      throw new Error(`Could not find user with email ${email}: ${authError}`);
     }
+    
+    return {
+      success: false,
+      error: `Could not find user with email ${email}`
+    };
   } catch (error: any) {
     console.error("Error seeding data for email:", error);
     return {
