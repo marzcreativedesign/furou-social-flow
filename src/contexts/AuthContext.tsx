@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';

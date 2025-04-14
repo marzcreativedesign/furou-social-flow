@@ -73,7 +73,7 @@ const Onboarding = () => {
             </button>
           ) : (
             <div className="space-y-4">
-              <Link to="/login" className="btn-primary w-full block text-center">
+              <Link to="/auth" className="btn-primary w-full block text-center">
                 Começar agora
               </Link>
             </div>

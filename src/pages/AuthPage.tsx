@@ -1,191 +1,154 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import EmailAuthForm from "@/components/auth/EmailAuthForm";
-import { AuthService } from "@/services/auth.service";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, User, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useRole } from "@/hooks/useRole";
+
+// Esquema de validação para o formulário de login
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
+});
+
+// Esquema de validação para o formulário de cadastro
+const signupSchema = z.object({
+  fullName: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
+});
+
+// Esquema de validação para o perfil
+const profileSchema = z.object({
+  username: z.string().min(3, "O nome de usuário deve ter pelo menos 3 caracteres"),
+  bio: z.string().optional()
+});
 
 const AuthPage = () => {
-  const { user } = useAuth();
-  const { role, isLoading: roleLoading } = useRole();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [showEmailAuth, setShowEmailAuth] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [authStep, setAuthStep] = useState("credentials"); // "credentials", "profile"
+  const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
-
-  // Profile data
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-
-  // Handle redirection based on user role
-  useEffect(() => {
-    if (user && !roleLoading) {
-      if (authStep === "credentials") {
-        // Check if user needs to complete profile
-        checkProfileCompletion();
-      } else if (authStep === "profile") {
-        // User just completed profile setup, redirect based on role
-        if (role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/home");
-        }
-      }
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [completingProfile, setCompletingProfile] = useState(false);
+  
+  // Formulário de login
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: ""
     }
-  }, [user, roleLoading, role, authStep]);
-
-  // Check if user needs to complete profile setup
-  const checkProfileCompletion = async () => {
-    if (!user) return;
-    
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('full_name, username, avatar_url')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      
-      // If user has already completed their profile, redirect based on role
-      if (profile && (profile.full_name || profile.username || profile.avatar_url)) {
-        if (role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/home");
-        }
-      } else {
-        // User needs to complete profile
-        setAuthStep("profile");
-      }
-    } catch (error) {
-      console.error("Error checking profile:", error);
-      // Default to profile completion step if there's an error
-      setAuthStep("profile");
+  });
+  
+  // Formulário de cadastro
+  const signupForm = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: ""
     }
-  };
+  });
+  
+  // Formulário de perfil
+  const profileForm = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      username: "",
+      bio: ""
+    }
+  });
 
-  const handleEmailAuth = async (email: string, password: string) => {
+  // Se o usuário já estiver logado e não estiver completando o perfil, redireciona para a página inicial
+  if (user && !completingProfile) {
+    return <Navigate to="/home" />;
+  }
+
+  // Função para lidar com o login
+  const handleLogin = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const { error } = isSignUp 
-        ? await AuthService.signUpWithEmail(email, password)
-        : await AuthService.signInWithEmail(email, password);
-
+      const { error } = await signIn(data.email, data.password);
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success(isSignUp 
-          ? "Conta criada com sucesso! Agora complete seu perfil." 
-          : "Login realizado com sucesso!");
+        toast.success("Login realizado com sucesso!");
+        navigate("/home");
       }
     } catch (error: any) {
-      toast.error(error.message || "Ocorreu um erro durante a autenticação");
+      toast.error(error.message || "Ocorreu um erro ao fazer login");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleAuth = async () => {
+  // Função para lidar com o cadastro
+  const handleSignUp = async (data: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
     try {
-      const { error } = await AuthService.signInWithGoogle();
-      if (error) toast.error(error.message);
+      const { error } = await signUp(data.email, data.password);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Cadastro realizado com sucesso!");
+        // Após o cadastro, o usuário já estará logado e precisamos salvar seu nome
+        if (user) {
+          // Aqui já podemos salvar o nome completo no perfil
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ full_name: data.fullName })
+            .eq('id', user.id);
+            
+          if (profileError) {
+            console.error("Erro ao salvar o nome completo:", profileError);
+          }
+          
+          // Avança para a etapa de completar o perfil
+          setCompletingProfile(true);
+        }
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Ocorreu um erro ao fazer o cadastro");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAppleAuth = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await AuthService.signInWithApple();
-      if (error) toast.error(error.message);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    setAvatarFile(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setAvatarPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Função para completar o perfil
+  const handleProfileCompletion = async (data: z.infer<typeof profileSchema>) => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      // Upload avatar if selected
-      let avatarUrl = null;
-      if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: data.username,
+          bio: data.bio || "",
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
         
-        const { error: uploadError, data } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, avatarFile);
-          
-        if (uploadError) throw uploadError;
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-          
-        avatarUrl = publicUrl;
-      }
-      
-      // Update user profile
-      const { error: updateError } = await supabase.from('profiles').update({
-        full_name: fullName,
-        username,
-        bio,
-        avatar_url: avatarUrl,
-        updated_at: new Date().toISOString()
-      }).eq('id', user.id);
-      
-      if (updateError) throw updateError;
-      
-      toast.success("Perfil atualizado com sucesso!");
-      
-      // Check role for redirection
-      if (role === "admin") {
-        navigate("/admin");
+      if (error) {
+        toast.error("Erro ao salvar perfil: " + error.message);
       } else {
-        navigate("/home");
+        toast.success("Perfil criado com sucesso!");
+        setCompletingProfile(false);
+        navigate('/home');
       }
     } catch (error: any) {
-      toast.error(`Erro ao salvar perfil: ${error.message}`);
+      toast.error(error.message || "Ocorreu um erro ao salvar o perfil");
     } finally {
       setIsLoading(false);
     }
@@ -195,115 +158,276 @@ const AuthPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            {authStep === "credentials" 
-              ? (showEmailAuth 
-                ? (isSignUp ? "Criar Conta" : "Entrar")
-                : "Bem-vindo ao Furou?!")
-              : "Complete seu perfil"}
+          <CardTitle className="text-2xl font-bold">
+            {completingProfile ? "Complete seu perfil" : 
+             isSignUp ? "Criar uma conta" : "Bem-vindo de volta!"}
           </CardTitle>
           <CardDescription>
-            {authStep === "credentials"
-              ? (showEmailAuth
-                ? "Digite suas credenciais para continuar"
-                : "Escolha como deseja continuar")
-              : "Adicione seus dados para personalizar sua experiência"}
+            {completingProfile ? "Adicione mais detalhes ao seu perfil" : 
+             isSignUp ? "Preencha seus dados para criar sua conta" : "Entre com seu email e senha para continuar"}
           </CardDescription>
         </CardHeader>
+        
         <CardContent>
-          {authStep === "credentials" ? (
-            showEmailAuth ? (
-              <EmailAuthForm
-                isSignUp={isSignUp}
-                setIsSignUp={setIsSignUp}
-                onBackClick={() => setShowEmailAuth(false)}
-                onSubmit={handleEmailAuth}
-                isLoading={isLoading}
-              />
-            ) : (
-              <SocialAuthButtons
-                onGoogleClick={handleGoogleAuth}
-                onAppleClick={handleAppleAuth}
-                onEmailClick={() => setShowEmailAuth(true)}
-                isLoading={isLoading}
-              />
-            )
-          ) : (
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
-              {/* Avatar Upload */}
-              <div className="flex flex-col items-center">
-                <div className="relative mb-4">
-                  <Avatar className="w-24 h-24 border-2 border-primary">
-                    <AvatarImage src={avatarPreview || ""} />
-                    <AvatarFallback className="bg-muted">
-                      <User className="w-12 h-12 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <label 
-                    htmlFor="avatar-upload" 
-                    className="absolute bottom-0 right-0 p-1 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90"
-                  >
-                    <Upload className="h-4 w-4" />
-                    <span className="sr-only">Upload avatar</span>
-                  </label>
-                  <input 
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">Clique para adicionar uma foto de perfil</p>
-              </div>
+          {completingProfile ? (
+            // Formulário de conclusão do perfil
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(handleProfileCompletion)} className="space-y-4">
+                <FormField
+                  control={profileForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Nome de usuário</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            placeholder="seu_username"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={profileForm.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Bio (opcional)</FormLabel>
+                      <FormControl>
+                        <textarea
+                          placeholder="Conte um pouco sobre você..."
+                          className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-              {/* Full Name */}
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nome completo</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Seu nome completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary text-white rounded-full h-12 mt-6"
+                >
+                  {isLoading ? "Salvando..." : "Concluir cadastro"}
+                </Button>
+              </form>
+            </Form>
+          ) : isSignUp ? (
+            // Formulário de cadastro
+            <Form {...signupForm}>
+              <form onSubmit={signupForm.handleSubmit(handleSignUp)} className="space-y-4">
+                <FormField
+                  control={signupForm.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Nome completo</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            placeholder="Seu nome completo"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              
-              {/* Username */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Nome de usuário</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="@seu_username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
+                
+                <FormField
+                  control={signupForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>E-mail</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="seu@email.com"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              
-              {/* Bio */}
-              <div className="space-y-2">
-                <Label htmlFor="bio">Sobre você</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Conte um pouco sobre você..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
+                
+                <FormField
+                  control={signupForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Senha</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        >
+                          {showPassword ? 
+                            <EyeOff className="h-5 w-5 text-muted-foreground" /> : 
+                            <Eye className="h-5 w-5 text-muted-foreground" />
+                          }
+                        </button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary/90" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Salvando..." : "Concluir cadastro"}
-              </Button>
-            </form>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary text-white rounded-full h-12 mt-6"
+                >
+                  {isLoading ? "Cadastrando..." : "Criar conta"}
+                </Button>
+                
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Já tem uma conta?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(false)}
+                      className="text-primary hover:underline"
+                    >
+                      Fazer login
+                    </button>
+                  </p>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            // Formulário de login
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                <FormField
+                  control={loginForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>E-mail</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="seu@email.com"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Senha</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        >
+                          {showPassword ? 
+                            <EyeOff className="h-5 w-5 text-muted-foreground" /> : 
+                            <Eye className="h-5 w-5 text-muted-foreground" />
+                          }
+                        </button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end">
+                  <Link to="/resetar-senha" className="text-sm text-primary hover:underline">
+                    Esqueci minha senha
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary text-white rounded-full h-12"
+                >
+                  {isLoading ? "Entrando..." : "Entrar"}
+                </Button>
+                
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Ainda não tem uma conta?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(true)}
+                      className="text-primary hover:underline"
+                    >
+                      Criar agora
+                    </button>
+                  </p>
+                </div>
+              </form>
+            </Form>
           )}
+          
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground">
+              Ao continuar, você concorda com nossos{" "}
+              <Link to="/termos" className="text-primary hover:underline">
+                Termos de Uso
+              </Link>{" "}
+              e{" "}
+              <Link to="/privacidade" className="text-primary hover:underline">
+                Política de Privacidade
+              </Link>.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
