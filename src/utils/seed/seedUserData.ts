@@ -58,7 +58,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Fix the deep type instantiation by using explicit return type and simplifying error handling
+// Completely rewrite the function with simplified return types to avoid deep instantiation
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile directly
@@ -94,9 +94,11 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     };
   } catch (error) {
     console.error("Error seeding data for email:", error);
+    // Use a simpler error handling approach to avoid complex type inference
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: errorMessage
     };
   }
 };
