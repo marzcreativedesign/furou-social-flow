@@ -58,10 +58,10 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Completely rewrite the function with simplified return types to avoid deep instantiation
+// Completely rewrite the function to eliminate excessive type inference
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // First try to find the profile directly
+    // First try to find the profile by email
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('id')
@@ -69,7 +69,6 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       .maybeSingle();
       
     if (userError) {
-      console.error("Error fetching profile:", userError);
       return {
         success: false,
         error: userError.message
@@ -83,7 +82,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     // If not found in profiles, try using the current session
     const { data: sessionData } = await supabase.auth.getSession();
     
-    if (sessionData.session?.user && sessionData.session.user.email === email) {
+    if (sessionData && sessionData.session?.user && sessionData.session.user.email === email) {
       return await seedUserData(sessionData.session.user.id);
     }
     
@@ -94,11 +93,9 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     };
   } catch (error) {
     console.error("Error seeding data for email:", error);
-    // Use a simpler error handling approach to avoid complex type inference
-    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: errorMessage
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 };
