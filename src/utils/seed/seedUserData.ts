@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
