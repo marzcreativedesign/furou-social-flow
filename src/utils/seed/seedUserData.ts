@@ -88,7 +88,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .single();
+      .single<ProfileData>();
     
     if (queryError) {
       console.error('Error querying profile by email:', queryError);
