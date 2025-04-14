@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { GroupsService } from "@/services/groups.service";
@@ -43,7 +42,7 @@ const Groups = () => {
         
         if (data) {
           // Create a map to track unique groups and avoid duplicate keys
-          const groupsMap = new Map();
+          const groupsMap = new Map<string, Group>();
           
           data.forEach(item => {
             if (item.groups?.id) {
@@ -77,7 +76,7 @@ const Groups = () => {
     };
 
     fetchGroups();
-  }, [user, toastUI]);
+  }, [user]);
 
   const handleGroupCreated = (newGroup: Group) => {
     setGroups(prevGroups => [...prevGroups, newGroup]);
