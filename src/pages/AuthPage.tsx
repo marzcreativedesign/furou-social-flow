@@ -28,9 +28,9 @@ const AuthPage = () => {
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      fullName: "Usuário de Teste",
-      email: "teste@furou.com",
-      password: "password123"
+      fullName: "",
+      email: "",
+      password: ""
     }
   });
 
