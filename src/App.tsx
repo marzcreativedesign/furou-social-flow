@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,25 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+// Import all page components
+import LandingPage from "./pages/LandingPage";
+import Onboarding from "./pages/Onboarding";
+import Login from "./pages/Login";
+import HomePage from "./pages/HomePage";
+import EventDetail from "./pages/EventDetail";
+import CreateEvent from "./pages/CreateEvent";
+import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import CalendarView from "./pages/CalendarView";
+import Settings from "./pages/Settings";
+import EventsPage from "./pages/EventsPage";
+import CostCalculatorPage from "./pages/CostCalculatorPage";
+import ExplorePage from "./pages/ExplorePage";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 

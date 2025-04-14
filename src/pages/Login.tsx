@@ -1,118 +1,110 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { useNavigate, useLocation } from "react-router-dom";
+
+import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import EmailAuthForm from "@/components/auth/EmailAuthForm";
-import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import AuthFooter from "@/components/auth/AuthFooter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+
+const loginSchema = z.object({
+  email: z.string().email({ message: "Email inválido" }),
+  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, signUp, signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
-  const [emailLogin, setEmailLogin] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { user, signIn } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Check for signup parameter in URL
-    const params = new URLSearchParams(location.search);
-    if (params.get('signup') === 'true') {
-      setEmailLogin(true);
-      setIsSignUp(true);
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+    try {
+      const { error } = await signIn(data.email, data.password);
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Ocorreu um erro ao fazer login");
+    } finally {
+      setIsLoading(false);
     }
-  }, [location]);
+  };
 
-  // Redirect if user is already logged in
+  // If the user is already logged in, redirect to home
   if (user) {
-    navigate('/home');
-    return null;
+    return <Navigate to="/home" />;
   }
 
-  const handleEmailSubmit = async (email: string, password: string) => {
-    try {
-      const { error } = isSignUp 
-        ? await signUp(email, password)
-        : await signIn(email, password);
-      
-      if (error) {
-        if (error.message.includes("Email not confirmed")) {
-          toast.error("Por favor, confirme seu e-mail para fazer login");
-        } else if (error.message.includes("Invalid login credentials")) {
-          toast.error("E-mail ou senha incorretos");
-        } else if (error.message.includes("User already registered")) {
-          toast.error("Este e-mail já está cadastrado");
-          setIsSignUp(false); // Mudar para login
-        } else {
-          toast.error(`Erro: ${error.message}`);
-        }
-        return;
-      }
-
-      if (isSignUp) {
-        toast.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
-      } else {
-        toast.success("Login realizado com sucesso!");
-        navigate('/home');
-      }
-    } catch (error: any) {
-      toast.error(`Erro inesperado: ${error.message}`);
-      console.error("Login error:", error);
-    }
-  };
-
-  const handleAuthProvider = async (provider: string) => {
-    try {
-      if (provider === "email") {
-        setEmailLogin(true);
-        return;
-      }
-
-      if (provider === "google") {
-        await signInWithGoogle();
-        return;
-      }
-
-      if (provider === "apple") {
-        await signInWithApple();
-        return;
-      }
-    } catch (error: any) {
-      console.error(`Error with ${provider} auth:`, error);
-      toast.error(`Erro com autenticação ${provider}: ${error.message}`);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-primary">Furou?!</h1>
-            <p className="text-muted-foreground">
-              Conecte-se para organizar eventos incríveis com seus amigos
-            </p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>
+            Entre com seu email e senha para acessar sua conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                placeholder="seuemail@exemplo.com"
+                type="email"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect="off"
+                disabled={isLoading}
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                placeholder="••••••••"
+                type="password"
+                autoComplete="current-password"
+                disabled={isLoading}
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              {isLoading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-center text-sm">
+            Não tem uma conta?{" "}
+            <Link
+              to="/onboarding"
+              className="underline underline-offset-4 hover:text-primary"
+            >
+              Criar conta
+            </Link>
           </div>
-
-          {emailLogin ? (
-            <EmailAuthForm 
-              isSignUp={isSignUp}
-              setIsSignUp={setIsSignUp}
-              onBackClick={() => setEmailLogin(false)}
-              onSubmit={handleEmailSubmit}
-              isLoading={isLoading}
-            />
-          ) : (
-            <SocialAuthButtons 
-              onGoogleClick={() => handleAuthProvider("google")}
-              onAppleClick={() => handleAuthProvider("apple")}
-              onEmailClick={() => handleAuthProvider("email")}
-              isLoading={isLoading}
-            />
-          )}
-
-          <AuthFooter />
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };
