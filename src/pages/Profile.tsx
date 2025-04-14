@@ -23,6 +23,26 @@ const Profile = () => {
     navigate('/auth');
   };
 
+  const handleProfileUpdate = (formData: { full_name: string; bio: string }) => {
+    if (!profile) return;
+    
+    // Create a new profile object with updated values
+    const updatedProfile = {
+      ...profile,
+      full_name: formData.full_name,
+      bio: formData.bio
+    };
+    
+    // Update the profile in state
+    setProfile(updatedProfile);
+    
+    // Here you would normally also save to database
+    toast({
+      title: "Perfil atualizado",
+      description: "As informações do seu perfil foram atualizadas."
+    });
+  };
+
   if (isLoading) {
     return (
       <MainLayout title="Perfil" showDock>
@@ -66,10 +86,16 @@ const Profile = () => {
         <ProfileStats stats={userStats} />
         
         <div className="my-6">
-          {profile && <ProfileEditorDialog profile={profile} onProfileUpdated={setProfile} />}
+          {profile && <ProfileEditorDialog 
+            profile={profile} 
+            onProfileUpdated={handleProfileUpdate} 
+          />}
         </div>
         
-        <ProfileActions onSignOut={handleSignOut} />
+        <ProfileActions 
+          onSignOut={handleSignOut} 
+          groupsCount={userStats.groups} 
+        />
       </div>
     </MainLayout>
   );

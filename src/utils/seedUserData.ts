@@ -1,6 +1,4 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
 
 // Event names, descriptions and locations
 const EVENT_NAMES = [
@@ -40,7 +38,6 @@ const LOCATIONS = [
   "Teatro Municipal"
 ];
 
-// Group names and descriptions
 const GROUP_NAMES = [
   "Amigos da Faculdade", "Time de Futebol", "Clube do Livro", 
   "Equipe de Trabalho", "Viagens e Aventuras", "Chefs Amadores", 
@@ -61,7 +58,6 @@ const GROUP_DESCRIPTIONS = [
   "Compartilhando práticas de bem-estar e mindfulness."
 ];
 
-// Image URLs for events and groups
 const IMAGE_URLS = [
   "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
   "https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3",
@@ -78,28 +74,23 @@ const IMAGE_URLS = [
   "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3"
 ];
 
-// Helper function to get a random item from an array
 const getRandomItem = <T>(items: T[]): T => {
   return items[Math.floor(Math.random() * items.length)];
 };
 
-// Helper function to get a random date within the next 30 days
 const getRandomFutureDate = (): Date => {
   const now = new Date();
   const daysToAdd = Math.floor(Math.random() * 30) + 1;
   const result = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
   
-  // Set random hours and minutes
   result.setHours(Math.floor(Math.random() * 12) + 8); // Between 8 AM and 8 PM
   result.setMinutes(Math.floor(Math.random() * 4) * 15); // 0, 15, 30, or 45 mins
   
   return result;
 };
 
-// Function to seed user data
 export const seedUserData = async (userId: string) => {
   try {
-    // Seed events
     const eventIds: string[] = [];
     const eventCount = Math.floor(Math.random() * 6) + 5; // 5-10 events
     
@@ -128,7 +119,6 @@ export const seedUserData = async (userId: string) => {
       if (eventData && eventData.length > 0) {
         eventIds.push(eventData[0].id);
         
-        // Add creator as participant automatically
         await supabase
           .from('event_participants')
           .insert({
@@ -139,7 +129,6 @@ export const seedUserData = async (userId: string) => {
       }
     }
     
-    // Seed groups
     const groupIds: string[] = [];
     const groupCount = Math.floor(Math.random() * 4) + 3; // 3-6 groups
     
@@ -162,7 +151,6 @@ export const seedUserData = async (userId: string) => {
         const groupId = groupData[0].id;
         groupIds.push(groupId);
         
-        // Add user as member (and admin) of the group
         const { error: memberError } = await supabase
           .from('group_members')
           .insert({
@@ -175,7 +163,6 @@ export const seedUserData = async (userId: string) => {
           console.error("Error adding group member:", memberError);
         }
           
-        // Associate a random event with this group (if we have any)
         if (eventIds.length > 0) {
           const randomEventId = eventIds[Math.floor(Math.random() * eventIds.length)];
           await supabase
@@ -188,7 +175,6 @@ export const seedUserData = async (userId: string) => {
       }
     }
     
-    // Seed notifications
     const notificationTitles = [
       "Novo evento criado!",
       "Convite para grupo",
@@ -207,7 +193,6 @@ export const seedUserData = async (userId: string) => {
       "Seu evento Workshop de Fotografia acontecerá em breve"
     ];
     
-    // Create 5-8 notifications
     const notifCount = Math.floor(Math.random() * 4) + 5;
     for (let i = 0; i < notifCount; i++) {
       const index = i % notificationTitles.length;
@@ -219,7 +204,7 @@ export const seedUserData = async (userId: string) => {
           title: notificationTitles[index],
           content: notificationContents[index],
           related_id: eventIds.length > i ? eventIds[i] : null,
-          is_read: Math.random() > 0.7 // About 30% read, 70% unread
+          is_read: Math.random() > 0.7
         });
     }
     
@@ -240,30 +225,31 @@ export const seedUserData = async (userId: string) => {
   }
 };
 
-// Function to seed data for a specific email
 export const seedDataForEmail = async (email: string) => {
   try {
-    // First, get user by email
-    const { data: userData, error: userError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, email')
+      .select('id')
       .eq('email', email)
       .maybeSingle();
     
-    if (userError) {
-      throw userError;
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
     }
     
-    if (!userData) {
-      // Try to get user from auth directly
-      const { data, error: authError } = await supabase.auth.admin.listUsers();
+    if (profileData && profileData.id) {
+      const result = await seedUserData(profileData.id);
+      return result;
+    }
+    
+    try {
+      const { data: authData } = await supabase.auth.admin.listUsers();
       
-      if (authError) {
-        throw new Error(`Error fetching user by email: ${authError.message}`);
+      if (!authData || !authData.users) {
+        throw new Error(`No users found in auth system`);
       }
       
-      const users = data?.users || [];
-      const user = users.find(u => u.email === email);
+      const user = authData.users.find(u => u.email === email);
       
       if (!user) {
         throw new Error(`No user found with email ${email}`);
@@ -271,10 +257,10 @@ export const seedDataForEmail = async (email: string) => {
       
       const result = await seedUserData(user.id);
       return result;
+    } catch (authError) {
+      console.error("Error accessing auth users:", authError);
+      throw new Error(`Could not find user with email ${email}: ${authError}`);
     }
-    
-    const result = await seedUserData(userData.id);
-    return result;
   } catch (error: any) {
     console.error("Error seeding data for email:", error);
     return {

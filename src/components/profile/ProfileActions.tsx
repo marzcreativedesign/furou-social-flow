@@ -1,12 +1,13 @@
 
 import { useNavigate } from "react-router-dom";
-import { Users, CalendarDays, ChevronRight } from "lucide-react";
+import { Users, CalendarDays, ChevronRight, LogOut } from "lucide-react";
 
 interface ProfileActionsProps {
-  groupsCount: number;
+  onSignOut?: () => void;
+  groupsCount?: number;
 }
 
-export const ProfileActions = ({ groupsCount }: ProfileActionsProps) => {
+export const ProfileActions = ({ onSignOut, groupsCount = 0 }: ProfileActionsProps) => {
   const navigate = useNavigate();
 
   return (
@@ -35,6 +36,19 @@ export const ProfileActions = ({ groupsCount }: ProfileActionsProps) => {
         </div>
         <ChevronRight size={20} className="text-muted-foreground dark:text-[#B3B3B3]" />
       </button>
+
+      {onSignOut && (
+        <button 
+          className="flex items-center justify-between w-full bg-white dark:bg-card p-4 rounded-xl shadow-sm hover:shadow-md transition-all dark:hover:bg-[#262626]"
+          onClick={onSignOut}
+        >
+          <div className="flex items-center">
+            <LogOut className="text-red-500 mr-3" size={20} />
+            <span className="text-red-500">Sair</span>
+          </div>
+          <ChevronRight size={20} className="text-muted-foreground dark:text-[#B3B3B3]" />
+        </button>
+      )}
     </div>
   );
 };
