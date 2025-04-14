@@ -1,94 +1,23 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Pencil, Trash2, Search, Users, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Users, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type Group = {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  member_count?: number;
-}
+import { useGroupsAdmin, type Group } from "@/hooks/useGroupsAdmin";
+import GroupSearch from "./groups/GroupSearch";
+import GroupEditDialog from "./groups/GroupEditDialog";
+import GroupDeleteDialog from "./groups/GroupDeleteDialog";
 
 const GroupManagement = () => {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { groups, loading, fetchGroups } = useGroupsAdmin();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  const fetchGroups = async () => {
-    setLoading(true);
-    try {
-      // Fetch groups
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('groups')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (groupsError) throw groupsError;
-
-      // For each group, count members
-      const groupsWithMembers = await Promise.all(groupsData.map(async (group) => {
-        const { count, error: countError } = await supabase
-          .from('group_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('group_id', group.id);
-          
-        if (countError) {
-          console.error('Error counting members for group:', group.id, countError);
-          return { ...group, member_count: 0 };
-        }
-        
-        return { ...group, member_count: count || 0 };
-      }));
-
-      setGroups(groupsWithMembers);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-      toast({
-        title: "Erro ao carregar grupos",
-        description: "Não foi possível carregar a lista de grupos.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
 
   const filteredGroups = groups.filter(group => 
     group.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -105,28 +34,21 @@ const GroupManagement = () => {
     setOpenDeleteDialog(true);
   };
 
-  const saveGroupChanges = async () => {
-    if (!editingGroup) return;
-
+  const saveGroupChanges = async (group: Group) => {
     try {
       const { error } = await supabase
         .from('groups')
         .update({
-          name: editingGroup.name,
-          description: editingGroup.description,
-          image_url: editingGroup.image_url,
+          name: group.name,
+          description: group.description,
+          image_url: group.image_url,
           updated_at: new Date().toISOString()
         })
-        .eq('id', editingGroup.id);
+        .eq('id', group.id);
 
       if (error) throw error;
 
-      setGroups(groups.map(group => 
-        group.id === editingGroup.id ? {
-          ...editingGroup,
-          member_count: group.member_count // Preserve member count
-        } : group
-      ));
+      await fetchGroups();
 
       toast({
         title: "Grupo atualizado",
@@ -148,7 +70,6 @@ const GroupManagement = () => {
     if (!editingGroup) return;
 
     try {
-      // Delete group
       const { error } = await supabase
         .from('groups')
         .delete()
@@ -156,8 +77,7 @@ const GroupManagement = () => {
 
       if (error) throw error;
 
-      // Update local state
-      setGroups(groups.filter(group => group.id !== editingGroup.id));
+      await fetchGroups();
 
       toast({
         title: "Grupo excluído",
@@ -185,17 +105,10 @@ const GroupManagement = () => {
         </Button>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou descrição..."
-            value={searchQuery}
-            onChange={handleSearch}
-            className="pl-8"
-          />
-        </div>
-      </div>
+      <GroupSearch 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
       <div className="border rounded-md overflow-hidden">
         <Table>
@@ -259,94 +172,19 @@ const GroupManagement = () => {
         </Table>
       </div>
 
-      {/* Edit Group Dialog */}
-      <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Editar Grupo</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do grupo.
-            </DialogDescription>
-          </DialogHeader>
-          {editingGroup && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="name" className="text-sm font-medium">
-                  Nome
-                </label>
-                <Input
-                  id="name"
-                  value={editingGroup.name}
-                  onChange={(e) => setEditingGroup({...editingGroup, name: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="description" className="text-sm font-medium">
-                  Descrição
-                </label>
-                <Textarea
-                  id="description"
-                  rows={3}
-                  value={editingGroup.description || ''}
-                  onChange={(e) => setEditingGroup({...editingGroup, description: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="image_url" className="text-sm font-medium">
-                  URL da imagem
-                </label>
-                <Input
-                  id="image_url"
-                  value={editingGroup.image_url || ''}
-                  onChange={(e) => setEditingGroup({...editingGroup, image_url: e.target.value})}
-                />
-                {editingGroup.image_url && (
-                  <div className="mt-2">
-                    <img 
-                      src={editingGroup.image_url} 
-                      alt={editingGroup.name}
-                      className="w-full h-40 object-cover rounded-md"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/placeholder.svg";
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenEditDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={saveGroupChanges}>
-              Salvar alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GroupEditDialog
+        group={editingGroup}
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+        onSave={saveGroupChanges}
+      />
 
-      {/* Delete Group Dialog */}
-      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir o grupo "{editingGroup?.name}"?
-              Esta ação também excluirá todas as associações de membros e eventos.
-              Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDeleteDialog(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={deleteGroup}>
-              Excluir grupo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GroupDeleteDialog
+        group={editingGroup}
+        open={openDeleteDialog}
+        onOpenChange={setOpenDeleteDialog}
+        onDelete={deleteGroup}
+      />
     </div>
   );
 };
