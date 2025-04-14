@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Event names, descriptions and locations
@@ -88,7 +89,18 @@ const getRandomFutureDate = (): Date => {
   return result;
 };
 
-export const seedUserData = async (userId: string) => {
+// Define explicit types for the result of seedUserData
+interface SeedUserDataResult {
+  success: boolean;
+  eventIds?: string[];
+  groupIds?: string[];
+  eventCount?: number;
+  groupCount?: number;
+  notificationCount?: number;
+  error?: any;
+}
+
+export const seedUserData = async (userId: string): Promise<SeedUserDataResult> => {
   try {
     const eventIds: string[] = [];
     const eventCount = Math.floor(Math.random() * 6) + 5; // 5-10 events
@@ -224,7 +236,8 @@ export const seedUserData = async (userId: string) => {
   }
 };
 
-export const seedDataForEmail = async (email: string) => {
+// Explicitly define the return type for seedDataForEmail
+export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
@@ -241,6 +254,7 @@ export const seedDataForEmail = async (email: string) => {
       return result;
     }
     
+    // If we can't find the user in the profiles table, check the session
     const { data: sessionData } = await supabase.auth.getSession();
     
     if (sessionData && sessionData.session && sessionData.session.user && 
@@ -249,6 +263,7 @@ export const seedDataForEmail = async (email: string) => {
       return result;
     }
     
+    // If we still can't find the user, return an error
     return {
       success: false,
       error: `Could not find user with email ${email}`
