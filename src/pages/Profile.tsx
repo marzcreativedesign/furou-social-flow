@@ -9,8 +9,6 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SeedDataButton } from "@/components/profile/SeedDataButton";
-import { SeedTestEmailButton } from "@/components/profile/SeedTestEmailButton";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -72,15 +70,6 @@ const Profile = () => {
           
           <h1 className="text-2xl font-bold mb-1">{profile?.full_name || "Usuário"}</h1>
           <p className="text-muted-foreground">{profile?.email}</p>
-        </div>
-
-        <div className="mb-6 space-y-3">
-          <div className="flex justify-center">
-            <SeedDataButton />
-          </div>
-          <div className="flex justify-center">
-            <SeedTestEmailButton email="teste@furou.com" />
-          </div>
         </div>
         
         <ProfileStats stats={userStats} />
