@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Users } from "lucide-react";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -19,6 +17,7 @@ import { Label } from "../components/ui/label";
 import { useToast } from "../components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import MainLayout from "../components/MainLayout";
 
 // Mock data for groups
 const MOCK_GROUPS = [
@@ -80,9 +79,7 @@ const Groups = () => {
   };
 
   return (
-    <div className="pb-20">
-      <Header title="Seus Grupos" />
-      
+    <MainLayout title="Seus Grupos">
       <div className="px-4 py-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold">Seus grupos</h2>
@@ -172,9 +169,7 @@ const Groups = () => {
           </div>
         )}
       </div>
-      
-      <BottomNav />
-    </div>
+    </MainLayout>
   );
 };
 
