@@ -75,7 +75,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Definição explícita do tipo para evitar instantiação excessiva de tipos
+// Interface explícita para dados do perfil para evitar problemas de tipagem
 interface ProfileData {
   id: string;
 }
@@ -83,12 +83,12 @@ interface ProfileData {
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Primeiro, tenta encontrar o perfil pelo email usando uma consulta SQL direta
+    // Usando uma abordagem sem RPC para evitar problemas de tipagem
     const { data, error: queryError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .maybeSingle();
+      .single();
     
     if (queryError) {
       console.error('Error querying profile by email:', queryError);
@@ -99,7 +99,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     }
 
     // Se encontrou o perfil, usa esse ID
-    if (data && data.id) {
+    if (data) {
       return await seedUserData(data.id);
     }
 
