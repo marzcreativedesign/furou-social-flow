@@ -51,7 +51,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         
         if (eventsError) {
           console.error("Error fetching events:", eventsError);
-          toast.error("Erro ao carregar eventos");
+          toast.error("Error loading events");
         } else if (userEvents) {
           const formattedEvents: Event[] = userEvents.map(event => {
             const groupInfo = event.group_events?.[0]?.groups || null;
@@ -98,19 +98,11 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         if (notificationsError) {
           console.error("Error fetching notifications:", notificationsError);
         } else if (notifications) {
-          const unreadNotifications = notifications
-            .filter(notification => !notification.is_read)
-            .slice(0, 5)
-            .map(notification => ({
-              ...notification,
-              eventName: notification.title,
-              imageUrl: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3"
-            }));
-          setPendingActions(unreadNotifications);
+          setPendingActions(notifications);
         }
       } catch (error) {
         console.error("Error loading homepage data:", error);
-        toast.error("Erro ao carregar dados");
+        toast.error("Error loading data");
       } finally {
         setLoading(false);
       }
@@ -146,13 +138,11 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
 
   const handlePendingActionComplete = async (id: string) => {
     try {
-      // Update the notification as read in the backend
       await NotificationsService.markAsRead(id);
-      // Update local state
       setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
     } catch (error) {
       console.error("Error completing action:", error);
-      toast.error("Erro ao completar ação");
+      toast.error("Error completing action");
     }
   };
 
