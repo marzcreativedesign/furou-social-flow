@@ -1,28 +1,8 @@
-
-import { useState } from "react";
-import { User } from "@supabase/supabase-js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type UserRole = "free" | "premium" | "admin";
-
-type UserWithRole = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  username: string | null;
-  role: UserRole;
-  created_at: string | null;
-};
+import type { UserWithRole } from "@/hooks/useUsers";
 
 interface UsersTableProps {
   users: UserWithRole[];
