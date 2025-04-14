@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,6 +16,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
@@ -38,26 +39,39 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const LandingPage: React.FC = () => {
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains("dark")
   );
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmitEmail = (e: React.FormEvent) => {
+  const handleSubmitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim() && email.includes("@")) {
-      toast({
-        title: "Inscrição realizada!",
-        description: "Você será notificado quando o app for lançado.",
+    
+    if (!email.trim() || !email.includes("@")) {
+      toast.error("Por favor, insira um email válido");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const response = await supabase.functions.invoke('collect-email', {
+        body: { email: email.trim() }
       });
+      
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao registrar email");
+      }
+      
+      toast.success("Inscrição realizada! Você será notificado quando o app for lançado.");
       setEmail("");
-    } else {
-      toast({
-        title: "Erro!",
-        description: "Por favor, insira um email válido.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error("Erro ao cadastrar email:", error);
+      toast.error(error.message || "Ocorreu um erro. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -72,6 +86,10 @@ const LandingPage: React.FC = () => {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("darkMode", "false");
     }
+  };
+
+  const handleLogin = () => {
+    navigate("/login");
   };
 
   const features = [
@@ -149,7 +167,6 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Dark/Light Mode Toggle */}
       <div className="fixed top-4 right-4 z-50">
         <Button
           variant="outline"
@@ -162,7 +179,6 @@ const LandingPage: React.FC = () => {
         </Button>
       </div>
       
-      {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-6 md:px-12 lg:px-24 bg-gradient-to-br from-background via-background to-accent/20">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1528495612343-9ca9f4a4de28?q=80&w=1974')] bg-cover bg-center opacity-5"></div>
         <div className="container mx-auto max-w-7xl">
@@ -172,7 +188,7 @@ const LandingPage: React.FC = () => {
               <span className="text-2xl font-bold text-foreground">Furou?!</span>
             </div>
             <Button 
-              onClick={() => navigate("/login")}
+              onClick={handleLogin}
               variant="outline"
             >
               Login
@@ -202,11 +218,16 @@ const LandingPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full"
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
-                <Button type="submit" className="bg-primary hover:bg-primary/90">
-                  Quero ser avisado no lançamento!
+                <Button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Enviando..." : "Quero ser avisado no lançamento!"}
                 </Button>
               </form>
             </motion.div>
@@ -221,7 +242,7 @@ const LandingPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl transform rotate-3 scale-105"></div>
                 <AspectRatio ratio={9/16} className="overflow-hidden bg-card rounded-3xl border shadow-lg">
                   <img 
-                    src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1974" 
+                    src="https://images.unsplash.com/photo-1529156069834-ef04bbd61622?q=80&w=1974" 
                     alt="Amigos se divertindo em um evento" 
                     className="object-cover w-full h-full"
                   />
@@ -236,7 +257,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* About Section */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-accent/10">
         <div className="container mx-auto max-w-5xl text-center">
           <h2 className="text-3xl font-bold mb-3">Sobre o Furou?!</h2>
@@ -266,10 +286,9 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* App Preview Section */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-background">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold mb-3 text-center">Conheça o app</h2>
+          <h2 className="text-3xl font-bold mb-3">Conheça o app</h2>
           <p className="text-xl text-muted-foreground mb-12 text-center max-w-3xl mx-auto">
             Veja as principais telas do Furou?! e descubra como ele vai transformar a maneira como você organiza eventos
           </p>
@@ -308,7 +327,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-secondary/5">
         <div className="container mx-auto max-w-5xl text-center">
           <h2 className="text-3xl font-bold mb-3">O que estão dizendo</h2>
@@ -342,7 +360,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Differentials */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-background">
         <div className="container mx-auto max-w-5xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -391,7 +408,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-accent/10">
         <div className="container mx-auto max-w-3xl">
           <h2 className="text-3xl font-bold mb-3 text-center">Perguntas frequentes</h2>
@@ -410,7 +426,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
       <section className="py-20 px-6 md:px-12 lg:px-24 bg-gradient-to-br from-primary/20 via-background to-secondary/20">
         <div className="container mx-auto max-w-3xl text-center">
           <motion.div
@@ -433,18 +448,22 @@ const LandingPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full"
+                  disabled={isSubmitting}
                   required
                 />
               </div>
-              <Button type="submit" className="bg-primary hover:bg-primary/90">
-                Quero participar! <ArrowRight className="ml-2 h-4 w-4" />
+              <Button 
+                type="submit" 
+                className="bg-primary hover:bg-primary/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Enviando..." : "Quero participar!"} {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
             </form>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="py-12 px-6 md:px-12 lg:px-24 bg-muted/30 border-t">
         <div className="container mx-auto max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

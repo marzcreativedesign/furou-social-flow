@@ -1,15 +1,23 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import AuthFooter from "@/components/auth/AuthFooter";
 
 const Login = () => {
-  const { signIn, signUp, signInWithGoogle, signInWithApple, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const { signIn, signUp, signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
   const [emailLogin, setEmailLogin] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+
+  // Redirect if user is already logged in
+  if (user) {
+    navigate('/home');
+    return null;
+  }
 
   const handleEmailSubmit = async (email: string, password: string) => {
     try {
@@ -35,26 +43,33 @@ const Login = () => {
         toast.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
       } else {
         toast.success("Login realizado com sucesso!");
+        navigate('/home');
       }
     } catch (error: any) {
       toast.error(`Erro inesperado: ${error.message}`);
+      console.error("Login error:", error);
     }
   };
 
   const handleAuthProvider = async (provider: string) => {
-    if (provider === "email") {
-      setEmailLogin(true);
-      return;
-    }
+    try {
+      if (provider === "email") {
+        setEmailLogin(true);
+        return;
+      }
 
-    if (provider === "google") {
-      await signInWithGoogle();
-      return;
-    }
+      if (provider === "google") {
+        await signInWithGoogle();
+        return;
+      }
 
-    if (provider === "apple") {
-      await signInWithApple();
-      return;
+      if (provider === "apple") {
+        await signInWithApple();
+        return;
+      }
+    } catch (error: any) {
+      console.error(`Error with ${provider} auth:`, error);
+      toast.error(`Erro com autenticação ${provider}: ${error.message}`);
     }
   };
 
