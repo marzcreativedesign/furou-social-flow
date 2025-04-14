@@ -101,43 +101,36 @@ const Groups = () => {
     setLoading(true);
 
     try {
-      const result = await GroupsService.createGroup({
+      // The issue is here - we need to handle the correct return type
+      const createdGroup = await GroupsService.createGroup({
         name: newGroupName,
         description: newGroupDescription || undefined,
         image_url: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3"
       });
 
-      if (result.error) {
-        console.error("Error creating group:", result.error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar o grupo",
-          variant: "destructive",
-        });
-        return;
+      if (!createdGroup || createdGroup.length === 0) {
+        throw new Error("Falha ao criar grupo");
       }
 
-      if (result.data && result.data.length > 0) {
-        const newGroup: Group = {
-          id: result.data[0].id,
-          name: result.data[0].name,
-          description: result.data[0].description,
-          image_url: result.data[0].image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
-          members: 1,
-          lastActivity: "Agora",
-          created_at: result.data[0].created_at
-        };
+      const newGroup: Group = {
+        id: createdGroup[0].id,
+        name: createdGroup[0].name,
+        description: createdGroup[0].description,
+        image_url: createdGroup[0].image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
+        members: 1,
+        lastActivity: "Agora",
+        created_at: createdGroup[0].created_at
+      };
 
-        setGroups(prevGroups => [...prevGroups, newGroup]);
-        
-        toast({
-          title: "Grupo criado",
-          description: `O grupo "${newGroupName}" foi criado com sucesso!`,
-        });
+      setGroups(prevGroups => [...prevGroups, newGroup]);
+      
+      toast({
+        title: "Grupo criado",
+        description: `O grupo "${newGroupName}" foi criado com sucesso!`,
+      });
 
-        // Redirecionar para a página do novo grupo
-        navigate(`/grupo/${newGroup.id}`);
-      }
+      // Redirecionar para a página do novo grupo
+      navigate(`/grupo/${newGroup.id}`);
     } catch (error) {
       console.error("Error creating group:", error);
       toast({
