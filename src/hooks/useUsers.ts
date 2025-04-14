@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
-type UserRole = "free" | "premium" | "admin";
+export type UserRole = "free" | "premium" | "admin";
 
 export type UserWithRole = {
   id: string;
