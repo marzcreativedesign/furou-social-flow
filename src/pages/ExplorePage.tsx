@@ -18,6 +18,16 @@ interface Event {
   image_url?: string | null;
   attendees: number;
   type: "public" | "private" | "group";
+  event_participants?: {
+    id: string;
+    user_id: string;
+    status: string;
+  }[];
+  profiles?: {
+    id: string;
+    full_name: string;
+    avatar_url: string;
+  };
 }
 
 const ExplorePage = () => {
@@ -57,6 +67,8 @@ const ExplorePage = () => {
             location: event.location,
             imageUrl: event.image_url,
             attendees: event.event_participants?.length || 0,
+            event_participants: event.event_participants,
+            profiles: event.profiles,
             type: "public"
           }));
           

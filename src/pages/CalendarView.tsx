@@ -19,6 +19,14 @@ interface Event {
   time: string;
   location: string | null;
   type: string;
+  group_events?: {
+    id: string;
+    group_id: string;
+    groups?: { 
+      id: string;
+      name: string 
+    };
+  }[];
 }
 
 const CalendarView = () => {
@@ -69,6 +77,7 @@ const CalendarView = () => {
               date: eventDate,
               time: timeString,
               location: event.location,
+              group_events: event.group_events,
               type: event.is_public ? "public" : (groupInfo ? "group" : "private")
             };
           });

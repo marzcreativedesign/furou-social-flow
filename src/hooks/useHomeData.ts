@@ -13,8 +13,19 @@ export interface Event {
   image_url: string | null;
   is_public: boolean;
   creator_id: string;
-  event_participants?: any[];
-  group_events?: { groups?: { name: string } }[];
+  event_participants?: {
+    id: string;
+    user_id: string;
+    status: string;
+  }[];
+  group_events?: {
+    id: string;
+    group_id: string;
+    groups?: { 
+      id: string;
+      name: string 
+    };
+  }[];
   confirmed?: boolean;
   type?: "public" | "private" | "group";
   groupName?: string | null;

@@ -20,7 +20,8 @@ export const EventsService = {
       .from('events')
       .select(`
         *,
-        event_participants(*)
+        event_participants(*),
+        group_events(*, groups(id, name))
       `)
       .or(`creator_id.eq.${user.user.id},event_participants.user_id.eq.${user.user.id}`)
       .order('date', { ascending: true });
@@ -50,7 +51,8 @@ export const EventsService = {
       .from('events')
       .select(`
         *,
-        profiles:creator_id(*)
+        profiles:creator_id(*),
+        event_participants(*)
       `)
       .eq('is_public', true)
       .order('date', { ascending: true });
