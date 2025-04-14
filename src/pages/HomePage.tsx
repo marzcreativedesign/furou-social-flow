@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, CalendarDays, Settings, Bell, X, Check } from "lucide-react";
-import Header from "../components/Header";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
-import EventCard from "../components/EventCard";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import CostCalculator from "@/components/CostCalculator";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
 import { NotificationsService } from "@/services/notifications.service";
 import { toast } from "sonner";
+import PendingActions from "@/components/home/PendingActions";
+import EventTypeFilters from "@/components/home/EventTypeFilters";
+import EventsList from "@/components/home/EventsList";
+import SearchInput from "@/components/home/SearchInput";
 
 type FilterType = 'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed';
 
@@ -49,11 +49,11 @@ const HomePage = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [events, setEvents] = useState<Event[]>([]);
-  const [publicEvents, setPublicEvents] = useState<Event[]>([]);
-  const [pendingActions, setPendingActions] = useState<Notification[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [publicEvents, setPublicEvents] = useState<any[]>([]);
+  const [pendingActions, setPendingActions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || "Usuário"; 
+  const userName = user?.user_metadata?.full_name?.split(' ')[0] || "Usuário";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,263 +157,83 @@ const HomePage = () => {
     return true;
   });
 
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+  const handlePendingActionComplete = (id: string) => {
+    setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
   };
-
-  const handleAcceptAction = async (id: string) => {
-    try {
-      await NotificationsService.markAsRead(id);
-      setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
-      toast.success("Ação aceita com sucesso");
-    } catch (error) {
-      console.error("Error accepting action:", error);
-      toast.error("Erro ao aceitar ação");
-    }
-  };
-
-  const handleRejectAction = async (id: string) => {
-    try {
-      await NotificationsService.markAsRead(id);
-      setPendingActions(prevActions => prevActions.filter(action => action.id !== id));
-      toast.success("Ação rejeitada");
-    } catch (error) {
-      console.error("Error rejecting action:", error);
-      toast.error("Erro ao rejeitar ação");
-    }
-  };
-
-  if (loading) {
-    return (
-      <MainLayout title="Furou?!" showSearch onSearch={handleSearchChange} showDock>
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
-    <MainLayout 
-      title="Furou?!" 
-      showSearch 
-      onSearch={handleSearchChange} 
-      showDock 
-      rightContent={<>
-        <Sheet>
-          <SheetTrigger asChild>
-            {/* Keep existing trigger content */}
-          </SheetTrigger>
-          <SheetContent className="dark:bg-card dark:border-[#2C2C2C]">
-            <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Calculadora de Rateio</h2>
-            <p className="text-muted-foreground mb-4 dark:text-[#B3B3B3]">
-              Divida facilmente o valor de um evento entre os participantes
-            </p>
-            <CostCalculator isDrawer />
-            
-            <Button className="w-full mt-4 dark:bg-primary dark:hover:bg-accent" onClick={() => navigate("/calculadora")}>
-              Abrir calculadora completa
-            </Button>
-          </SheetContent>
-        </Sheet>
-      </>}
-    >
+    <MainLayout title="Furou?!" showSearch onSearch={setSearchQuery} showDock>
       <div className="p-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-3 dark:text-[#EDEDED]">Olá, {userName} 👋</h1>
-          
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-[#B3B3B3]" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar eventos..." 
-              className="w-full px-10 py-3 rounded-xl border border-input bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3] dark:focus:border-primary dark:focus:ring-primary/20" 
-              value={searchQuery} 
-              onChange={e => handleSearchChange(e.target.value)} 
-            />
-          </div>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        {pendingActions.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Ações Pendentes</h2>
-            <div className="space-y-3">
-              {pendingActions.map(action => (
-                <div key={action.id} className="bg-accent/10 dark:bg-[#FF6B00]/20 p-4 rounded-lg flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <img src={action.imageUrl} alt={action.eventName} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium dark:text-[#EDEDED]">{action.title}</h3>
-                      <p className="text-sm text-muted-foreground dark:text-[#B3B3B3]">{action.content}</p>
-                      <span className="text-xs text-muted-foreground dark:text-[#B3B3B3]">
-                        {new Date(action.created_at).toLocaleString('pt-BR', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: 'numeric',
-                          minute: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-full w-9 h-9 p-0 dark:border-[#2C2C2C] dark:bg-[#262626] dark:hover:bg-[#2C2C2C] dark:text-[#EDEDED]" 
-                      onClick={() => handleRejectAction(action.id)}
-                    >
-                      <X size={16} />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="rounded-full w-9 h-9 p-0 dark:bg-primary dark:hover:bg-accent" 
-                      onClick={() => handleAcceptAction(action.id)}
-                    >
-                      <Check size={16} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <PendingActions 
+          actions={pendingActions} 
+          onActionComplete={handlePendingActionComplete} 
+        />
 
-        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none">
-          <Button 
-            variant={activeFilter === 'all' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'all' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('all')}
-          >
-            Todos
-          </Button>
-          <Button 
-            variant={activeFilter === 'public' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'public' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('public')}
-          >
-            Eventos Públicos
-          </Button>
-          <Button 
-            variant={activeFilter === 'private' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'private' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('private')}
-          >
-            Eventos Privados
-          </Button>
-          <Button 
-            variant={activeFilter === 'group' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'group' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('group')}
-          >
-            Grupos
-          </Button>
-          <Button 
-            variant={activeFilter === 'confirmed' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'confirmed' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('confirmed')}
-          >
-            Confirmados
-          </Button>
-          <Button 
-            variant={activeFilter === 'missed' ? 'default' : 'outline'} 
-            size="sm" 
-            className={`rounded-full whitespace-nowrap ${activeFilter !== 'missed' ? 'dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]' : 'dark:bg-primary dark:text-white dark:hover:bg-accent'}`} 
-            onClick={() => setActiveFilter('missed')}
-          >
-            Furei
-          </Button>
-        </div>
+        <EventTypeFilters 
+          activeFilter={activeFilter} 
+          onFilterChange={setActiveFilter} 
+        />
 
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold dark:text-[#EDEDED]">Seus Eventos</h2>
-            <Button variant="ghost" size="sm" asChild className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
-              <Link to="/eventos">Ver todos</Link>
-            </Button>
-          </div>
-
-          {filteredEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredEvents.map(event => (
-                <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
-                  <EventCard 
-                    id={event.id}
-                    title={event.title}
-                    date={event.date}
-                    location={event.location || "Local não definido"}
-                    imageUrl={event.image_url || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3"}
-                    attendees={event.attendees || 0}
-                    confirmed={event.confirmed}
-                    type={event.type as "public" | "private" | "group"}
-                    groupName={event.groupName}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : searchQuery ? (
-            <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
-              <Search className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
-              <p className="text-muted-foreground dark:text-[#B3B3B3]">
-                Nenhum evento encontrado para "{searchQuery}"
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
-              <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
-              <h3 className="text-lg font-medium mb-1 dark:text-[#EDEDED]">Nenhum evento</h3>
-              <p className="text-sm text-muted-foreground dark:text-[#B3B3B3] mb-4">
-                Você não tem eventos ativos no momento
-              </p>
-              <Button onClick={() => navigate("/criar")} className="dark:bg-primary dark:hover:bg-accent">
-                Criar Evento
-              </Button>
-            </div>
-          )}
+          <EventsList 
+            title="Seus Eventos"
+            events={filteredEvents}
+            showViewAll
+            viewAllLink="/eventos"
+            emptyMessage={searchQuery ? `Nenhum evento encontrado para "${searchQuery}"` : "Você não tem eventos ativos no momento"}
+            onCreateEvent={() => navigate("/criar")}
+          />
         </div>
 
         {!searchQuery && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold dark:text-[#EDEDED]">Eventos Públicos</h2>
-              <Button variant="ghost" size="sm" asChild className="dark:text-[#FFA756] dark:hover:bg-[#262626]">
-                <Link to="/eventos?filter=public">Ver todos</Link>
-              </Button>
-            </div>
-            
-            {publicEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {publicEvents.map(event => (
-                  <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
-                    <EventCard 
-                      id={event.id}
-                      title={event.title}
-                      date={event.date}
-                      location={event.location || "Local não definido"}
-                      imageUrl={event.image_url || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3"}
-                      attendees={event.attendees || 0}
-                      type="public"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-muted/20 dark:bg-[#262626]/50 rounded-xl">
-                <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground dark:text-[#B3B3B3] mb-2" />
-                <p className="text-muted-foreground dark:text-[#B3B3B3]">
-                  Nenhum evento público disponível
-                </p>
-              </div>
-            )}
-          </div>
+          <EventsList 
+            title="Eventos Públicos"
+            events={publicEvents}
+            showViewAll
+            viewAllLink="/eventos?filter=public"
+          />
         )}
       </div>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          {/* Keep existing trigger content */}
+            <Button variant="ghost" className="mr-2 px-0 dark:text-[#EDEDED] hover:bg-accent dark:hover:bg-[#262626]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-settings mr-2 h-4 w-4"
+              >
+                <path d="M12.22 2.02h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73-.73H2.02a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2h.18a2 2 0 0 1 1.73 1l.25.43a2 2 0 0 1 0 2l-.08.15a2 2 0 0 0-.73 2.73v.18a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73.73h.18a2 2 0 0 0 2-2v-.44a2 2 0 0 0-2-2h-.18a2 2 0 0 1-1.73-1l-.25-.43a2 2 0 0 1 0-2l.08-.15a2 2 0 0 0 .73-2.73v-.18a2 2 0 0 0-2-2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1-1.73l-.43-.25a2 2 0 0 1 0-2l.08-.15a2 2 0 0 0 .73-2.73Z" />
+                <path d="M12 8v8" />
+              </svg>
+              Calculadora
+            </Button>
+        </SheetTrigger>
+        <SheetContent className="dark:bg-card dark:border-[#2C2C2C]">
+          <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Calculadora de Rateio</h2>
+          <p className="text-muted-foreground mb-4 dark:text-[#B3B3B3]">
+            Divida facilmente o valor de um evento entre os participantes
+          </p>
+          <CostCalculator isDrawer />
+          
+          <Button className="w-full mt-4 dark:bg-primary dark:hover:bg-accent" onClick={() => navigate("/calculadora")}>
+            Abrir calculadora completa
+          </Button>
+        </SheetContent>
+      </Sheet>
     </MainLayout>
   );
 };
