@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -76,8 +75,8 @@ export default {
 				},
 				
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))',
+					DEFAULT: "hsl(0 0% 90%)", // Cinza claro mais escuro
+					foreground: "hsl(0 0% 40%)", // Texto do muted mais escuro para contraste
 				},
 				
 				accent: {
