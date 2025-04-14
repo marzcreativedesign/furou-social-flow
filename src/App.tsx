@@ -1,12 +1,12 @@
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 // Import all page components
 import LandingPage from "./pages/LandingPage";
@@ -26,6 +26,7 @@ import EventsPage from "./pages/EventsPage";
 import CostCalculatorPage from "./pages/CostCalculatorPage";
 import ExplorePage from "./pages/ExplorePage";
 import NotFound from "./pages/NotFound";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,10 @@ const App = () => {
                 <Route path="/eventos" element={<EventsPage />} />
                 <Route path="/calculadora" element={<CostCalculatorPage />} />
                 <Route path="/explorar" element={<ExplorePage />} />
+              </Route>
+
+              <Route element={<AdminRoute />}>
+                <Route path="/admin" element={<AdminPage />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />
