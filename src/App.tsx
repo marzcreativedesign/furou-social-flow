@@ -26,7 +26,7 @@ import ExplorePage from "./pages/ExplorePage";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize dark mode from localStorage on app start
+  // Inicializa o modo escuro do localStorage na inicialização do aplicativo
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
     if (isDark) {
@@ -34,6 +34,12 @@ const App = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    // Remover quaisquer classes de acessibilidade que possam ter sido aplicadas
+    document.documentElement.classList.remove('high-contrast', 'reduce-motion');
+    document.documentElement.style.fontSize = '100%';
+    document.documentElement.classList.remove('font-serif', 'font-mono', 'font-dyslexic');
+    document.documentElement.classList.add('font-sans');
   }, []);
 
   return (

@@ -14,27 +14,38 @@ const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('darkMode') === 'true';
-  });
+  const [darkMode, setDarkMode] = useState(false);
+  const [fontSize, setFontSize] = useState(100);
+  const [fontFamily, setFontFamily] = useState("default");
+  const [highContrast, setHighContrast] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   
-  const [fontSize, setFontSize] = useState(() => {
-    return parseInt(localStorage.getItem('fontSize') || '100');
-  });
-  
-  const [fontFamily, setFontFamily] = useState(() => {
-    return localStorage.getItem('fontFamily') || 'default';
-  });
-  
-  const [highContrast, setHighContrast] = useState(() => {
-    return localStorage.getItem('highContrast') === 'true';
-  });
-  
-  const [reducedMotion, setReducedMotion] = useState(() => {
-    return localStorage.getItem('reducedMotion') === 'true';
-  });
-
   useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode !== null) {
+      setDarkMode(savedDarkMode === 'true');
+    }
+    
+    const savedFontSize = localStorage.getItem('fontSize');
+    if (savedFontSize !== null) {
+      setFontSize(parseInt(savedFontSize));
+    }
+    
+    const savedFontFamily = localStorage.getItem('fontFamily');
+    if (savedFontFamily !== null) {
+      setFontFamily(savedFontFamily);
+    }
+    
+    const savedHighContrast = localStorage.getItem('highContrast');
+    if (savedHighContrast !== null) {
+      setHighContrast(savedHighContrast === 'true');
+    }
+    
+    const savedReducedMotion = localStorage.getItem('reducedMotion');
+    if (savedReducedMotion !== null) {
+      setReducedMotion(savedReducedMotion === 'true');
+    }
+
     applySettings();
   }, []);
 

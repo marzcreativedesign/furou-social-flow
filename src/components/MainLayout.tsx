@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -62,56 +61,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
-    const isHighContrast = localStorage.getItem('highContrast') === 'true';
-    const isReducedMotion = localStorage.getItem('reducedMotion') === 'true';
-    const fontSize = localStorage.getItem('fontSize');
-    const fontFamily = localStorage.getItem('fontFamily');
-    
     setDarkMode(isDark);
     
-    // Apply dark mode
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
-    }
-    
-    // Apply high contrast if enabled
-    if (isHighContrast) {
-      document.documentElement.classList.add('high-contrast');
-    } else {
-      document.documentElement.classList.remove('high-contrast');
-    }
-    
-    // Apply reduced motion if enabled
-    if (isReducedMotion) {
-      document.documentElement.classList.add('reduce-motion');
-    } else {
-      document.documentElement.classList.remove('reduce-motion');
-    }
-    
-    // Apply font size if set
-    if (fontSize) {
-      document.documentElement.style.fontSize = `${fontSize}%`;
-    }
-    
-    // Apply font family if set
-    if (fontFamily) {
-      document.documentElement.classList.remove('font-sans', 'font-serif', 'font-mono', 'font-dyslexic');
-      
-      switch (fontFamily) {
-        case 'serif':
-          document.documentElement.classList.add('font-serif');
-          break;
-        case 'mono':
-          document.documentElement.classList.add('font-mono');
-          break;
-        case 'dyslexic':
-          document.documentElement.classList.add('font-dyslexic');
-          break;
-        default:
-          document.documentElement.classList.add('font-sans');
-      }
     }
   }, []);
 
@@ -157,7 +112,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
       <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
         <div className="lg:flex">
-          {/* Desktop sidebar */}
           {isDesktop && (
             <div className="hidden lg:block lg:w-64 p-4">
               <div className="sticky top-20 space-y-1">
@@ -217,7 +171,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             </div>
           )}
           
-          {/* Mobile and tablet content */}
           <div className="flex-1">
             {children}
           </div>
