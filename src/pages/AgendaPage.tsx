@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 // Mock data for events
@@ -99,13 +99,31 @@ const AgendaPage = () => {
     );
   };
 
+  // Function to style past dates
+  const modifiersStyles = {
+    pastDate: {
+      color: "rgb(176, 176, 176)", // #B0B0B0
+      opacity: 0.6,
+    },
+    hasEvent: { 
+      fontWeight: 'bold', 
+      textDecoration: 'underline', 
+      color: 'var(--accent)' 
+    }
+  };
+
+  // Function to check if a date is in the past
+  const isPastDate = (date: Date) => {
+    return isBefore(startOfDay(date), startOfDay(new Date())) && !isToday(date);
+  };
+
   return (
     <MainLayout title="Agenda">
       <div className="p-4">
         <h2 className="text-xl font-semibold mb-4">Sua Agenda</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendário */}
+          {/* Calendar */}
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
@@ -116,23 +134,18 @@ const AgendaPage = () => {
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  className="border rounded-md"
+                  className="border rounded-md pointer-events-auto"
                   modifiers={{
-                    hasEvent: (day) => dateHasEvent(day)
+                    hasEvent: (day) => dateHasEvent(day),
+                    pastDate: (day) => isPastDate(day)
                   }}
-                  modifiersStyles={{
-                    hasEvent: { 
-                      fontWeight: 'bold', 
-                      textDecoration: 'underline', 
-                      color: 'var(--accent)' 
-                    }
-                  }}
+                  modifiersStyles={modifiersStyles}
                 />
               </CardContent>
             </Card>
           </div>
           
-          {/* Lista de eventos do dia selecionado */}
+          {/* Selected date events list */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
@@ -147,7 +160,9 @@ const AgendaPage = () => {
                     {selectedDateEvents.map((event) => (
                       <div 
                         key={event.id}
-                        className="p-4 border rounded-lg hover:bg-accent/10 transition-colors cursor-pointer"
+                        className={`p-4 border rounded-lg hover:bg-accent/10 transition-colors cursor-pointer ${
+                          isPastDate(event.date) ? 'opacity-60' : ''
+                        }`}
                         onClick={() => window.location.href = `/evento/${event.id}`}
                       >
                         <div className="flex items-start justify-between">
@@ -190,3 +205,4 @@ const AgendaPage = () => {
 };
 
 export default AgendaPage;
+
