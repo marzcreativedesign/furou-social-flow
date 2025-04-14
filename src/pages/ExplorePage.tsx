@@ -140,8 +140,6 @@ const ExplorePage = () => {
                       imageUrl={event.image_url || ""}
                       attendees={event.attendees || 0}
                       type="public"
-                      creatorName={event.profiles?.full_name || "Usuário"}
-                      creatorAvatar={event.profiles?.avatar_url || ""}
                       size="large"
                     />
                   </div>
