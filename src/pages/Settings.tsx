@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Moon, Sun, ArrowLeft, Check, Contrast, Eye, Type, HandStop } from "lucide-react";
+import { Moon, Sun, ArrowLeft, Check, Contrast, Eye, Type, ZoomOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +14,6 @@ const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Get initial settings from localStorage or use defaults
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
@@ -36,7 +34,6 @@ const Settings = () => {
     return localStorage.getItem('reducedMotion') === 'true';
   });
 
-  // Apply settings on initial load
   useEffect(() => {
     applySettings();
   }, []);
@@ -125,29 +122,23 @@ const Settings = () => {
     });
   };
 
-  // Apply all settings at once
   const applySettings = () => {
-    // Apply dark mode
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
     
-    // Apply font size
     document.documentElement.style.fontSize = `${fontSize}%`;
     
-    // Apply font family
     applyFontFamily(fontFamily);
     
-    // Apply high contrast
     if (highContrast) {
       document.documentElement.classList.add('high-contrast');
     } else {
       document.documentElement.classList.remove('high-contrast');
     }
     
-    // Apply reduced motion
     if (reducedMotion) {
       document.documentElement.classList.add('reduce-motion');
     } else {
@@ -178,7 +169,6 @@ const Settings = () => {
         
         <Separator />
 
-        {/* Dark Mode */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-lg font-medium flex items-center">
@@ -192,7 +182,6 @@ const Settings = () => {
           <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
         </div>
 
-        {/* High Contrast */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-lg font-medium flex items-center">
@@ -213,7 +202,6 @@ const Settings = () => {
           <p className="text-muted-foreground">Ajuste o tamanho e estilo do texto para facilitar a leitura</p>
         </div>
 
-        {/* Font Size */}
         <div className="space-y-3">
           <div className="space-y-1">
             <h3 className="text-lg font-medium flex items-center">
@@ -239,7 +227,6 @@ const Settings = () => {
           <p className="text-sm text-center">{fontSize}%</p>
         </div>
 
-        {/* Font Family */}
         <div className="space-y-3">
           <div className="space-y-1">
             <h3 className="text-lg font-medium flex items-center">
@@ -277,11 +264,10 @@ const Settings = () => {
           <p className="text-muted-foreground">Ajuste como os elementos se movem na tela</p>
         </div>
 
-        {/* Reduced Motion */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-lg font-medium flex items-center">
-              <HandStop className="mr-2" size={20} />
+              <ZoomOut className="mr-2" size={20} />
               Reduzir animações
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -301,7 +287,6 @@ const Settings = () => {
           </Button>
         </div>
 
-        {/* Preview Section */}
         <div className="mt-8 space-y-4 border border-border rounded-xl p-4">
           <h3 className="text-lg font-medium">Visualização das configurações</h3>
           
