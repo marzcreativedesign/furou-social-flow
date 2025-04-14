@@ -1,7 +1,6 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
@@ -9,9 +8,19 @@ import AuthFooter from "@/components/auth/AuthFooter";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
   const [emailLogin, setEmailLogin] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    // Check for signup parameter in URL
+    const params = new URLSearchParams(location.search);
+    if (params.get('signup') === 'true') {
+      setEmailLogin(true);
+      setIsSignUp(true);
+    }
+  }, [location]);
 
   // Redirect if user is already logged in
   if (user) {
