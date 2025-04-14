@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Event names, descriptions and locations
@@ -236,43 +235,45 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Explicitly define the return type for seedDataForEmail
+// Modified to fix the infinite type instantiation issue
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    const { data: profileData, error: profileError } = await supabase
+    // First try to find the profile directly
+    const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
       .maybeSingle();
-    
-    if (profileError) {
-      console.error("Error fetching profile:", profileError);
+      
+    if (userError) {
+      console.error("Error fetching profile:", userError);
+      return {
+        success: false,
+        error: userError
+      };
     }
     
-    if (profileData && profileData.id) {
-      const result = await seedUserData(profileData.id);
-      return result;
+    if (userData && userData.id) {
+      return await seedUserData(userData.id);
     }
     
-    // If we can't find the user in the profiles table, check the session
+    // If not found in profiles, try using the current session
     const { data: sessionData } = await supabase.auth.getSession();
     
-    if (sessionData && sessionData.session && sessionData.session.user && 
-        sessionData.session.user.email === email) {
-      const result = await seedUserData(sessionData.session.user.id);
-      return result;
+    if (sessionData.session?.user && sessionData.session.user.email === email) {
+      return await seedUserData(sessionData.session.user.id);
     }
     
-    // If we still can't find the user, return an error
+    // If user still not found
     return {
       success: false,
       error: `Could not find user with email ${email}`
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error seeding data for email:", error);
     return {
       success: false,
-      error: error.message
+      error: typeof error === 'object' ? (error as Error).message : String(error)
     };
   }
 };
