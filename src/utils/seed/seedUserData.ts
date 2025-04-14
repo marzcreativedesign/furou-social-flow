@@ -75,24 +75,18 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Interface do tipo de resposta da busca de perfil
-interface ProfileResponse {
-  id?: string;
-}
+// Definição explícita do tipo para evitar instantiação excessiva de tipos
+type ProfileData = { id: string } | null;
 
 // Função para semear dados com base no email
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
-    // Primeiro, tenta encontrar o perfil pelo email
-    const { data, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    // Primeiro, tenta encontrar o perfil pelo email usando uma consulta direta
+    // Isso evita problemas de recursividade infinita nas políticas RLS
+    const { data, error: userError } = await supabase.rpc('get_profile_by_email', { user_email: email });
     
-    const profile = data as ProfileResponse | null;
-
     if (userError) {
+      console.error('Error in RPC call:', userError);
       return {
         success: false,
         error: userError.message,
@@ -100,8 +94,8 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     }
 
     // Se encontrou no perfil, usa esse ID
-    if (profile && profile.id) {
-      return await seedUserData(profile.id);
+    if (data && data.id) {
+      return await seedUserData(data.id);
     }
 
     // Tenta obter a sessão atual
@@ -120,6 +114,7 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error in seedDataForEmail:', errorMessage);
     return {
       success: false,
       error: errorMessage,
