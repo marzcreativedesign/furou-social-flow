@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createEvent, createGroup, createNotification } from './helpers';
 import type { SeedUserDataResult } from './types';
@@ -71,7 +72,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile by email
-    const { data, error: userError } = await supabase
+    const { data: profile, error: userError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
@@ -85,16 +86,15 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
       };
     }
     
-    if (data && data.id) {
-      return await seedUserData(data.id);
+    if (profile && profile.id) {
+      return await seedUserData(profile.id);
     }
     
     // If not found in profiles, try using the current session
     const { data: sessionData } = await supabase.auth.getSession();
     
-    if (sessionData?.session?.user?.email === email) {
-      const userId = sessionData.session.user.id;
-      return await seedUserData(userId);
+    if (sessionData?.session?.user?.email === email && sessionData?.session?.user?.id) {
+      return await seedUserData(sessionData.session.user.id);
     }
     
     // If user still not found
@@ -104,9 +104,10 @@ export const seedDataForEmail = async (email: string): Promise<SeedUserDataResul
     };
   } catch (error) {
     console.error("Error seeding data for email:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: errorMessage
     };
   }
 };
