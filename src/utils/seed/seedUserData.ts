@@ -5,7 +5,7 @@ import { SeedUserDataResult } from "./types";
 // Helper function to safely perform database queries
 async function safeQueryProfiles(email: string): Promise<{ id: string } | null> {
   try {
-    // Usando any para evitar problemas de tipagem profunda
+    // Simplifying type handling to avoid excessive type instantiation
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
