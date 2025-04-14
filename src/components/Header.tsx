@@ -1,8 +1,7 @@
-
 import { useState } from "react";
-import { Search, Bell, ArrowLeft } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Search, Bell, ArrowLeft, Menu, X } from "lucide-react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,16 +47,21 @@ const Header = ({
 }: HeaderProps) => {
   const location = useLocation();
   const path = location.pathname;
+  const { user } = useAuth();
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const isDesktop = window.innerWidth >= 1024;
 
+  const homeRoute = user ? "/home" : "/";
+
   const getTitleFromPath = () => {
     switch (path) {
       case "/":
         return "Furou?!";
+      case "/home":
+        return "Dashboard";
       case "/eventos":
         return "Meus Eventos";
       case "/notificacoes":
@@ -107,7 +111,6 @@ const Header = ({
     { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' },
   ];
 
-  // Renderiza o botão voltar ou o botão do menu hamburguer
   const renderLeftButton = () => {
     if (showBack) {
       return (
@@ -120,7 +123,6 @@ const Header = ({
         </button>
       );
     } else if (!isDesktop) {
-      // Só exibe o menu hamburguer em dispositivos móveis
       return (
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
@@ -131,7 +133,9 @@ const Header = ({
           <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
             <SheetHeader>
               <SheetTitle className="text-left flex items-center">
-                <span className="text-2xl font-bold">Furou?!</span>
+                <Link to={homeRoute} onClick={() => setMenuOpen(false)}>
+                  <span className="text-2xl font-bold">Furou?!</span>
+                </Link>
               </SheetTitle>
             </SheetHeader>
             <Separator className="my-4" />
@@ -204,7 +208,6 @@ const Header = ({
         </Sheet>
       );
     }
-    // Na versão desktop, não exibimos nenhum botão à esquerda
     return null;
   };
 
@@ -214,9 +217,9 @@ const Header = ({
         <div className="flex items-center">
           {renderLeftButton()}
           {!isSearchActive && (
-            <h1 className="text-lg font-bold text-center">
-              {path === '/' ? 'Furou?!' : getTitleFromPath()}
-            </h1>
+            <Link to={homeRoute} className="text-lg font-bold text-center">
+              {path === '/' || path === '/home' ? 'Furou?!' : getTitleFromPath()}
+            </Link>
           )}
         </div>
 

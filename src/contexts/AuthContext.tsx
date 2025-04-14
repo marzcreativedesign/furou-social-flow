@@ -1,4 +1,3 @@
-
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -23,14 +22,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = AuthService.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
     });
 
-    // THEN check for existing session
     AuthService.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -72,9 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await AuthService.signOut();
-      navigate('/login');
+      setSession(null);
+      setUser(null);
+      navigate('/', { replace: true });
+      toast.success("Logout realizado com sucesso!");
     } catch (error) {
       console.error("Sign out error:", error);
+      toast.error("Erro ao realizar logout");
     }
   };
 
