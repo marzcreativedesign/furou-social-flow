@@ -1,10 +1,10 @@
 
 import { Link } from "react-router-dom";
-import { Tag } from "lucide-react";
+import { Tag, Edit2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { EventShareButton } from "@/components/EventShareButton";
+import EventShareButton from "@/components/EventShareButton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import EventTag from "@/components/EventTag";

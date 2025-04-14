@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Edit2 } from "lucide-react";
@@ -13,7 +12,6 @@ import EventInfo from "@/components/event-detail/EventInfo";
 import EventParticipants from "@/components/event-detail/EventParticipants";
 import EventEditDialog from "@/components/event-detail/EventEditDialog";
 
-// Mock data
 const MOCK_EVENT = {
   id: "1",
   title: "Happy Hour no Bar do Zé",
@@ -121,9 +119,7 @@ const EventDetail = () => {
   };
 
   const handleSaveEditedEvent = () => {
-    // Format the date and times back into a display format
-    const formattedDate = "Sexta-feira, 8 de Abril"; // This would be properly formatted from editEventData.date in a real app
-    
+    const formattedDate = "Sexta-feira, 8 de Abril";
     setEvent(prev => ({
       ...prev,
       title: editEventData.title,
@@ -143,8 +139,7 @@ const EventDetail = () => {
     });
   };
 
-  // Check if current user is the event host
-  const isEventHost = event.host.id === "1"; // In a real app, this would compare with the authenticated user ID
+  const isEventHost = event.host.id === "1";
 
   const confirmedAttendees = event.attendees.filter(attendee => 
     event.id === "1" || Math.random() > 0.3);
@@ -159,6 +154,8 @@ const EventDetail = () => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
+
+  const renderCostCalculator = event.type === "private";
 
   return (
     <MainLayout showBack onBack={handleBack} title={event.title}>
@@ -220,7 +217,7 @@ const EventDetail = () => {
           onToggleShowAll={() => setShowAllAttendees(!showAllAttendees)}
         />
         
-        {event.type === "private" && (
+        {renderCostCalculator && (
           <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
             <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Calculadora de Custos</h2>
             <EventCostCalculator attendeesCount={event.attendees.length} />
