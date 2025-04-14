@@ -98,5 +98,23 @@ export const AuthService = {
       .select('*')
       .eq('id', userId)
       .single();
+  },
+
+  /**
+   * Enviar email de recuperação de senha
+   */
+  resetPassword: async (email: string) => {
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?reset=true`,
+    });
+  },
+  
+  /**
+   * Atualizar senha do usuário
+   */
+  updatePassword: async (newPassword: string) => {
+    return await supabase.auth.updateUser({
+      password: newPassword
+    });
   }
 };

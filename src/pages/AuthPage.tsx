@@ -1,7 +1,7 @@
 
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,42 +9,50 @@ import EmailAuthForm from "@/components/auth/EmailAuthForm";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 
 const AuthPage = () => {
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [showResetForm, setShowResetForm] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isReset = searchParams.get("reset") === "true";
+  const location = useLocation();
 
-  const handleSignUp = async (email: string, password: string, fullName: string) => {
+  useEffect(() => {
+    if (isReset) {
+      setShowResetForm(true);
+    }
+  }, [isReset]);
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/home');
+    }
+  }, [user, navigate]);
+
+  // Check if we need to show login or signup tab based on URL
+  useEffect(() => {
+    if (location.pathname.includes("login")) {
+      setActiveTab("login");
+    } else if (location.pathname.includes("signup")) {
+      setActiveTab("signup");
+    }
+  }, [location]);
+
+  const handleSignUp = async (email: string, password: string, fullName?: string) => {
+    if (!fullName) {
+      toast.error("Nome completo é obrigatório");
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName
-          }
-        }
-      });
-
+      const { error } = await signUp(email, password, fullName);
+      
       if (error) {
         toast.error(error.message);
-        return;
       }
-
-      if (data.user) {
-        await supabase
-          .from('profiles')
-          .update({ full_name: fullName })
-          .eq('id', data.user.id);
-
-        toast.success("Usuário criado com sucesso!");
-        navigate('/home');
-      }
-    } catch (error: any) {
-      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -53,20 +61,24 @@ const AuthPage = () => {
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { error } = await signIn(email, password);
+      
       if (error) {
         toast.error(error.message);
-        return;
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      toast.success("Login realizado com sucesso!");
-      navigate('/home');
-    } catch (error: any) {
-      toast.error(error.message);
+  const handleResetPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await resetPassword(email);
+      
+      if (error) {
+        toast.error(error.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +98,11 @@ const AuthPage = () => {
         </CardHeader>
         <CardContent>
           {showResetForm ? (
-            <ResetPasswordForm onBackToLogin={() => setShowResetForm(false)} />
+            <ResetPasswordForm 
+              onSubmit={handleResetPassword}
+              onBackToLogin={() => setShowResetForm(false)}
+              isLoading={isLoading}
+            />
           ) : (
             <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">

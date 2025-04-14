@@ -10,8 +10,9 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,15 +55,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { error } = await AuthService.signUpWithEmail(email, password);
-      if (!error) {
+      const { error, data } = await AuthService.signUpWithEmail(email, password);
+      
+      if (!error && data.user) {
+        await AuthService.updateProfile(data.user.id, { full_name: fullName });
         toast.success("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
       }
+      
       return { error };
     } catch (error: any) {
       console.error("Sign up error:", error);
+      return { error };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await AuthService.resetPassword(email);
+      if (!error) {
+        toast.success("Enviamos as instruções de recuperação para seu e-mail.");
+      }
+      return { error };
+    } catch (error: any) {
+      console.error("Password reset error:", error);
       return { error };
     }
   };
@@ -87,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signUp,
     signOut,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

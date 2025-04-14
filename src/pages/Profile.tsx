@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Edit, LogOut, ChevronRight, CalendarDays, Users } from "lucide-react";
@@ -12,8 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/use-auth";
 
-// Extended user data for testing
 const MOCK_USER = {
   id: "1",
   name: "Carlos Oliveira",
@@ -29,7 +28,6 @@ const MOCK_USER = {
   groups: 3,
 };
 
-// Extended mock events for testing
 const MOCK_USER_EVENTS = [
   {
     id: "1",
@@ -58,6 +56,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(MOCK_USER);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const { user: authUser } = useAuth();
   const [formData, setFormData] = useState({
     name: user.name,
     email: user.email,
@@ -101,13 +101,50 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    // In a real app, this would handle logout logic
     toast({
       title: "Logout realizado",
       description: "Você saiu da sua conta",
     });
     
     navigate("/login");
+  };
+
+  const handleSeedTestData = async () => {
+    if (authUser?.email === 'teste@furou.com') {
+      try {
+        setIsSeeding(true);
+        const { default: seedTestUserData } = await import('../utils/seedTestData');
+        const result = await seedTestUserData();
+        
+        if (result?.success) {
+          toast({
+            title: "Dados criados com sucesso",
+            description: "Eventos, grupos e notificações foram criados para o usuário de teste.",
+          });
+        } else {
+          toast({
+            title: "Erro ao criar dados",
+            description: "Ocorreu um erro ao criar os dados de teste.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error seeding test data:", error);
+        toast({
+          title: "Erro ao criar dados",
+          description: "Ocorreu um erro ao criar os dados de teste.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSeeding(false);
+      }
+    } else {
+      toast({
+        title: "Acesso negado",
+        description: "Esta funcionalidade é apenas para o usuário de teste.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -223,6 +260,17 @@ const Profile = () => {
             <LogOut size={18} className="mr-2" />
             Sair da conta
           </Button>
+          
+          {authUser?.email === 'teste@furou.com' && (
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-blue-500 mt-2 dark:border-[#2C2C2C] dark:hover:bg-[#262626]"
+              onClick={handleSeedTestData}
+              disabled={isSeeding}
+            >
+              {isSeeding ? "Criando dados..." : "Criar dados de teste"}
+            </Button>
+          )}
         </div>
       </div>
       
