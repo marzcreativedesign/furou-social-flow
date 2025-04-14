@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 // Event names, descriptions and locations
 const EVENT_NAMES = [
@@ -100,7 +100,7 @@ const getRandomFutureDate = (): Date => {
 export const seedUserData = async (userId: string) => {
   try {
     // Seed events
-    const eventIds = [];
+    const eventIds: string[] = [];
     const eventCount = Math.floor(Math.random() * 6) + 5; // 5-10 events
     
     for (let i = 0; i < eventCount; i++) {
@@ -140,7 +140,7 @@ export const seedUserData = async (userId: string) => {
     }
     
     // Seed groups
-    const groupIds = [];
+    const groupIds: string[] = [];
     const groupCount = Math.floor(Math.random() * 4) + 3; // 3-6 groups
     
     for (let i = 0; i < groupCount; i++) {
@@ -246,7 +246,7 @@ export const seedDataForEmail = async (email: string) => {
     // First, get user by email
     const { data: userData, error: userError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, email')
       .eq('email', email)
       .maybeSingle();
     
@@ -256,13 +256,15 @@ export const seedDataForEmail = async (email: string) => {
     
     if (!userData) {
       // Try to get user from auth directly
-      const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw new Error(`Error fetching user by email: ${authError.message}`);
       }
       
-      const user = users?.find(u => u.email === email);
+      const users = data?.users || [];
+      const user = users.find(u => u.email === email);
+      
       if (!user) {
         throw new Error(`No user found with email ${email}`);
       }

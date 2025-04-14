@@ -37,7 +37,7 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const { error } = await EventsService.updateParticipationStatus(eventId, 'confirmed');
+      const { error } = await EventsService.updateParticipantStatus(eventId, user.id, 'confirmed');
       
       if (error) {
         console.error("Error confirming event:", error);
@@ -64,7 +64,7 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const { error } = await EventsService.updateParticipationStatus(eventId, 'declined');
+      const { error } = await EventsService.updateParticipantStatus(eventId, user.id, 'declined');
       
       if (error) {
         console.error("Error declining event:", error);

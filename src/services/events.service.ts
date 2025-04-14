@@ -44,6 +44,11 @@ export const EventsService = {
       .or(`creator_id.eq.${userData.user.id},event_participants.user_id.eq.${userData.user.id}`);
   },
   
+  // Add getUserEvents as an alias to getEvents for backward compatibility
+  async getUserEvents() {
+    return this.getEvents();
+  },
+  
   async getPublicEvents() {
     // Get all public events
     return supabase
@@ -90,5 +95,16 @@ export const EventsService = {
       .update({ status })
       .eq("event_id", eventId)
       .eq("user_id", userId);
+  },
+
+  // Add updateParticipationStatus as an alias to updateParticipantStatus for backward compatibility
+  async updateParticipationStatus(eventId: string, status: string) {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user) {
+      throw new Error("User not authenticated");
+    }
+    
+    return this.updateParticipantStatus(eventId, userData.user.id, status);
   }
 };
