@@ -1,13 +1,21 @@
+
 import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import CostCalculator from "@/components/CostCalculator";
+
 const CalculatorButton = () => {
   const navigate = useNavigate();
-  return <Sheet>
+  return (
+    <Sheet>
       <SheetTrigger asChild>
-        
+        <Button 
+          size="icon" 
+          className="fixed bottom-20 right-4 rounded-full shadow-lg bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/90"
+        >
+          <Settings size={20} />
+        </Button>
       </SheetTrigger>
       <SheetContent className="dark:bg-card dark:border-[#2C2C2C]">
         <h2 className="text-xl font-bold mb-4 dark:text-[#EDEDED]">Calculadora de Rateio</h2>
@@ -20,6 +28,8 @@ const CalculatorButton = () => {
           Abrir calculadora completa
         </Button>
       </SheetContent>
-    </Sheet>;
+    </Sheet>
+  );
 };
+
 export default CalculatorButton;

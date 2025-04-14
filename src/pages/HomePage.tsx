@@ -19,7 +19,9 @@ const HomePage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   
   // Get the first name of the user from user_metadata or set a default
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || "Usuário";
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 
+                   user?.user_metadata?.name?.split(' ')[0] || 
+                   "Usuário";
 
   const {
     loading,
