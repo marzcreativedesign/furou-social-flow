@@ -1,432 +1,227 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { 
-  UserPlus, 
-  Mail, 
-  Link as LinkIcon, 
-  MoreHorizontal, 
-  Edit, 
-  Trash, 
-  Calendar, 
-  ArrowUp, 
-  ArrowDown,
-  ChevronRight
-} from "lucide-react";
-import Header from "../components/Header";
-import BottomNav from "../components/BottomNav";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { useToast } from "../components/ui/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Progress } from "../components/ui/progress";
-import GroupRanking from "@/components/GroupRanking";
-import MainLayout from "@/components/MainLayout";
 
-const MOCK_GROUP = {
-  id: "1",
-  name: "Amigos da Faculdade",
-  description: "Grupo para organizar eventos da turma de 2023",
-  imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80",
-  members: [
-    { 
-      id: "1", 
-      name: "João Silva", 
-      image: "https://i.pravatar.cc/150?img=1",
-      isAdmin: true,
-      stats: { participated: 12, missed: 2, pending: 1 }
-    },
-    { 
-      id: "2", 
-      name: "Maria Souza", 
-      image: "https://i.pravatar.cc/150?img=5",
-      isAdmin: false,
-      stats: { participated: 10, missed: 1, pending: 3 }
-    },
-    { 
-      id: "3", 
-      name: "Pedro Santos", 
-      image: "https://i.pravatar.cc/150?img=7",
-      isAdmin: false,
-      stats: { participated: 8, missed: 4, pending: 2 }
-    },
-    { 
-      id: "4", 
-      name: "Ana Oliveira", 
-      image: "https://i.pravatar.cc/150?img=9",
-      isAdmin: false, 
-      stats: { participated: 14, missed: 0, pending: 0 }
-    }
-  ],
-  events: [
-    {
-      id: "1",
-      title: "Churrasco de Final de Semestre",
-      date: "Sábado, 20 de Maio",
-      confirmedCount: 8,
-      pendingCount: 4,
-      image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
-    },
-    {
-      id: "2",
-      title: "Estudo em Grupo para Prova Final",
-      date: "Quinta, 25 de Maio",
-      confirmedCount: 6,
-      pendingCount: 6,
-      image: "https://images.unsplash.com/photo-1554252116-bdb8a68dba68?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-    }
-  ]
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import MainLayout from '../components/MainLayout';
+import GroupMembersManagement from '../components/GroupMembersManagement';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Info, Map, MessageCircle, Plus, Settings, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+// Simulação de dados de um grupo
+const mockGroup = {
+  id: '123',
+  name: 'Amigos da Faculdade',
+  description: 'Grupo para combinar os rolês da galera da faculdade',
+  membersCount: 15,
+  eventsCount: 8,
+  coverImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2232&q=80',
+  isOwner: true,
+  isAdmin: true
 };
 
+// Simulação de eventos do grupo
+const mockEvents = [
+  {
+    id: '1',
+    title: 'Happy Hour na Vila',
+    date: 'Sexta, 19:00',
+    location: 'Vila Madalena',
+    imageUrl: 'https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    attendees: 12
+  },
+  {
+    id: '2',
+    title: 'Churrasco de Final de Semestre',
+    date: 'Domingo, 12:00',
+    location: 'Casa do João',
+    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
+    attendees: 15
+  },
+  {
+    id: '3',
+    title: 'Apresentação de TCC',
+    date: 'Segunda, 14:00',
+    location: 'Universidade',
+    imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+    attendees: 8
+  }
+];
+
 const GroupDetail = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [group, setGroup] = useState(MOCK_GROUP);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editGroupName, setEditGroupName] = useState(group.name);
-  const [editGroupDescription, setEditGroupDescription] = useState(group.description || "");
+  const [group, setGroup] = useState(mockGroup);
+  const [events, setEvents] = useState(mockEvents);
+  const [activeTab, setActiveTab] = useState('eventos');
 
-  const sortedMembers = [...group.members].sort((a, b) => {
-    const totalA = a.stats.participated + a.stats.missed + a.stats.pending;
-    const totalB = b.stats.participated + b.stats.missed + b.stats.pending;
-    const rateA = totalA > 0 ? a.stats.participated / totalA : 0;
-    const rateB = totalB > 0 ? b.stats.participated / totalB : 0;
-    return rateB - rateA;
-  });
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleInvite = () => {
-    if (inviteEmail.trim() === "") {
-      toast({
-        title: "Erro",
-        description: "O e-mail não pode estar vazio",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Convite enviado",
-      description: `Um convite foi enviado para ${inviteEmail}`,
-    });
-    setInviteEmail("");
-    setIsInviteDialogOpen(false);
-  };
-
-  const copyInviteLink = () => {
-    navigator.clipboard.writeText(`https://furou.app/convite/${group.id}`);
-    toast({
-      title: "Link copiado",
-      description: "Link de convite copiado para a área de transferência",
-    });
-  };
-
-  const handleEditGroup = () => {
-    if (editGroupName.trim() === "") {
-      toast({
-        title: "Erro",
-        description: "O nome do grupo não pode estar vazio",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setGroup({
-      ...group,
-      name: editGroupName,
-      description: editGroupDescription
-    });
-
-    setIsEditDialogOpen(false);
-    toast({
-      title: "Grupo atualizado",
-      description: "As informações do grupo foram atualizadas com sucesso",
-    });
-  };
-
-  const handleRemoveMember = (memberId: string) => {
-    const updatedMembers = group.members.filter(member => member.id !== memberId);
-    setGroup({
-      ...group,
-      members: updatedMembers
-    });
-
-    toast({
-      title: "Membro removido",
-      description: "O membro foi removido do grupo com sucesso",
-    });
-  };
-
-  const handlePromoteToAdmin = (memberId: string) => {
-    const updatedMembers = group.members.map(member => 
-      member.id === memberId ? { ...member, isAdmin: true } : member
-    );
-    
-    setGroup({
-      ...group,
-      members: updatedMembers
-    });
-
-    toast({
-      title: "Administrador adicionado",
-      description: "O membro agora é um administrador do grupo",
-    });
-  };
-
-  const handleDemoteFromAdmin = (memberId: string) => {
-    const updatedMembers = group.members.map(member => 
-      member.id === memberId ? { ...member, isAdmin: false } : member
-    );
-    
-    setGroup({
-      ...group,
-      members: updatedMembers
-    });
-
-    toast({
-      title: "Administrador removido",
-      description: "O membro não é mais um administrador do grupo",
-    });
-  };
+  // Em uma implementação real, buscaríamos os dados do grupo a partir do ID
+  useEffect(() => {
+    // Aqui seria uma chamada para uma API para buscar os dados do grupo
+    console.log(`Buscando dados do grupo ${id}`);
+    // Usar os dados mockados por enquanto
+  }, [id]);
 
   return (
     <MainLayout 
-      title={group.name}
-      showBack
-      onBack={() => navigate(-1)}
-      showDock
+      title={group.name} 
+      showBack 
+      onBack={() => navigate('/grupos')}
     >
-      <div className="px-4 py-4">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={group.imageUrl} alt={group.name} />
-              <AvatarFallback>
-                {group.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-xl font-bold">{group.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {group.members.length} {group.members.length === 1 ? "membro" : "membros"}
-              </p>
-              {group.description && (
-                <p className="text-sm mt-1">{group.description}</p>
-              )}
-            </div>
+      <div className="p-4">
+        {/* Header do grupo com imagem de capa */}
+        <div className="relative w-full h-40 rounded-xl overflow-hidden mb-6">
+          <img 
+            src={group.coverImage} 
+            alt={group.name} 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute bottom-0 left-0 p-4 text-white">
+            <h1 className="text-2xl font-bold">{group.name}</h1>
+            <p className="text-sm text-white/80">{group.description}</p>
           </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => {
-                    e.preventDefault();
-                    setIsEditDialogOpen(true);
-                  }}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar grupo
-                  </DropdownMenuItem>
-                </DialogTrigger>
-              </Dialog>
-              <DropdownMenuItem className="text-destructive">
-                <Trash className="mr-2 h-4 w-4" />
-                Excluir grupo
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
-        
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Convidar pessoas
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Convidar para o grupo</DialogTitle>
-                <DialogDescription>
-                  Envie um convite por e-mail ou compartilhe um link
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="email"
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="nome@exemplo.com"
-                      className="flex-1"
-                    />
-                    <Button variant="outline" onClick={handleInvite}>
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <Label>Compartilhar link</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      readOnly
-                      value={`https://furou.app/convite/${group.id}`}
-                      className="flex-1"
-                    />
-                    <Button variant="outline" onClick={copyInviteLink}>
-                      <LinkIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
-                  Fechar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          <Button variant="outline">
-            <Calendar className="mr-2 h-4 w-4" />
-            Criar evento
-          </Button>
+
+        {/* Estatísticas do grupo */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+            <div className="text-lg font-bold">{group.membersCount}</div>
+            <div className="text-sm text-muted-foreground">Membros</div>
+          </div>
+          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+            <div className="text-lg font-bold">{group.eventsCount}</div>
+            <div className="text-sm text-muted-foreground">Eventos</div>
+          </div>
+          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+            <div className="text-lg font-bold">2</div>
+            <div className="text-sm text-muted-foreground">Ativos</div>
+          </div>
         </div>
-        
-        <Tabs defaultValue="members" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="members">Ranking</TabsTrigger>
-            <TabsTrigger value="events">Eventos</TabsTrigger>
+
+        {/* Abas de navegação */}
+        <Tabs 
+          defaultValue="eventos" 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="w-full"
+        >
+          <TabsList className="w-full grid grid-cols-4 mb-4">
+            <TabsTrigger value="eventos">
+              <Calendar className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Eventos</span>
+            </TabsTrigger>
+            <TabsTrigger value="membros">
+              <Users className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Membros</span>
+            </TabsTrigger>
+            <TabsTrigger value="chat">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="sobre">
+              <Info className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Sobre</span>
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="members" className="pt-4">
-            <GroupRanking members={group.members} />
+          {/* Conteúdo da aba Eventos */}
+          <TabsContent value="eventos" className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Eventos do Grupo</h2>
+              <Button size="sm" onClick={() => navigate('/criar')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Evento
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {events.map(event => (
+                <div 
+                  key={event.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-border dark:border-gray-700"
+                  onClick={() => navigate(`/evento/${event.id}`)}
+                >
+                  <div className="h-32 overflow-hidden">
+                    <img 
+                      src={event.imageUrl} 
+                      alt={event.title} 
+                      className="w-full h-full object-cover transition-transform hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold">{event.title}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {event.attendees} confirmados
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">{event.date}</p>
+                    <p className="text-sm text-muted-foreground flex items-center">
+                      <Map className="h-3 w-3 mr-1" />
+                      {event.location}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </TabsContent>
           
-          <TabsContent value="events" className="pt-4">
-            <div className="space-y-4">
-              {group.events.map((event) => (
-                <Card key={event.id} className="overflow-hidden cursor-pointer" onClick={() => navigate(`/evento/${event.id}`)}>
-                  <div className="flex h-24">
-                    <div 
-                      className="w-24 h-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${event.image})` }}
-                    ></div>
-                    <div className="flex-1 p-3 flex flex-col justify-between">
-                      <div>
-                        <h3 className="font-medium text-sm line-clamp-2">{event.title}</h3>
-                        <p className="text-xs text-muted-foreground">{event.date}</p>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs">
-                          <span className="text-green-600">{event.confirmedCount} confirmados</span>
-                          {event.pendingCount > 0 && (
-                            <span className="text-yellow-600 ml-2">{event.pendingCount} pendentes</span>
-                          )}
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-              
-              {group.events.length === 0 && (
-                <div className="text-center py-8">
-                  <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                  <h3 className="text-lg font-medium mb-1">Nenhum evento</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Este grupo ainda não tem eventos
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => navigate('/criar')}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Criar o primeiro evento
-                  </Button>
-                </div>
-              )}
+          {/* Conteúdo da aba Membros */}
+          <TabsContent value="membros">
+            <GroupMembersManagement 
+              groupId={id || '0'}
+              isOwner={group.isOwner}
+              isAdmin={group.isAdmin}
+            />
+          </TabsContent>
+          
+          {/* Conteúdo da aba Chat */}
+          <TabsContent value="chat" className="h-[400px] flex items-center justify-center">
+            <div className="text-center p-4">
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Chat do grupo</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Em breve você poderá conversar com todos do grupo aqui.
+              </p>
+              <Button variant="outline">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Ativar notificações
+              </Button>
             </div>
+          </TabsContent>
+          
+          {/* Conteúdo da aba Sobre */}
+          <TabsContent value="sobre" className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+              <h3 className="font-semibold mb-2">Sobre o grupo</h3>
+              <p className="text-muted-foreground text-sm mb-4">{group.description}</p>
+              
+              <h4 className="font-medium mb-2">Criado em</h4>
+              <p className="text-muted-foreground text-sm mb-4">01 de Janeiro de 2023</p>
+              
+              <h4 className="font-medium mb-2">Criado por</h4>
+              <div className="flex items-center">
+                <Avatar className="h-8 w-8 mr-2">
+                  <AvatarImage src="https://i.pravatar.cc/150?u=1" />
+                  <AvatarFallback>CO</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">Carlos Oliveira</span>
+              </div>
+            </div>
+            
+            {group.isOwner && (
+              <div className="mt-4">
+                <Button variant="outline" className="w-full" onClick={() => {}}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações do grupo
+                </Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
-      
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar grupo</DialogTitle>
-            <DialogDescription>
-              Altere as informações do seu grupo
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="group-name">Nome do grupo</Label>
-              <Input
-                id="group-name"
-                value={editGroupName}
-                onChange={(e) => setEditGroupName(e.target.value)}
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="group-description">Descrição (opcional)</Label>
-              <Input
-                id="group-description"
-                value={editGroupDescription}
-                onChange={(e) => setEditGroupDescription(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleEditGroup}>
-              Salvar alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </MainLayout>
   );
 };

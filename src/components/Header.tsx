@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, Bell, Menu, ArrowLeft } from "lucide-react";
+import { Search, Bell, ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
+import { Hamburger } from "./ui/hamburger";
 import { 
   Home, 
   Calendar, 
@@ -51,7 +52,7 @@ const Header = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const isDesktop = window.innerWidth >= 1024; // Modo desktop acima de 1024px
+  const isDesktop = window.innerWidth >= 1024;
 
   const getTitleFromPath = () => {
     switch (path) {
@@ -118,12 +119,13 @@ const Header = ({
           <ArrowLeft size={24} />
         </button>
       );
-    } else {
+    } else if (!isDesktop) {
+      // Só exibe o menu hamburguer em dispositivos móveis
       return (
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="mr-2">
-              <Menu size={24} />
+              <Hamburger onClick={() => {}} />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] sm:w-[400px] dark:bg-gray-900 dark:text-white">
@@ -202,6 +204,8 @@ const Header = ({
         </Sheet>
       );
     }
+    // Na versão desktop, não exibimos nenhum botão à esquerda
+    return null;
   };
 
   return (
