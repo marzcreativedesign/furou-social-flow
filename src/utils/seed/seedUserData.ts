@@ -58,6 +58,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
+// Use the explicit SeedUserDataResult type to avoid recursive type references
 export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile directly

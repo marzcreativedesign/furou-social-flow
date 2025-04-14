@@ -88,7 +88,7 @@ const getRandomFutureDate = (): Date => {
   return result;
 };
 
-// Define explicit types for the result of seedUserData
+// Define explicit type for the return value
 interface SeedUserDataResult {
   success: boolean;
   eventIds?: string[];
@@ -235,16 +235,7 @@ export const seedUserData = async (userId: string): Promise<SeedUserDataResult> 
   }
 };
 
-// Completely rewrite the seedDataForEmail function to fix the infinite type instantiation issue
-export const seedDataForEmail = async (email: string): Promise<{
-  success: boolean;
-  eventIds?: string[];
-  groupIds?: string[];
-  eventCount?: number;
-  groupCount?: number;
-  notificationCount?: number;
-  error?: any;
-}> => {
+export const seedDataForEmail = async (email: string): Promise<SeedUserDataResult> => {
   try {
     // First try to find the profile directly
     const { data: userData, error: userError } = await supabase
