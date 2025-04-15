@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
@@ -14,7 +15,8 @@ export const EventQueriesService = {
           profiles:creator_id(*),
           event_participants(*)
         `)
-        .or(`creator_id.eq.${user.id},event_participants.user_id.eq.${user.id}`);
+        .or(`creator_id.eq.${user.id},is_public.eq.true`)
+        .order("date", { ascending: true });
       
       if (error) {
         return handleError(error, "Erro ao buscar eventos");
@@ -106,3 +108,4 @@ export const EventQueriesService = {
     }
   }
 };
+
