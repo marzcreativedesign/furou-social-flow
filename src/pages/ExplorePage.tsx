@@ -41,12 +41,14 @@ const ExplorePage = () => {
         attendees: event.event_participants?.length || 0
       }));
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Não foi possível carregar eventos públicos",
-        variant: "destructive",
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Não foi possível carregar eventos públicos",
+          variant: "destructive",
+        });
+      }
     }
   });
 
