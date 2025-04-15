@@ -40,17 +40,19 @@ const ExplorePage = () => {
         }),
         attendees: event.event_participants?.length || 0
       }));
-    },
-    onSettled: (data, error) => {
-      if (error) {
-        toast({
-          title: "Erro",
-          description: error instanceof Error ? error.message : "Não foi possível carregar eventos públicos",
-          variant: "destructive",
-        });
-      }
     }
   });
+
+  // Handle error display separately
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Não foi possível carregar eventos públicos",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const filteredEvents = events.filter(event => {
     if (searchQuery) {
