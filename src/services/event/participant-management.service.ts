@@ -1,58 +1,96 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
 
 export const ParticipantManagementService = {
-  async joinEvent(eventId: string) {
+  async joinEvent(eventId: string, status: 'confirmed' | 'declined' = 'confirmed') {
     try {
       const user = await getCurrentUser();
       
-      // Check if user is already a participant
-      const { data: existingParticipant } = await supabase
-        .from("event_participants")
+      // Check if user already has a confirmation
+      const { data: existingConfirmation } = await supabase
+        .from("event_confirmations")
         .select("*")
         .eq("event_id", eventId)
         .eq("user_id", user.id)
         .maybeSingle();
       
-      if (existingParticipant) {
-        // User is already a participant, update their status instead
-        return this.updateParticipantStatus(eventId, user.id, "confirmed");
+      if (existingConfirmation) {
+        // Update existing confirmation
+        const { data, error } = await supabase
+          .from("event_confirmations")
+          .update({ status })
+          .eq("id", existingConfirmation.id)
+          .select();
+        
+        if (error) {
+          return handleError(error, "Erro ao atualizar confirmação");
+        }
+        
+        return { data, error: null };
       }
       
-      // Otherwise, add them as a new participant
-      const { data, error } = await supabase.from("event_participants").insert({
-        event_id: eventId,
-        user_id: user.id,
-        status: "confirmed"
-      });
+      // Create new confirmation
+      const { data, error } = await supabase
+        .from("event_confirmations")
+        .insert({
+          event_id: eventId,
+          user_id: user.id,
+          status
+        })
+        .select();
       
       if (error) {
-        return handleError(error, "Erro ao participar do evento");
+        return handleError(error, "Erro ao confirmar presença");
       }
       
-      return { data, error };
+      return { data, error: null };
     } catch (error) {
-      return handleError(error, "Erro inesperado ao participar do evento");
+      return handleError(error, "Erro inesperado ao confirmar presença");
     }
   },
   
   async updateParticipantStatus(eventId: string, userId: string, status: string) {
     try {
-      const { data, error } = await supabase
-        .from("event_participants")
-        .update({ status })
+      const { data: existingConfirmation } = await supabase
+        .from("event_confirmations")
+        .select("*")
         .eq("event_id", eventId)
         .eq("user_id", userId)
+        .maybeSingle();
+      
+      if (existingConfirmation) {
+        const { data, error } = await supabase
+          .from("event_confirmations")
+          .update({ status })
+          .eq("id", existingConfirmation.id)
+          .select();
+        
+        if (error) {
+          return handleError(error, "Erro ao atualizar status");
+        }
+        
+        return { data, error: null };
+      }
+      
+      // Create new confirmation if none exists
+      const { data, error } = await supabase
+        .from("event_confirmations")
+        .insert({
+          event_id: eventId,
+          user_id: userId,
+          status
+        })
         .select();
       
       if (error) {
-        return handleError(error, "Erro ao atualizar status de participação");
+        return handleError(error, "Erro ao atualizar status");
       }
       
-      return { data, error };
+      return { data, error: null };
     } catch (error) {
-      return handleError(error, "Erro inesperado ao atualizar status de participação");
+      return handleError(error, "Erro inesperado ao atualizar status");
     }
   },
 

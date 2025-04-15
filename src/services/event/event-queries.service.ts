@@ -131,9 +131,26 @@ export const EventQueriesService = {
         const data = {
           ...eventData,
           comments: [],
-          event_participants: [],
+          event_confirmations: [],
           group_events: []
         } as Event;
+        
+        const { data: confirmations } = await supabase
+          .from("event_confirmations")
+          .select(`
+            *,
+            profiles:user_id(*)
+          `)
+          .eq("event_id", id);
+        
+        if (confirmations) {
+          data.event_participants = confirmations.map(conf => ({
+            id: conf.id,
+            user_id: conf.user_id,
+            status: conf.status,
+            profiles: conf.profiles
+          }));
+        }
         
         const { data: participants } = await supabase
           .from("event_participants")
@@ -143,9 +160,10 @@ export const EventQueriesService = {
           `)
           .eq("event_id", id);
         
-        if (participants) {
-          data.event_participants = participants;
-        }
+        const { data: comments } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("event_id", id);
         
         const { data: groupEvents } = await supabase
           .from("group_events")
@@ -154,19 +172,6 @@ export const EventQueriesService = {
             groups(*)
           `)
           .eq("event_id", id);
-        
-        if (groupEvents) {
-          data.group_events = groupEvents;
-        }
-        
-        const { data: comments } = await supabase
-          .from("comments")
-          .select("*")
-          .eq("event_id", id);
-        
-        if (comments) {
-          data.comments = comments;
-        }
         
         return { data, error: null };
       }

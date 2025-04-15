@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
-import { EventsService } from "@/services/events.service";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { EventQueriesService } from "@/services/event/event-queries.service";
+import { ParticipantManagementService } from "@/services/event/participant-management.service";
 
 interface ConfirmationButtonProps {
   onConfirm: () => void;
   onDecline: () => void;
-  initialState?: boolean | null;
   eventId: string;
 }
 
@@ -22,32 +21,30 @@ const ConfirmationButton = ({
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check the initial status when the component mounts
     const checkInitialStatus = async () => {
       if (!user || !eventId) return;
       
       try {
-        const { data, error } = await EventsService.getEventById(eventId);
+        const { data: event } = await EventQueriesService.getEventById(eventId);
         
-        if (error) {
-          console.error("Error getting event:", error);
-          return;
-        }
-        
-        if (data?.event_participants) {
-          const userParticipation = data.event_participants.find(
-            (p) => p.user_id === user.id
-          );
+        if (event) {
+          const { data: confirmations } = await supabase
+            .from('event_confirmations')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('user_id', user.id)
+            .maybeSingle();
           
-          if (userParticipation) {
-            setConfirmed(userParticipation.status === 'confirmed' ? true : 
-                        userParticipation.status === 'declined' ? false : null);
+          if (confirmations) {
+            setConfirmed(confirmations.status === 'confirmed' ? true : 
+                        confirmations.status === 'declined' ? false : null);
           }
         }
       } catch (error) {
-        console.error("Error checking participant status:", error);
+        console.error("Error checking confirmation status:", error);
       }
     };
     
@@ -55,7 +52,11 @@ const ConfirmationButton = ({
   }, [user, eventId]);
 
   const handleAuthRequired = () => {
-    toast.error("Faça login para participar deste evento");
+    toast({
+      title: "Atenção",
+      description: "Faça login para participar deste evento",
+      variant: "destructive",
+    });
     navigate("/auth");
   };
 
@@ -67,33 +68,31 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      let result;
-      if (confirmed === true) {
-        // User is already confirmed, do nothing
-        setLoading(false);
-        return;
-      } else if (confirmed === null) {
-        // User has not responded yet, join the event
-        result = await EventsService.joinEvent(eventId);
-      } else {
-        // User previously declined, update to confirmed
-        result = await EventsService.updateParticipationStatus(eventId, 'confirmed');
-      }
+      const result = await ParticipantManagementService.joinEvent(eventId, 'confirmed');
       
       if (result.error) {
-        console.error("Error confirming event:", result.error);
-        toast.error("Erro ao confirmar presença");
+        toast({
+          title: "Erro",
+          description: "Erro ao confirmar presen��a",
+          variant: "destructive",
+        });
         return;
       }
       
       setConfirmed(true);
-      toast.success("Presença confirmada!");
-      // Reload the page to update participants lists
-      window.location.reload();
+      toast({
+        title: "Sucesso",
+        description: "Presença confirmada!",
+      });
       onConfirm();
+      window.location.reload();
     } catch (error) {
       console.error("Error confirming event:", error);
-      toast.error("Erro ao confirmar presença");
+      toast({
+        title: "Erro",
+        description: "Erro ao confirmar presença",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -107,36 +106,31 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      let result;
-      if (confirmed === false) {
-        // User is already declined, do nothing
-        setLoading(false);
-        return;
-      } else if (confirmed === null) {
-        // User has not responded yet, join with declined status
-        result = await EventsService.joinEvent(eventId);
-        if (!result.error) {
-          result = await EventsService.updateParticipationStatus(eventId, 'declined');
-        }
-      } else {
-        // User previously confirmed, update to declined
-        result = await EventsService.updateParticipationStatus(eventId, 'declined');
-      }
+      const result = await ParticipantManagementService.joinEvent(eventId, 'declined');
       
       if (result.error) {
-        console.error("Error declining event:", result.error);
-        toast.error("Erro ao cancelar presença");
+        toast({
+          title: "Erro",
+          description: "Erro ao cancelar presença",
+          variant: "destructive",
+        });
         return;
       }
       
       setConfirmed(false);
-      toast.success("Presença cancelada");
-      // Reload the page to update participants lists
-      window.location.reload();
+      toast({
+        title: "Sucesso",
+        description: "Presença cancelada",
+      });
       onDecline();
+      window.location.reload();
     } catch (error) {
       console.error("Error declining event:", error);
-      toast.error("Erro ao cancelar presença");
+      toast({
+        title: "Erro",
+        description: "Erro ao cancelar presença",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
