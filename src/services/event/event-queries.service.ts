@@ -26,8 +26,13 @@ export const EventQueriesService = {
         const { data: confirmations } = await supabase
           .from("event_confirmations")
           .select(`
-            *,
-            profiles:user_id(*)
+            id,
+            user_id,
+            status,
+            event_id,
+            created_at,
+            updated_at,
+            profiles:user_id(id, full_name, avatar_url)
           `)
           .eq("event_id", event.id);
         
@@ -81,8 +86,13 @@ export const EventQueriesService = {
         const { data: confirmations } = await supabase
           .from("event_confirmations")
           .select(`
-            *,
-            profiles:user_id(*)
+            id,
+            user_id,
+            status,
+            event_id,
+            created_at,
+            updated_at,
+            profiles:user_id(id, full_name, avatar_url)
           `)
           .eq("event_id", event.id);
         
@@ -139,18 +149,15 @@ export const EventQueriesService = {
         const { data: confirmations } = await supabase
           .from("event_confirmations")
           .select(`
-            *,
-            profiles:user_id(*)
+            id,
+            user_id,
+            status,
+            profiles:user_id(id, full_name, avatar_url)
           `)
           .eq("event_id", id);
         
         if (confirmations) {
-          eventWithExtras.event_participants = confirmations.map(conf => ({
-            id: conf.id,
-            user_id: conf.user_id,
-            status: conf.status || '',
-            profiles: conf.profiles
-          }));
+          eventWithExtras.event_participants = confirmations;
         }
         
         const { data: comments } = await supabase
@@ -204,8 +211,13 @@ export const EventQueriesService = {
         const { data: confirmations } = await supabase
           .from("event_confirmations")
           .select(`
-            *,
-            profiles:user_id(*)
+            id,
+            user_id,
+            status,
+            event_id,
+            created_at,
+            updated_at,
+            profiles:user_id(id, full_name, avatar_url)
           `)
           .eq("event_id", event.id);
         

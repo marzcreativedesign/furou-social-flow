@@ -3,11 +3,14 @@ export interface EventParticipant {
   id: string;
   user_id: string;
   status: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  event_id?: string | null;
   profiles?: {
     id: string;
     full_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 }
 
 export interface EventData {

@@ -1,5 +1,4 @@
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleError } from "./utils";
@@ -35,7 +34,7 @@ export const EventCreationService = {
       // Also add the creator as a participant (confirmed)
       if (data && data.length > 0) {
         const eventId = data[0].id;
-        const { error: participantError } = await supabase.from("event_participants").insert({
+        const { error: participantError } = await supabase.from("event_confirmations").insert({
           event_id: eventId,
           user_id: user.id,
           status: "confirmed"
