@@ -1,4 +1,5 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleError } from "./utils";
@@ -11,14 +12,25 @@ export const EventCreationService = {
       const user = await getCurrentUser();
       
       // Insert the event with the authenticated user as creator
-      const { data, error } = await supabase.from("events").insert({
+      // Removed .select() to prevent RLS recursion issues
+      const { error } = await supabase.from("events").insert({
         ...eventData,
         creator_id: user.id
-      }).select();
+      });
 
       if (error) {
         return handleError(error, "Erro ao criar evento");
       }
+      
+      // If we need the created event data, fetch it separately after creation
+      const { data: createdEvents } = await supabase
+        .from("events")
+        .select("*")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      const data = createdEvents || [];
       
       // Also add the creator as a participant (confirmed)
       if (data && data.length > 0) {
