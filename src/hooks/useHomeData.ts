@@ -61,7 +61,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
       try {
         if (!user) return;
         
-        const { data: userEvents, error: eventsError } = await EventsService.getUserEvents();
+        const { data: userEvents, error: eventsError } = await EventsService.getEvents();
         
         if (eventsError) {
           console.error("Error fetching events:", eventsError);

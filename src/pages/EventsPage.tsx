@@ -19,7 +19,7 @@ const EventsPage = () => {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data } = await EventsService.getUserEvents();
+      const { data } = await EventsService.getEvents();
       return data || [];
     }
   });

@@ -39,7 +39,7 @@ const CalendarView = () => {
       
       setLoading(true);
       try {
-        const { data, error } = await EventsService.getUserEvents();
+        const { data, error } = await EventsService.getEvents();
         
         if (error) {
           console.error("Error fetching events:", error);

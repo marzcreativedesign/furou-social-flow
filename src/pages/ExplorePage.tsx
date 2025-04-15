@@ -8,7 +8,7 @@ import EventCard from '../components/EventCard';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventQueriesService } from '@/services/event/event-queries.service';
+import { EventQueriesService } from '@/services/event/queries';
 import { useToast } from "@/components/ui/use-toast";
 import { Event } from "@/types/event";
 
