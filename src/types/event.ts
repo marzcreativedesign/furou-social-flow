@@ -5,8 +5,8 @@ export interface EventParticipant {
   status: string;
   profiles?: {
     id: string;
-    full_name: string;
-    avatar_url: string;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -15,16 +15,16 @@ export interface EventData {
   title: string;
   description: string;
   date: string;
-  location: string;
-  address?: string;
-  is_public: boolean;
+  location: string | null;
+  address?: string | null;
+  is_public: boolean | null;
   image_url: string | null;
   creator_id: string;
   comments: any[];
   profiles: {
     id: string;
-    full_name: string;
-    avatar_url: string;
+    full_name: string | null;
+    avatar_url: string | null;
   };
   event_participants: EventParticipant[];
   estimated_budget?: number | null;
@@ -34,9 +34,9 @@ export interface EventData {
       name: string 
     } 
   }>;
-  created_at?: string;
-  updated_at?: string;
-  visibility?: 'public' | 'private';
+  created_at?: string | null;
+  updated_at?: string | null;
+  visibility?: 'public' | 'private' | null;
 }
 
 export type Event = EventData;

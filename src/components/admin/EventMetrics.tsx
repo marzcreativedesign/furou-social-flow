@@ -25,18 +25,26 @@ const EventMetrics = () => {
           .from('events')
           .select(`
             id,
-            title,
-            event_participants (count)
+            title
           `);
 
         if (participantsError) throw participantsError;
 
-        const formattedMetrics: EventMetrics[] = (eventsWithParticipants || []).map(event => ({
-          event_id: event.id,
-          event_title: event.title,
-          views: Math.floor(Math.random() * 1000), // Placeholder for views
-          shares: Math.floor(Math.random() * 100), // Placeholder for shares
-          participants: event.event_participants?.[0]?.count || 0
+        const formattedMetrics: EventMetrics[] = await Promise.all((eventsWithParticipants || []).map(async event => {
+          // Get participants count for each event
+          const { count: participantsCount } = await supabase
+            .from("event_confirmations")
+            .select("*", { count: 'exact', head: true })
+            .eq("event_id", event.id)
+            .eq("status", "confirmed");
+          
+          return {
+            event_id: event.id,
+            event_title: event.title,
+            views: Math.floor(Math.random() * 1000), // Placeholder for views
+            shares: Math.floor(Math.random() * 100), // Placeholder for shares
+            participants: participantsCount || 0
+          };
         }));
 
         setMetrics(formattedMetrics);

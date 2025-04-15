@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -5,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { EventQueriesService } from "@/services/event/event-queries.service";
 import { ParticipantManagementService } from "@/services/event/participant-management.service";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConfirmationButtonProps {
   onConfirm: () => void;
@@ -73,7 +75,7 @@ const ConfirmationButton = ({
       if (result.error) {
         toast({
           title: "Erro",
-          description: "Erro ao confirmar presen��a",
+          description: "Erro ao confirmar presença",
           variant: "destructive",
         });
         return;

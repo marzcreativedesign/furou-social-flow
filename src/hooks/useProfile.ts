@@ -56,19 +56,28 @@ export const useProfile = () => {
           });
         }
 
-        // Fetch events stats
-        const { data: events } = await supabase
+        // Fetch events created count
+        const { data: eventsCreated } = await supabase
           .from('events')
-          .select('*, event_participants(*)');
+          .select('id')
+          .eq('creator_id', user.id);
 
+        // Fetch event confirmations
+        const { data: confirmations } = await supabase
+          .from('event_confirmations')
+          .select('status')
+          .eq('user_id', user.id);
+
+        // Fetch groups
         const { data: groups } = await supabase
-          .from('groups')
-          .select('*, group_members!inner(*)');
+          .from('group_members')
+          .select('group_id')
+          .eq('user_id', user.id);
 
         setUserStats({
-          eventsCreated: events?.filter(e => e.creator_id === user.id).length || 0,
-          eventsAttended: events?.filter(e => e.event_participants?.some(p => p.status === 'confirmed')).length || 0,
-          eventsMissed: events?.filter(e => e.event_participants?.some(p => p.status === 'declined')).length || 0,
+          eventsCreated: eventsCreated?.length || 0,
+          eventsAttended: confirmations?.filter(c => c.status === 'confirmed').length || 0,
+          eventsMissed: confirmations?.filter(c => c.status === 'declined').length || 0,
           groups: groups?.length || 0
         });
 

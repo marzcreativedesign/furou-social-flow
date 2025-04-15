@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
@@ -22,11 +23,11 @@ export const EventQueriesService = {
       }
       
       const data = await Promise.all(eventsData.map(async event => {
-        const { data: participants } = await supabase
-          .from("event_participants")
+        const { data: confirmations } = await supabase
+          .from("event_confirmations")
           .select(`
             *,
-            profiles(*)
+            profiles:user_id(*)
           `)
           .eq("event_id", event.id);
         
@@ -45,7 +46,7 @@ export const EventQueriesService = {
         
         return {
           ...event,
-          event_participants: participants || [],
+          event_participants: confirmations || [],
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
@@ -77,11 +78,11 @@ export const EventQueriesService = {
       }
       
       const data = await Promise.all(eventsData.map(async event => {
-        const { data: participants } = await supabase
-          .from("event_participants")
+        const { data: confirmations } = await supabase
+          .from("event_confirmations")
           .select(`
             *,
-            profiles(*)
+            profiles:user_id(*)
           `)
           .eq("event_id", event.id);
         
@@ -100,7 +101,7 @@ export const EventQueriesService = {
         
         return {
           ...event,
-          event_participants: participants || [],
+          event_participants: confirmations || [],
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
@@ -128,10 +129,10 @@ export const EventQueriesService = {
       }
       
       if (eventData) {
-        const data = {
+        const eventWithExtras = {
           ...eventData,
+          event_participants: [],
           comments: [],
-          event_confirmations: [],
           group_events: []
         } as Event;
         
@@ -144,26 +145,22 @@ export const EventQueriesService = {
           .eq("event_id", id);
         
         if (confirmations) {
-          data.event_participants = confirmations.map(conf => ({
+          eventWithExtras.event_participants = confirmations.map(conf => ({
             id: conf.id,
             user_id: conf.user_id,
-            status: conf.status,
+            status: conf.status || '',
             profiles: conf.profiles
           }));
         }
-        
-        const { data: participants } = await supabase
-          .from("event_participants")
-          .select(`
-            *,
-            profiles(*)
-          `)
-          .eq("event_id", id);
         
         const { data: comments } = await supabase
           .from("comments")
           .select("*")
           .eq("event_id", id);
+        
+        if (comments) {
+          eventWithExtras.comments = comments;
+        }
         
         const { data: groupEvents } = await supabase
           .from("group_events")
@@ -173,7 +170,11 @@ export const EventQueriesService = {
           `)
           .eq("event_id", id);
         
-        return { data, error: null };
+        if (groupEvents) {
+          eventWithExtras.group_events = groupEvents;
+        }
+        
+        return { data: eventWithExtras, error: null };
       }
       
       return { data: null, error };
@@ -200,11 +201,11 @@ export const EventQueriesService = {
       }
       
       const data = await Promise.all(eventsData.map(async event => {
-        const { data: participants } = await supabase
-          .from("event_participants")
+        const { data: confirmations } = await supabase
+          .from("event_confirmations")
           .select(`
             *,
-            profiles(*)
+            profiles:user_id(*)
           `)
           .eq("event_id", event.id);
         
@@ -223,7 +224,7 @@ export const EventQueriesService = {
         
         return {
           ...event,
-          event_participants: participants || [],
+          event_participants: confirmations || [],
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
