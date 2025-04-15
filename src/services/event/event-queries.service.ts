@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
-import type { Event } from "@/types/event";
+import type { Event, EventParticipant } from "@/types/event";
 
 export const EventQueriesService = {
   async getEvents() {
@@ -48,10 +48,23 @@ export const EventQueriesService = {
             groups(*)
           `)
           .eq("event_id", event.id);
+
+        // Convert and process the confirmations data to ensure it matches EventParticipant type
+        const eventParticipants = confirmations ? confirmations.map(conf => {
+          return {
+            id: conf.id,
+            user_id: conf.user_id || "",
+            status: conf.status || "",
+            event_id: conf.event_id,
+            created_at: conf.created_at,
+            updated_at: conf.updated_at,
+            profiles: conf.profiles || null
+          } as EventParticipant;
+        }) : [];
         
         return {
           ...event,
-          event_participants: confirmations || [],
+          event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
@@ -109,9 +122,22 @@ export const EventQueriesService = {
           `)
           .eq("event_id", event.id);
         
+        // Convert and process the confirmations data to ensure it matches EventParticipant type
+        const eventParticipants = confirmations ? confirmations.map(conf => {
+          return {
+            id: conf.id,
+            user_id: conf.user_id || "",
+            status: conf.status || "",
+            event_id: conf.event_id,
+            created_at: conf.created_at,
+            updated_at: conf.updated_at,
+            profiles: conf.profiles || null
+          } as EventParticipant;
+        }) : [];
+        
         return {
           ...event,
-          event_participants: confirmations || [],
+          event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
@@ -152,12 +178,26 @@ export const EventQueriesService = {
             id,
             user_id,
             status,
+            event_id,
+            created_at,
+            updated_at,
             profiles:user_id(id, full_name, avatar_url)
           `)
           .eq("event_id", id);
         
         if (confirmations) {
-          eventWithExtras.event_participants = confirmations;
+          // Convert and process the confirmations data to ensure it matches EventParticipant type
+          eventWithExtras.event_participants = confirmations.map(conf => {
+            return {
+              id: conf.id,
+              user_id: conf.user_id || "",
+              status: conf.status || "",
+              event_id: conf.event_id,
+              created_at: conf.created_at,
+              updated_at: conf.updated_at,
+              profiles: conf.profiles || null
+            } as EventParticipant;
+          });
         }
         
         const { data: comments } = await supabase
@@ -234,9 +274,22 @@ export const EventQueriesService = {
           `)
           .eq("event_id", event.id);
         
+        // Convert and process the confirmations data to ensure it matches EventParticipant type
+        const eventParticipants = confirmations ? confirmations.map(conf => {
+          return {
+            id: conf.id,
+            user_id: conf.user_id || "",
+            status: conf.status || "",
+            event_id: conf.event_id,
+            created_at: conf.created_at,
+            updated_at: conf.updated_at,
+            profiles: conf.profiles || null
+          } as EventParticipant;
+        }) : [];
+        
         return {
           ...event,
-          event_participants: confirmations || [],
+          event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
         } as Event;
