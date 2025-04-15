@@ -1,15 +1,17 @@
 
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import EventMapButton from "@/components/EventMapButton";
+import EventAttendeesCount from "./EventAttendeesCount";
+import type { EventParticipant } from "@/types/event";
 
 interface EventInfoProps {
   fullDate: string;
   location: string;
   address: string;
-  attendeesCount: number;
+  participants: EventParticipant[];
 }
 
-const EventInfo = ({ fullDate, location, address, attendeesCount }: EventInfoProps) => {
+const EventInfo = ({ fullDate, location, address, participants }: EventInfoProps) => {
   return (
     <div className="space-y-4 mb-6">
       <div className="flex items-center">
@@ -33,10 +35,7 @@ const EventInfo = ({ fullDate, location, address, attendeesCount }: EventInfoPro
         </div>
       </div>
       
-      <div className="flex items-center">
-        <Users size={18} className="text-[#FF8A1E] dark:text-[#FF8A1E] mr-3 flex-shrink-0" />
-        <span className="dark:text-[#EDEDED]">{attendeesCount} confirmados</span>
-      </div>
+      <EventAttendeesCount participants={participants} />
     </div>
   );
 };

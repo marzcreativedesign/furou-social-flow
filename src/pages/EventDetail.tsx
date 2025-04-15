@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -57,7 +56,6 @@ const EventDetail = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
 
-  // Process participants into appropriate arrays for the EventParticipants component
   const processParticipants = () => {
     if (!event) return { confirmedAttendees: [], pendingAttendees: [], cancelledAttendees: [] };
     
@@ -125,7 +123,7 @@ const EventDetail = () => {
           fullDate={formatEventDate(event.date)}
           location={event.location || "Local não definido"}
           address={event.address || ""}
-          attendeesCount={event.event_participants ? event.event_participants.length : 0}
+          participants={event.event_participants}
         />
         
         <div className="border-t border-b py-4 my-4 border-border dark:border-[#2C2C2C]">
