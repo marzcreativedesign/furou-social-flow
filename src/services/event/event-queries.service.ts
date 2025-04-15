@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
@@ -9,7 +8,6 @@ export const EventQueriesService = {
     try {
       const user = await getCurrentUser();
       
-      // Fetch events that are either created by the user or public
       const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
@@ -23,40 +21,37 @@ export const EventQueriesService = {
         return handleError(error, "Erro ao buscar eventos");
       }
       
-      // If we need participants data, fetch it in a separate query
-      if (eventsData && eventsData.length > 0) {
-        const data = eventsData.map(event => ({
+      const data = await Promise.all(eventsData.map(async event => {
+        const { data: participants } = await supabase
+          .from("event_participants")
+          .select(`
+            *,
+            profiles(*)
+          `)
+          .eq("event_id", event.id);
+        
+        const { data: comments } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("event_id", event.id);
+        
+        const { data: groupEvents } = await supabase
+          .from("group_events")
+          .select(`
+            *,
+            groups(*)
+          `)
+          .eq("event_id", event.id);
+        
+        return {
           ...event,
-          comments: [],          // Initialize comments as empty array
-          event_participants: [] // Initialize event_participants as empty array
-        })) as Event[];
-        
-        // For each event, fetch its participants
-        for (let i = 0; i < data.length; i++) {
-          const { data: participants, error: partError } = await supabase
-            .from("event_participants")
-            .select(`
-              *,
-              profiles(*)
-            `)
-            .eq("event_id", data[i].id);
-          
-          if (!partError && participants) {
-            data[i].event_participants = participants;
-          }
-        }
-        
-        return { data, error: null };
-      }
+          event_participants: participants || [],
+          comments: comments || [],
+          group_events: groupEvents || []
+        } as Event;
+      }));
       
-      return { 
-        data: (eventsData || []).map(event => ({
-          ...event,
-          comments: [],
-          event_participants: []
-        })) as Event[],
-        error: null 
-      };
+      return { data, error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos");
     }
@@ -68,7 +63,6 @@ export const EventQueriesService = {
   
   async getPublicEvents() {
     try {
-      // Fetch only public events
       const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
@@ -82,40 +76,37 @@ export const EventQueriesService = {
         return handleError(error, "Erro ao buscar eventos públicos");
       }
       
-      // If we need participants data, fetch it in a separate query
-      if (eventsData && eventsData.length > 0) {
-        const data = eventsData.map(event => ({
+      const data = await Promise.all(eventsData.map(async event => {
+        const { data: participants } = await supabase
+          .from("event_participants")
+          .select(`
+            *,
+            profiles(*)
+          `)
+          .eq("event_id", event.id);
+        
+        const { data: comments } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("event_id", event.id);
+        
+        const { data: groupEvents } = await supabase
+          .from("group_events")
+          .select(`
+            *,
+            groups(*)
+          `)
+          .eq("event_id", event.id);
+        
+        return {
           ...event,
-          comments: [],
-          event_participants: []
-        })) as Event[];
-        
-        // For each event, fetch its participants
-        for (let i = 0; i < data.length; i++) {
-          const { data: participants, error: partError } = await supabase
-            .from("event_participants")
-            .select(`
-              *,
-              profiles(*)
-            `)
-            .eq("event_id", data[i].id);
-          
-          if (!partError && participants) {
-            data[i].event_participants = participants;
-          }
-        }
-        
-        return { data, error: null };
-      }
+          event_participants: participants || [],
+          comments: comments || [],
+          group_events: groupEvents || []
+        } as Event;
+      }));
       
-      return { 
-        data: (eventsData || []).map(event => ({
-          ...event,
-          comments: [],
-          event_participants: []
-        })) as Event[],
-        error: null 
-      };
+      return { data, error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos públicos");
     }
@@ -123,7 +114,6 @@ export const EventQueriesService = {
   
   async getEventById(id: string) {
     try {
-      // Fetch the event without nested queries
       const { data: eventData, error } = await supabase
         .from("events")
         .select(`
@@ -138,7 +128,6 @@ export const EventQueriesService = {
       }
       
       if (eventData) {
-        // Initialize with empty arrays for the required properties
         const data = {
           ...eventData,
           comments: [],
@@ -146,8 +135,7 @@ export const EventQueriesService = {
           group_events: []
         } as Event;
         
-        // Fetch participants in a separate query
-        const { data: participants, error: partError } = await supabase
+        const { data: participants } = await supabase
           .from("event_participants")
           .select(`
             *,
@@ -155,12 +143,11 @@ export const EventQueriesService = {
           `)
           .eq("event_id", id);
         
-        if (!partError && participants) {
+        if (participants) {
           data.event_participants = participants;
         }
         
-        // Fetch group events in a separate query
-        const { data: groupEvents, error: groupError } = await supabase
+        const { data: groupEvents } = await supabase
           .from("group_events")
           .select(`
             *,
@@ -168,17 +155,16 @@ export const EventQueriesService = {
           `)
           .eq("event_id", id);
         
-        if (!groupError && groupEvents) {
+        if (groupEvents) {
           data.group_events = groupEvents;
         }
         
-        // Fetch comments in a separate query
-        const { data: comments, error: commentsError } = await supabase
+        const { data: comments } = await supabase
           .from("comments")
           .select("*")
           .eq("event_id", id);
         
-        if (!commentsError && comments) {
+        if (comments) {
           data.comments = comments;
         }
         
@@ -195,7 +181,6 @@ export const EventQueriesService = {
     try {
       const user = await getCurrentUser();
       
-      // Fetch events created by the user
       const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
@@ -209,40 +194,37 @@ export const EventQueriesService = {
         return handleError(error, "Erro ao buscar eventos do usuário");
       }
       
-      // If we need participants data, fetch it in a separate query
-      if (eventsData && eventsData.length > 0) {
-        const data = eventsData.map(event => ({
+      const data = await Promise.all(eventsData.map(async event => {
+        const { data: participants } = await supabase
+          .from("event_participants")
+          .select(`
+            *,
+            profiles(*)
+          `)
+          .eq("event_id", event.id);
+        
+        const { data: comments } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("event_id", event.id);
+        
+        const { data: groupEvents } = await supabase
+          .from("group_events")
+          .select(`
+            *,
+            groups(*)
+          `)
+          .eq("event_id", event.id);
+        
+        return {
           ...event,
-          comments: [],
-          event_participants: []
-        })) as Event[];
-        
-        // For each event, fetch its participants
-        for (let i = 0; i < data.length; i++) {
-          const { data: participants, error: partError } = await supabase
-            .from("event_participants")
-            .select(`
-              *,
-              profiles(*)
-            `)
-            .eq("event_id", data[i].id);
-          
-          if (!partError && participants) {
-            data[i].event_participants = participants;
-          }
-        }
-        
-        return { data, error: null };
-      }
+          event_participants: participants || [],
+          comments: comments || [],
+          group_events: groupEvents || []
+        } as Event;
+      }));
       
-      return { 
-        data: (eventsData || []).map(event => ({
-          ...event,
-          comments: [],
-          event_participants: []
-        })) as Event[],
-        error: null 
-      };
+      return { data, error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos do usuário");
     }

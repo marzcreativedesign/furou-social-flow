@@ -145,6 +145,7 @@ export type Database = {
           date: string
           description: string | null
           estimated_budget: number | null
+          event_date: string | null
           id: string
           image_url: string | null
           is_public: boolean | null
@@ -159,6 +160,7 @@ export type Database = {
           date: string
           description?: string | null
           estimated_budget?: number | null
+          event_date?: string | null
           id?: string
           image_url?: string | null
           is_public?: boolean | null
@@ -173,6 +175,7 @@ export type Database = {
           date?: string
           description?: string | null
           estimated_budget?: number | null
+          event_date?: string | null
           id?: string
           image_url?: string | null
           is_public?: boolean | null

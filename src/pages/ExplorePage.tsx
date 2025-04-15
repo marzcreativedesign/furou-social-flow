@@ -1,68 +1,54 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search, Filter, Calendar, Users, PlusCircle } from "lucide-react";
-import MainLayout from "../components/MainLayout";
-import EventCard from "../components/EventCard";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import MainLayout from '../components/MainLayout';
+import EventCard from '../components/EventCard';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventsService } from "@/services/events.service";
+import { EventQueriesService } from '@/services/event/event-queries.service';
 import { useToast } from "@/components/ui/use-toast";
-import { Event } from "@/hooks/useHomeData"; // Reuse the Event interface
+import { Event } from "@/types/event";
 
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("events"); // "events" or "groups"
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState("events");
 
-  useEffect(() => {
-    const fetchPublicEvents = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await EventsService.getPublicEvents();
-        
-        if (error) {
-          console.error("Error fetching events:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar eventos públicos",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (data) {
-          const formattedEvents: Event[] = data.map(event => ({
-            ...event,
-            // Safely access event_participants that might be undefined
-            attendees: event.event_participants?.length || 0,
-            date: new Date(event.date).toLocaleString('pt-BR', {
-              weekday: 'long',
-              hour: 'numeric',
-              minute: 'numeric'
-            })
-          }));
-          
-          setEvents(formattedEvents);
-        }
-      } catch (error) {
-        console.error("Error loading events:", error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao carregar os eventos",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+  const { 
+    data: events = [], 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['publicEvents'],
+    queryFn: async () => {
+      const { data, error } = await EventQueriesService.getPublicEvents();
+      
+      if (error) {
+        throw new Error(error.message || 'Erro ao buscar eventos públicos');
       }
-    };
-    
-    fetchPublicEvents();
-  }, [toast]);
+      
+      return data.map(event => ({
+        ...event,
+        date: new Date(event.date).toLocaleString('pt-BR', {
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric'
+        }),
+        attendees: event.event_participants?.length || 0
+      }));
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Não foi possível carregar eventos públicos",
+        variant: "destructive",
+      });
+    }
+  });
 
   const filteredEvents = events.filter(event => {
     if (searchQuery) {
@@ -124,14 +110,29 @@ const ExplorePage = () => {
               </Button>
             </div>
             
-            {loading ? (
+            {isLoading ? (
               <div className="flex justify-center items-center py-10">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12 bg-red-50 rounded-xl">
+                <Search className="mx-auto h-12 w-12 text-red-500 mb-3" />
+                <h3 className="text-lg font-medium mb-1">Erro ao carregar eventos</h3>
+                <p className="text-sm text-red-700 mb-4">
+                  {error instanceof Error ? error.message : "Não foi possível carregar os eventos públicos"}
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Tentar Novamente
+                </Button>
               </div>
             ) : filteredEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredEvents.map(event => (
-                  <div key={event.id} onClick={() => handleEventClick(event.id)} className="cursor-pointer">
+                  <div 
+                    key={event.id} 
+                    onClick={() => handleEventClick(event.id)} 
+                    className="cursor-pointer"
+                  >
                     <EventCard 
                       id={event.id}
                       title={event.title}
@@ -150,7 +151,9 @@ const ExplorePage = () => {
                 <Search className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
                 <h3 className="text-lg font-medium mb-1">Nenhum evento encontrado</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchQuery ? `Não encontramos eventos para "${searchQuery}"` : "Não há eventos públicos disponíveis"}
+                  {searchQuery 
+                    ? `Não encontramos resultados para "${searchQuery}"` 
+                    : "Não há eventos públicos disponíveis"}
                 </p>
                 <Button onClick={() => navigate('/criar')}>Criar um evento</Button>
               </div>
