@@ -34,6 +34,9 @@ export interface EventData {
       name: string 
     } 
   }>;
+  created_at?: string;
+  updated_at?: string;
+  visibility?: 'public' | 'private';
 }
 
 export type Event = EventData;

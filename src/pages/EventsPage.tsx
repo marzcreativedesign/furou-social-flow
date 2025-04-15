@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import MainLayout from "../components/MainLayout";
 import EventTypeFilters from "../components/home/EventTypeFilters";
 import { EventsService } from "@/services/events.service";

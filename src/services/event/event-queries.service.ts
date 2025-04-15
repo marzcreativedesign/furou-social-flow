@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
+import type { Event } from "@/types/event";
 
 export const EventQueriesService = {
   async getEvents() {
@@ -10,7 +11,7 @@ export const EventQueriesService = {
       
       // Fetch events that are either created by the user or public
       // But don't include event_participants in the initial query to prevent recursion
-      const { data, error } = await supabase
+      const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
           *,
@@ -24,7 +25,9 @@ export const EventQueriesService = {
       }
       
       // If we need participants data, fetch it in a separate query
-      if (data && data.length > 0) {
+      if (eventsData && eventsData.length > 0) {
+        const data = [...eventsData] as Event[];
+        
         // For each event, fetch its participants
         for (let i = 0; i < data.length; i++) {
           const { data: participants, error: partError } = await supabase
@@ -34,11 +37,15 @@ export const EventQueriesService = {
           
           if (!partError && participants) {
             data[i].event_participants = participants;
+          } else {
+            data[i].event_participants = [];
           }
         }
+        
+        return { data, error: null };
       }
       
-      return { data, error };
+      return { data: eventsData as Event[], error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos");
     }
@@ -51,7 +58,7 @@ export const EventQueriesService = {
   async getPublicEvents() {
     try {
       // Fetch only public events without nested event_participants to avoid recursion
-      const { data, error } = await supabase
+      const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
           *,
@@ -65,7 +72,9 @@ export const EventQueriesService = {
       }
       
       // If we need participants data, fetch it in a separate query
-      if (data && data.length > 0) {
+      if (eventsData && eventsData.length > 0) {
+        const data = [...eventsData] as Event[];
+        
         // For each event, fetch its participants
         for (let i = 0; i < data.length; i++) {
           const { data: participants, error: partError } = await supabase
@@ -75,11 +84,15 @@ export const EventQueriesService = {
           
           if (!partError && participants) {
             data[i].event_participants = participants;
+          } else {
+            data[i].event_participants = [];
           }
         }
+        
+        return { data, error: null };
       }
       
-      return { data, error };
+      return { data: eventsData as Event[], error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos públicos");
     }
@@ -88,7 +101,7 @@ export const EventQueriesService = {
   async getEventById(id: string) {
     try {
       // Fetch the event without nested queries to avoid recursion
-      const { data, error } = await supabase
+      const { data: eventData, error } = await supabase
         .from("events")
         .select(`
           *,
@@ -101,7 +114,9 @@ export const EventQueriesService = {
         return handleError(error, "Erro ao buscar detalhes do evento");
       }
       
-      if (data) {
+      if (eventData) {
+        const data = { ...eventData } as Event;
+        
         // Fetch participants in a separate query
         const { data: participants, error: partError } = await supabase
           .from("event_participants")
@@ -113,6 +128,8 @@ export const EventQueriesService = {
         
         if (!partError && participants) {
           data.event_participants = participants;
+        } else {
+          data.event_participants = [];
         }
         
         // Fetch group events in a separate query
@@ -126,6 +143,8 @@ export const EventQueriesService = {
         
         if (!groupError && groupEvents) {
           data.group_events = groupEvents;
+        } else {
+          data.group_events = [];
         }
         
         // Fetch comments in a separate query
@@ -136,10 +155,14 @@ export const EventQueriesService = {
         
         if (!commentsError && comments) {
           data.comments = comments;
+        } else {
+          data.comments = [];
         }
+        
+        return { data, error: null };
       }
       
-      return { data, error };
+      return { data: null, error };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar detalhes do evento");
     }
@@ -150,7 +173,7 @@ export const EventQueriesService = {
       const user = await getCurrentUser();
       
       // Fetch events created by the user without nested queries to avoid recursion
-      const { data, error } = await supabase
+      const { data: eventsData, error } = await supabase
         .from("events")
         .select(`
           *,
@@ -164,7 +187,9 @@ export const EventQueriesService = {
       }
       
       // If we need participants data, fetch it in a separate query
-      if (data && data.length > 0) {
+      if (eventsData && eventsData.length > 0) {
+        const data = [...eventsData] as Event[];
+        
         // For each event, fetch its participants
         for (let i = 0; i < data.length; i++) {
           const { data: participants, error: partError } = await supabase
@@ -174,11 +199,15 @@ export const EventQueriesService = {
           
           if (!partError && participants) {
             data[i].event_participants = participants;
+          } else {
+            data[i].event_participants = [];
           }
         }
+        
+        return { data, error: null };
       }
       
-      return { data, error };
+      return { data: eventsData as Event[], error: null };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar eventos do usuário");
     }
