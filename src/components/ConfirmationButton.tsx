@@ -3,7 +3,7 @@ import { Check, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { EventQueriesService } from "@/services/event/event-queries.service";
+import { EventQueriesService } from "@/services/event/queries";
 import { ParticipantManagementService } from "@/services/event/participant-management.service";
 import { supabase } from "@/integrations/supabase/client";
 

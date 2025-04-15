@@ -1,14 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import MainLayout from "../components/MainLayout";
-import ConfirmationButton from "../components/ConfirmationButton";
-import { useToast } from "../hooks/use-toast";
-import EventDiscussion from "../components/EventDiscussion";
-import EventGallery from "../components/EventGallery";
-import EventCostCalculator from "../components/EventCostCalculator";
+import MainLayout from "@/components/MainLayout";
 import EventHeader from "@/components/event-detail/EventHeader";
 import EventInfo from "@/components/event-detail/EventInfo";
 import EventParticipants from "@/components/event-detail/EventParticipants";
@@ -16,87 +11,22 @@ import EventEditDialog from "@/components/event-detail/EventEditDialog";
 import EventDetailSkeleton from "@/components/event-detail/EventDetailSkeleton";
 import EventNotFound from "@/components/event-detail/EventNotFound";
 import EventBudget from "@/components/event-detail/EventBudget";
-import { EventsService } from "@/services/events.service";
+import EventDetailParticipation from "@/components/event-detail/EventDetailParticipation";
+import EventDetailDiscussion from "@/components/event-detail/EventDetailDiscussion";
+import { useEventDetail } from "@/hooks/use-event-detail";
 import { useAuth } from "@/contexts/AuthContext";
-import type { EventData } from "@/types/event";
+import { useToast } from "@/hooks/use-toast";
 
 const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [event, setEvent] = useState<EventData | null>(null);
   const [showAllAttendees, setShowAllAttendees] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editEventData, setEditEventData] = useState({
-    title: "",
-    description: "",
-    location: "",
-    address: "",
-    date: "",
-    startTime: "",
-    endTime: "",
-    type: "public" as "public" | "private" | "group",
-    includeEstimatedBudget: false,
-    estimatedBudget: "",
-  });
 
-  useEffect(() => {
-    const fetchEventData = async () => {
-      if (!id) return;
-      
-      setLoading(true);
-      try {
-        const { data, error } = await EventsService.getEventById(id);
-        
-        if (error) {
-          console.error("Error fetching event:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar os dados do evento",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data) {
-          setEvent(data as unknown as EventData);
-          
-          // Parse date for edit form
-          const eventDate = parseISO(data.date);
-          const formattedDate = format(eventDate, 'yyyy-MM-dd');
-          const startTime = format(eventDate, 'HH:mm');
-          const endTime = format(new Date(eventDate.getTime() + 3 * 60 * 60 * 1000), 'HH:mm');
-          
-          setEditEventData({
-            title: data.title,
-            description: data.description || "",
-            location: data.location || "",
-            address: data.address || "",
-            date: formattedDate,
-            startTime: startTime,
-            endTime: endTime,
-            type: data.is_public ? "public" : (data.group_events && data.group_events.length > 0 ? "group" : "private"),
-            includeEstimatedBudget: !!data.estimated_budget,
-            estimatedBudget: data.estimated_budget ? data.estimated_budget.toString() : "",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching event:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os dados do evento",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchEventData();
-  }, [id, toast]);
-  
+  const { loading, event, editEventData, setEditEventData } = useEventDetail(id);
+
   const handleBack = () => {
     navigate(-1);
   };
@@ -203,14 +133,11 @@ const EventDetail = () => {
           <p className="text-muted-foreground dark:text-[#B3B3B3]">{event.description}</p>
         </div>
         
-        <div className="bg-muted dark:bg-[#262626] p-4 rounded-xl mb-6">
-          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Você vai?</h2>
-          <ConfirmationButton 
-            onConfirm={() => {}}
-            onDecline={() => {}}
-            eventId={id || ""}
-          />
-        </div>
+        <EventDetailParticipation
+          id={event.id}
+          eventType={eventType}
+          confirmedAttendeesCount={confirmedAttendees.length}
+        />
         
         {event.estimated_budget && (
           <EventBudget 
@@ -228,28 +155,10 @@ const EventDetail = () => {
           eventType={eventType}
         />
         
-        {eventType !== "public" && (
-          <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
-            <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Calculadora de Custos</h2>
-            <EventCostCalculator attendeesCount={confirmedAttendees.length} />
-          </div>
-        )}
-        
-        <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
-          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Discussão</h2>
-          <EventDiscussion 
-            eventId={event.id} 
-            initialComments={event.comments || []} 
-          />
-        </div>
-        
-        <div className="border-t pt-4 mt-6 border-border dark:border-[#2C2C2C]">
-          <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Galeria</h2>
-          <EventGallery 
-            eventId={event.id}
-            initialImages={[]}
-          />
-        </div>
+        <EventDetailDiscussion 
+          eventId={event.id}
+          comments={event.comments || []}
+        />
       </div>
 
       <EventEditDialog
