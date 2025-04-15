@@ -28,5 +28,12 @@ export interface EventData {
   };
   event_participants: EventParticipant[];
   estimated_budget?: number | null;
-  group_events?: { group_id: string; groups?: { name: string } }[];
+  group_events?: Array<{ 
+    group_id: string; 
+    groups?: { 
+      name: string 
+    } 
+  }>;
 }
+
+export type Event = EventData;
