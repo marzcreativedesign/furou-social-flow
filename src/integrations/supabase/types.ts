@@ -144,6 +144,7 @@ export type Database = {
           creator_id: string
           date: string
           description: string | null
+          estimated_budget: number | null
           id: string
           image_url: string | null
           is_public: boolean | null
@@ -157,6 +158,7 @@ export type Database = {
           creator_id: string
           date: string
           description?: string | null
+          estimated_budget?: number | null
           id?: string
           image_url?: string | null
           is_public?: boolean | null
@@ -170,6 +172,7 @@ export type Database = {
           creator_id?: string
           date?: string
           description?: string | null
+          estimated_budget?: number | null
           id?: string
           image_url?: string | null
           is_public?: boolean | null

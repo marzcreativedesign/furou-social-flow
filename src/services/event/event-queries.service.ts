@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
@@ -80,6 +79,30 @@ export const EventQueriesService = {
       return { data, error };
     } catch (error) {
       return handleError(error, "Erro inesperado ao buscar detalhes do evento");
+    }
+  },
+  
+  async getUserCreatedEvents() {
+    try {
+      const user = await getCurrentUser();
+      
+      const { data, error } = await supabase
+        .from("events")
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants(*)
+        `)
+        .eq("creator_id", user.id)
+        .order("date", { ascending: true });
+      
+      if (error) {
+        return handleError(error, "Erro ao buscar eventos do usuário");
+      }
+      
+      return { data, error };
+    } catch (error) {
+      return handleError(error, "Erro inesperado ao buscar eventos do usuário");
     }
   }
 };
