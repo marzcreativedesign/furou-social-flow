@@ -10,7 +10,7 @@ export interface EventParticipant {
     id: string;
     full_name: string | null;
     avatar_url: string | null;
-  } | null;
+  } | null | any; // Making this more flexible to handle error cases
 }
 
 export interface EventData {

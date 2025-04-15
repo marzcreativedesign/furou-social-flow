@@ -31,10 +31,32 @@ export const EventQueriesService = {
             status,
             event_id,
             created_at,
-            updated_at,
-            profiles:user_id(id, full_name, avatar_url)
+            updated_at
           `)
           .eq("event_id", event.id);
+        
+        // Fetch profiles separately for each confirmation
+        const eventParticipants: EventParticipant[] = [];
+        
+        if (confirmations && confirmations.length > 0) {
+          for (const conf of confirmations) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .eq("id", conf.user_id)
+              .maybeSingle();
+            
+            eventParticipants.push({
+              id: conf.id,
+              user_id: conf.user_id || "",
+              status: conf.status || "",
+              event_id: conf.event_id,
+              created_at: conf.created_at,
+              updated_at: conf.updated_at,
+              profiles: profileData || null
+            });
+          }
+        }
         
         const { data: comments } = await supabase
           .from("comments")
@@ -48,19 +70,6 @@ export const EventQueriesService = {
             groups(*)
           `)
           .eq("event_id", event.id);
-
-        // Convert and process the confirmations data to ensure it matches EventParticipant type
-        const eventParticipants = confirmations ? confirmations.map(conf => {
-          return {
-            id: conf.id,
-            user_id: conf.user_id || "",
-            status: conf.status || "",
-            event_id: conf.event_id,
-            created_at: conf.created_at,
-            updated_at: conf.updated_at,
-            profiles: conf.profiles || null
-          } as EventParticipant;
-        }) : [];
         
         return {
           ...event,
@@ -104,10 +113,32 @@ export const EventQueriesService = {
             status,
             event_id,
             created_at,
-            updated_at,
-            profiles:user_id(id, full_name, avatar_url)
+            updated_at
           `)
           .eq("event_id", event.id);
+        
+        // Fetch profiles separately for each confirmation
+        const eventParticipants: EventParticipant[] = [];
+        
+        if (confirmations && confirmations.length > 0) {
+          for (const conf of confirmations) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .eq("id", conf.user_id)
+              .maybeSingle();
+            
+            eventParticipants.push({
+              id: conf.id,
+              user_id: conf.user_id || "",
+              status: conf.status || "",
+              event_id: conf.event_id,
+              created_at: conf.created_at,
+              updated_at: conf.updated_at,
+              profiles: profileData || null
+            });
+          }
+        }
         
         const { data: comments } = await supabase
           .from("comments")
@@ -121,19 +152,6 @@ export const EventQueriesService = {
             groups(*)
           `)
           .eq("event_id", event.id);
-        
-        // Convert and process the confirmations data to ensure it matches EventParticipant type
-        const eventParticipants = confirmations ? confirmations.map(conf => {
-          return {
-            id: conf.id,
-            user_id: conf.user_id || "",
-            status: conf.status || "",
-            event_id: conf.event_id,
-            created_at: conf.created_at,
-            updated_at: conf.updated_at,
-            profiles: conf.profiles || null
-          } as EventParticipant;
-        }) : [];
         
         return {
           ...event,
@@ -180,24 +198,34 @@ export const EventQueriesService = {
             status,
             event_id,
             created_at,
-            updated_at,
-            profiles:user_id(id, full_name, avatar_url)
+            updated_at
           `)
           .eq("event_id", id);
         
-        if (confirmations) {
-          // Convert and process the confirmations data to ensure it matches EventParticipant type
-          eventWithExtras.event_participants = confirmations.map(conf => {
-            return {
+        if (confirmations && confirmations.length > 0) {
+          // Create an array to hold participants with proper profile data
+          const participants: EventParticipant[] = [];
+          
+          // Fetch each profile separately
+          for (const conf of confirmations) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .eq("id", conf.user_id)
+              .maybeSingle();
+            
+            participants.push({
               id: conf.id,
               user_id: conf.user_id || "",
               status: conf.status || "",
               event_id: conf.event_id,
               created_at: conf.created_at,
               updated_at: conf.updated_at,
-              profiles: conf.profiles || null
-            } as EventParticipant;
-          });
+              profiles: profileData || null
+            });
+          }
+          
+          eventWithExtras.event_participants = participants;
         }
         
         const { data: comments } = await supabase
@@ -256,10 +284,32 @@ export const EventQueriesService = {
             status,
             event_id,
             created_at,
-            updated_at,
-            profiles:user_id(id, full_name, avatar_url)
+            updated_at
           `)
           .eq("event_id", event.id);
+        
+        // Fetch profiles separately for each confirmation
+        const eventParticipants: EventParticipant[] = [];
+        
+        if (confirmations && confirmations.length > 0) {
+          for (const conf of confirmations) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .eq("id", conf.user_id)
+              .maybeSingle();
+            
+            eventParticipants.push({
+              id: conf.id,
+              user_id: conf.user_id || "",
+              status: conf.status || "",
+              event_id: conf.event_id,
+              created_at: conf.created_at,
+              updated_at: conf.updated_at,
+              profiles: profileData || null
+            });
+          }
+        }
         
         const { data: comments } = await supabase
           .from("comments")
@@ -273,19 +323,6 @@ export const EventQueriesService = {
             groups(*)
           `)
           .eq("event_id", event.id);
-        
-        // Convert and process the confirmations data to ensure it matches EventParticipant type
-        const eventParticipants = confirmations ? confirmations.map(conf => {
-          return {
-            id: conf.id,
-            user_id: conf.user_id || "",
-            status: conf.status || "",
-            event_id: conf.event_id,
-            created_at: conf.created_at,
-            updated_at: conf.updated_at,
-            profiles: conf.profiles || null
-          } as EventParticipant;
-        }) : [];
         
         return {
           ...event,
