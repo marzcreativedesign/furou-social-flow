@@ -12,6 +12,7 @@ import EventNotFound from "@/components/event-detail/EventNotFound";
 import EventBudget from "@/components/event-detail/EventBudget";
 import EventDetailParticipation from "@/components/event-detail/EventDetailParticipation";
 import EventDetailDiscussion from "@/components/event-detail/EventDetailDiscussion";
+import EventGallery from "@/components/event-detail/EventGallery";
 import { useEventDetail } from "@/hooks/use-event-detail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -143,6 +144,8 @@ const EventDetail = () => {
             formatCurrency={formatCurrency} 
           />
         )}
+        
+        <EventGallery eventId={event.id} />
         
         <EventParticipants
           confirmedAttendees={confirmedAttendees}

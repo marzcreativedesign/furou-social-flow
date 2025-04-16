@@ -9,7 +9,6 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -93,16 +92,18 @@ const Profile = () => {
           
           <h1 className="text-2xl font-bold mb-1">{profile?.full_name || "Usuário"}</h1>
           <p className="text-muted-foreground">{profile?.email}</p>
+
+          <div className="w-full max-w-sm mt-4">
+            {profile && (
+              <ProfileEditorDialog 
+                profile={profile} 
+                onProfileUpdated={handleProfileUpdate} 
+              />
+            )}
+          </div>
         </div>
         
         <ProfileStats stats={userStats} />
-        
-        <div className="my-6">
-          {profile && <ProfileEditorDialog 
-            profile={profile} 
-            onProfileUpdated={handleProfileUpdate} 
-          />}
-        </div>
         
         <ProfileActions 
           onSignOut={handleSignOut} 
