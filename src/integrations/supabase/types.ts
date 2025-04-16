@@ -413,6 +413,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_groups: {
+        Args: { user_id: string }
+        Returns: {
+          group_id: string
+          group_name: string
+          group_description: string
+          is_admin: boolean
+        }[]
+      }
       has_role: {
         Args:
           | { user_id: string; _role: Database["public"]["Enums"]["app_role"] }
@@ -430,7 +439,7 @@ export type Database = {
         Returns: boolean
       }
       is_group_member: {
-        Args: { group_id: string }
+        Args: { p_group_id: string }
         Returns: boolean
       }
     }

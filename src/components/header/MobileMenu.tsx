@@ -8,12 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Hamburger } from "@/components/ui/hamburger";
-import { useAuth } from "@/contexts/AuthContext"; // Added import for auth
-import { supabase } from "@/integrations/supabase/client"; // Added import for supabase
+import { useAuth } from "@/contexts/AuthContext"; 
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Home, Calendar, Users, PlusCircle, LogOut,
   User, Calculator, Moon, Sun, ScrollText,
-  Globe, Settings, Bell
+  Globe, Settings, Bell, ChevronDown, ChevronUp
 } from "lucide-react";
 
 interface MobileMenuProps {
@@ -21,11 +21,21 @@ interface MobileMenuProps {
   toggleDarkMode: () => void;
 }
 
+interface MenuCategory {
+  title: string;
+  items: {
+    title: string;
+    icon: JSX.Element;
+    href: string;
+  }[];
+}
+
 const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['main']);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get the authenticated user
+  const { user, signOut } = useAuth();
   
   // State for user profile
   const [userProfile, setUserProfile] = useState({
@@ -72,17 +82,60 @@ const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
     fetchUserProfile();
   }, [user]);
 
-  const menuItems = [
-    { title: 'Início', icon: <Home size={20} />, href: '/' },
-    { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
-    { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
-    { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
-    { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
-    { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
-    { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
-    { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
-    { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' },
+  const menuCategories: MenuCategory[] = [
+    {
+      title: 'main',
+      items: [
+        { title: 'Início', icon: <Home size={20} />, href: '/' }
+      ]
+    },
+    {
+      title: 'Eventos',
+      items: [
+        { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
+        { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
+        { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' }
+      ]
+    },
+    {
+      title: 'Grupos',
+      items: [
+        { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' }
+      ]
+    },
+    {
+      title: 'Notificações',
+      items: [
+        { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' }
+      ]
+    },
+    {
+      title: 'Conta',
+      items: [
+        { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },
+        { title: 'Calculadora de Rateio', icon: <Calculator size={20} />, href: '/calculadora' },
+        { title: 'Acessibilidade', icon: <Settings size={20} />, href: '/acessibilidade' }
+      ]
+    }
   ];
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+      setMenuOpen(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -109,26 +162,49 @@ const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
             <AvatarImage src={userProfile.avatarUrl} />
             <AvatarFallback>{userProfile.initials}</AvatarFallback>
           </Avatar>
-          <div className="ml-3">
-            <p className="font-medium">{userProfile.name}</p>
-            <p className="text-sm text-muted-foreground">{userProfile.email}</p>
+          <div className="ml-3 overflow-hidden">
+            <p className="font-medium truncate">{userProfile.name}</p>
+            <p className="text-sm text-muted-foreground truncate">{userProfile.email}</p>
           </div>
         </Link>
         <ScrollArea className="h-[calc(100vh-180px)]">
           <div className="space-y-1 px-2">
-            {menuItems.map((item) => (
-              <Button
-                key={item.href}
-                variant={location.pathname === item.href ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => { 
-                  navigate(item.href); 
-                  setMenuOpen(false); 
-                }}
-              >
-                {item.icon}
-                <span className="ml-2">{item.title}</span>
-              </Button>
+            {menuCategories.map((category) => (
+              <div key={category.title} className="mb-2">
+                {category.title !== 'main' && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between font-semibold"
+                    onClick={() => toggleCategory(category.title)}
+                  >
+                    {category.title}
+                    {expandedCategories.includes(category.title) ? (
+                      <ChevronUp size={20} />
+                    ) : (
+                      <ChevronDown size={20} />
+                    )}
+                  </Button>
+                )}
+                
+                {expandedCategories.includes(category.title) && (
+                  <div className={category.title === 'main' ? '' : 'pl-2 border-l border-gray-300 dark:border-gray-700 ml-2 mt-1'}>
+                    {category.items.map((item) => (
+                      <Button
+                        key={item.href}
+                        variant={location.pathname === item.href ? "secondary" : "ghost"}
+                        className="w-full justify-start mb-1"
+                        onClick={() => { 
+                          navigate(item.href); 
+                          setMenuOpen(false); 
+                        }}
+                      >
+                        {item.icon}
+                        <span className="ml-2">{item.title}</span>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
           
@@ -158,7 +234,7 @@ const MobileMenu = ({ darkMode, toggleDarkMode }: MobileMenuProps) => {
             <Button 
               variant="destructive"
               className="w-full justify-start"
-              onClick={() => navigate("/login")}
+              onClick={handleLogout}
             >
               <LogOut className="mr-2" size={20} />
               <span>Sair</span>

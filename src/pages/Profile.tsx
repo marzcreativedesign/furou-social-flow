@@ -9,6 +9,7 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -17,28 +18,50 @@ const Profile = () => {
   const { profile, userStats, isLoading, setProfile } = useProfile();
   
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      navigate('/auth');
+      toast({
+        title: "Sessão encerrada",
+        description: "Você saiu do sistema com sucesso."
+      });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Erro ao sair",
+        description: "Não foi possível encerrar sua sessão.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleProfileUpdate = (formData: { full_name: string; bio: string }) => {
-    if (!profile) return;
+  const handleProfileUpdate = async (formData: { full_name: string; bio: string; avatar_url: string | null }) => {
+    if (!profile || !user) return;
     
-    // Create a new profile object with updated values
-    const updatedProfile = {
-      ...profile,
-      full_name: formData.full_name,
-      bio: formData.bio
-    };
-    
-    // Update the profile in state
-    setProfile(updatedProfile);
-    
-    // Here you would normally also save to database
-    toast({
-      title: "Perfil atualizado",
-      description: "As informações do seu perfil foram atualizadas."
-    });
+    try {
+      // Create a new profile object with updated values
+      const updatedProfile = {
+        ...profile,
+        full_name: formData.full_name,
+        bio: formData.bio,
+        avatar_url: formData.avatar_url
+      };
+      
+      // Update the profile in state
+      setProfile(updatedProfile);
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "As informações do seu perfil foram atualizadas."
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (isLoading) {
