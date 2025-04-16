@@ -8,6 +8,32 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import ProfileForm from "./ProfileForm";
 
+// Define the form schema
+const formSchema = z.object({
+  full_name: z.string().min(2, "O nome precisa ter pelo menos 2 caracteres"),
+  bio: z.string().optional(),
+  avatar_url: z.string().optional().nullable(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  // If any password field is filled, all password fields must be filled
+  const hasPasswordChange = data.currentPassword || data.newPassword || data.confirmPassword;
+  if (!hasPasswordChange) return true;
+  
+  return !!data.currentPassword && !!data.newPassword && !!data.confirmPassword;
+}, {
+  message: "Todos os campos de senha devem ser preenchidos para alterar a senha",
+  path: ["newPassword"],
+}).refine((data) => {
+  // New password and confirm password must match
+  if (!data.newPassword) return true;
+  return data.newPassword === data.confirmPassword;
+}, {
+  message: "As senhas não conferem",
+  path: ["confirmPassword"],
+});
+
 interface ProfileEditorDialogProps {
   profile: {
     id: string;
