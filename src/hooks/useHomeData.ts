@@ -66,10 +66,10 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         // Fetch all events the user is related to
         const response = await EventsService.getEvents();
         
-        if (response && 'error' in response && response.error) {
+        if (response && typeof response === 'object' && 'error' in response && response.error) {
           console.error("Error fetching events:", response.error);
           toast.error("Error loading events");
-        } else if (response && 'data' in response && response.data) {
+        } else if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
           // Process main events
           const formattedEvents: Event[] = response.data
             .filter(event => event.event_participants?.some(
@@ -109,6 +109,8 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
               date: event.date,
               location: event.location,
               image_url: event.image_url,
+              is_public: event.is_public,
+              creator_id: event.creator_id,
               status: event.event_participants?.find(p => p.user_id === user.id)?.status as 'invited' | 'pending'
             }));
           
@@ -118,9 +120,9 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         // Fetch public events
         const publicEventsResponse = await EventsService.getPublicEvents();
         
-        if (publicEventsResponse && 'error' in publicEventsResponse && publicEventsResponse.error) {
+        if (publicEventsResponse && typeof publicEventsResponse === 'object' && 'error' in publicEventsResponse && publicEventsResponse.error) {
           console.error("Error fetching public events:", publicEventsResponse.error);
-        } else if (publicEventsResponse && 'data' in publicEventsResponse && publicEventsResponse.data) {
+        } else if (publicEventsResponse && typeof publicEventsResponse === 'object' && 'data' in publicEventsResponse && Array.isArray(publicEventsResponse.data)) {
           const formattedPublicEvents: Event[] = publicEventsResponse.data
             .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
@@ -143,9 +145,9 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         // Fetch notifications
         const notificationsResponse = await NotificationsService.getUserNotifications();
         
-        if (notificationsResponse && 'error' in notificationsResponse && notificationsResponse.error) {
+        if (notificationsResponse && typeof notificationsResponse === 'object' && 'error' in notificationsResponse && notificationsResponse.error) {
           console.error("Error fetching notifications:", notificationsResponse.error);
-        } else if (notificationsResponse && 'data' in notificationsResponse && notificationsResponse.data) {
+        } else if (notificationsResponse && typeof notificationsResponse === 'object' && 'data' in notificationsResponse && Array.isArray(notificationsResponse.data)) {
           setPendingActions(notificationsResponse.data);
         }
       } catch (error) {
@@ -200,7 +202,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     if (status === 'confirmed') {
       // Refetch all events to update the confirmed list
       const response = await EventsService.getEvents();
-      if (response && 'data' in response && response.data) {
+      if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
         const formattedEvents = response.data.map(event => {
           const groupInfo = event.group_events && event.group_events[0]?.groups 
             ? event.group_events[0].groups 

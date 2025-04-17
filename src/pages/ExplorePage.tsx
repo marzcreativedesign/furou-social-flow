@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
@@ -40,22 +39,26 @@ const ExplorePage = () => {
       const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
       if (response && typeof response === 'object' && 'error' in response && response.error) {
-        throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
+        throw new Error(typeof response.error === 'object' && response.error !== null && 'message' in response.error 
+          ? String(response.error.message) 
+          : 'Erro ao buscar eventos públicos');
       }
       
       return { 
-        events: response && typeof response === 'object' && 'data' in response ? (response.data || []).map(event => ({
-          ...event,
-          date: new Date(event.date).toLocaleString('pt-BR', {
-            weekday: 'long',
-            hour: 'numeric',
-            minute: 'numeric'
-          }),
-          attendees: event.event_participants?.length || 0
-        })) : [],
+        events: response && typeof response === 'object' && 'data' in response && Array.isArray(response.data) 
+          ? response.data.map(event => ({
+              ...event,
+              date: new Date(event.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              }),
+              attendees: event.event_participants?.length || 0
+            })) 
+          : [],
         metadata: {
-          totalPages: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.totalPages || 1 : 1,
-          currentPage: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.currentPage || 1 : 1
+          totalPages: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.totalPages || 1 : 1,
+          currentPage: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.currentPage || 1 : 1
         }
       };
     },
@@ -76,7 +79,7 @@ const ExplorePage = () => {
     }
   }, [error, toast]);
 
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = Array.isArray(events) ? events.filter(event => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -86,7 +89,7 @@ const ExplorePage = () => {
       );
     }
     return true;
-  });
+  }) : [];
 
   const handleEventClick = (id: string) => {
     navigate(`/evento/${id}`);

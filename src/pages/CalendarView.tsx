@@ -40,7 +40,7 @@ const CalendarView = () => {
       try {
         const response = await EventsService.getEvents();
         
-        if (response && 'error' in response && response.error) {
+        if (response && typeof response === 'object' && 'error' in response && response.error) {
           console.error("Error fetching events:", response.error);
           toast({
             title: "Erro",
@@ -50,7 +50,7 @@ const CalendarView = () => {
           return;
         }
         
-        if (response && 'data' in response && response.data) {
+        if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
           const formattedEvents: Event[] = response.data.map(event => {
             // Safely access group_events that might be undefined
             const groupInfo = event.group_events && event.group_events[0]?.groups 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
@@ -41,8 +40,8 @@ const EventsPage = () => {
       return { 
         events: response && typeof response === 'object' && 'data' in response ? response.data || [] : [], 
         metadata: {
-          totalPages: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.totalPages || 1 : 1,
-          currentPage: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.currentPage || 1 : 1
+          totalPages: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.totalPages || 1 : 1,
+          currentPage: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.currentPage || 1 : 1
         }
       };
     },
@@ -64,7 +63,7 @@ const EventsPage = () => {
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
-  const filteredEvents = events.filter((event: Event) => {
+  const filteredEvents = Array.isArray(events) ? events.filter((event: Event) => {
     if (
       (activeFilter === 'public' && !event.is_public) || 
       (activeFilter === 'private' && event.is_public) || 
@@ -90,7 +89,7 @@ const EventsPage = () => {
     }
     
     return true;
-  });
+  }) : [];
 
   const handleBackToHome = () => navigate('/');
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => setLocationQuery(e.target.value);
