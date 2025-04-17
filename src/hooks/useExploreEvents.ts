@@ -81,6 +81,9 @@ export const useExploreEvents = (pageSize: number = 9) => {
         EventQueriesService.getPublicEvents(nextPage, pageSize).then((response) => {
           // Make sure response is valid and has data before processing
           if (response && !response.error && response.data) {
+            // Explicitly check and cast the response to handle the type
+            const responseMetadata = response.metadata || { totalPages: 1, currentPage: nextPage };
+            
             const result: ExploreEventsData = {
               events: (response.data || []).map(event => ({
                 ...event,
@@ -92,7 +95,7 @@ export const useExploreEvents = (pageSize: number = 9) => {
                 attendees: event.event_participants?.length || 0
               })),
               metadata: {
-                totalPages: response.metadata?.totalPages || 1,
+                totalPages: responseMetadata.totalPages || 1,
                 currentPage: nextPage
               }
             };
