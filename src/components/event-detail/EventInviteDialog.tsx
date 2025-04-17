@@ -32,6 +32,8 @@ const formSchema = z.object({
   email: z.string().email("Insira um e-mail válido"),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface EventInviteDialogProps {
   eventId: string;
   eventTitle: string;
@@ -43,14 +45,14 @@ const EventInviteDialog = ({ eventId, eventTitle, eventDate }: EventInviteDialog
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     
     try {

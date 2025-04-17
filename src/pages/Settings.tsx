@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,11 +17,12 @@ const Settings = () => {
     navigate(-1);
   };
 
+  // Proper type definition for font families
+  type FontFamily = "sans" | "serif" | "mono" | "dyslexic";
+
   // Create a type-safe font family change handler
-  const handleFontFamilyChange = (value: string) => {
-    // Validate that the value is one of the allowed font families
-    const validFontFamily = value as 'sans' | 'serif' | 'mono' | 'dyslexic';
-    updateSetting('fontFamily', validFontFamily, false);
+  const handleFontChange = (font: FontFamily) => {
+    updateSetting('fontFamily', font, false);
   };
 
   return (
@@ -41,7 +41,7 @@ const Settings = () => {
           fontSize={settings.fontSize}
           onFontSizeChange={(value) => updateSetting('fontSize', value[0], false)}
           fontFamily={settings.fontFamily}
-          onFontFamilyChange={handleFontFamilyChange}
+          onFontFamilyChange={handleFontChange}
         />
         
         <Separator />
