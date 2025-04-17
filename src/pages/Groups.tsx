@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { GroupsService } from "@/services/groups.service";
 import { useAuth } from "@/contexts/AuthContext";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
 import NoGroups from "@/components/groups/NoGroups";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Group {
   id: string;
@@ -19,8 +19,19 @@ interface Group {
   created_at?: string;
 }
 
+// Skeleton for loading state
+const GroupSkeleton = () => (
+  <div className="flex flex-col rounded-lg border border-border overflow-hidden">
+    <Skeleton className="h-40 w-full" />
+    <div className="p-4 space-y-2">
+      <Skeleton className="h-6 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-4 w-1/4" />
+    </div>
+  </div>
+);
+
 const Groups = () => {
-  const { toast: toastUI } = useToast();
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,7 +43,7 @@ const Groups = () => {
       
       setIsFetching(true);
       try {
-        const { data, error } = await GroupsService.getUserGroups();
+        const { data: groupMembers, error } = await GroupsService.getUserGroups();
         
         if (error) {
           console.error("Error fetching groups:", error);
@@ -40,11 +51,11 @@ const Groups = () => {
           return;
         }
         
-        if (data) {
+        if (groupMembers && groupMembers.length > 0) {
           // Create a map to track unique groups and avoid duplicate keys
           const groupsMap = new Map<string, Group>();
           
-          data.forEach(item => {
+          groupMembers.forEach(item => {
             if (item.groups?.id) {
               const groupId = item.groups.id;
               
@@ -66,6 +77,8 @@ const Groups = () => {
           // Convert map to array
           const formattedGroups = Array.from(groupsMap.values());
           setGroups(formattedGroups);
+        } else {
+          setGroups([]);
         }
       } catch (error) {
         console.error("Error fetching groups:", error);
@@ -88,12 +101,18 @@ const Groups = () => {
       <div className="px-4 py-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold">Seus grupos</h2>
-          <CreateGroupDialog onGroupCreated={handleGroupCreated} />
+          <CreateGroupDialog 
+            onGroupCreated={handleGroupCreated} 
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          />
         </div>
         
         {isFetching ? (
-          <div className="flex justify-center items-center py-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <GroupSkeleton key={i} />
+            ))}
           </div>
         ) : groups.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

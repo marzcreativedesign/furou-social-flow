@@ -1,6 +1,7 @@
 
 import { Calendar, MapPin, Users } from "lucide-react";
 import EventTag from "./EventTag";
+import { Link } from "react-router-dom";
 
 interface EventCardProps {
   id: string;
@@ -45,7 +46,7 @@ const EventCard = ({
   const isLarge = size === "large";
 
   return (
-    <div className={`event-card animate-fade-in ${getCardBorder()}`}>
+    <Link to={`/evento/${id}`} className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200`}>
       <div className={`relative ${isLarge ? 'h-60' : 'h-40'}`}>
         <img
           src={imageUrl}
@@ -92,7 +93,7 @@ const EventCard = ({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

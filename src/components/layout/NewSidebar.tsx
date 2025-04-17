@@ -133,12 +133,17 @@ const NewSidebar = ({ darkMode, toggleDarkMode }: NewSidebarProps) => {
   };
 
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path);
+    if (path === '/' && location.pathname === '/') {
+      return true;
+    }
+    
+    // For other pages, check if the path is exactly matching or is a subpath
+    return path !== '/' && (location.pathname === path || location.pathname.startsWith(`${path}/`));
   };
 
   return (
     <div className="hidden lg:block lg:w-64 p-4 border-r border-border dark:border-gray-800 min-h-[calc(100vh-64px)] fixed">
-      <div className="sticky top-20 space-y-4 flex flex-col h-[calc(100vh-100px)]">
+      <div className="sticky top-20 flex flex-col h-[calc(100vh-100px)]">
         {/* User Profile Section */}
         <div 
           onClick={() => navigate("/perfil")}
@@ -156,7 +161,7 @@ const NewSidebar = ({ darkMode, toggleDarkMode }: NewSidebarProps) => {
 
         <Separator className="my-2" />
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 pr-4">
           <div className="space-y-1 pb-4">
             {menuCategories.map((category) => (
               <div key={category.title} className="mb-2">
