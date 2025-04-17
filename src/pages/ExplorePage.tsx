@@ -13,6 +13,16 @@ import { Event } from "@/types/event";
 import EventsPagination from '@/components/events/EventsPagination';
 import { EventCacheService } from '@/services/event/cache/event-cache.service';
 
+interface EventsResponse {
+  data: Event[];
+  metadata: {
+    totalPages: number;
+    currentPage: number;
+    totalCount?: number;
+  };
+  error: null | any;
+}
+
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -44,29 +54,13 @@ const ExplorePage = () => {
           : 'Erro ao buscar eventos públicos');
       }
       
-      return { 
-        events: response && typeof response === 'object' && 'data' in response && Array.isArray(response.data) 
-          ? response.data.map(event => ({
-              ...event,
-              date: new Date(event.date).toLocaleString('pt-BR', {
-                weekday: 'long',
-                hour: 'numeric',
-                minute: 'numeric'
-              }),
-              attendees: event.event_participants?.length || 0
-            })) 
-          : [],
-        metadata: {
-          totalPages: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.totalPages || 1 : 1,
-          currentPage: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.currentPage || 1 : 1
-        }
-      };
+      return response as EventsResponse;
     },
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000, // Data remains fresh for 1 minute
   });
   
-  const events = eventsData?.events || [];
+  const events = eventsData?.data || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
   React.useEffect(() => {

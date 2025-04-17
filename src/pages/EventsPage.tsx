@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
@@ -10,6 +11,17 @@ import type { Event } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { EventCacheService } from "@/services/event/cache/event-cache.service";
+import { ApiResponse } from "@/services/event/cache/event-cache.service";
+
+interface EventsResponse {
+  data: Event[];
+  metadata: {
+    totalPages: number;
+    currentPage: number;
+    totalCount?: number;
+  };
+  error: null | any;
+}
 
 const EventsPage = () => {
   const navigate = useNavigate();
@@ -37,13 +49,7 @@ const EventsPage = () => {
         throw response.error;
       }
       
-      return { 
-        events: response && typeof response === 'object' && 'data' in response ? response.data || [] : [], 
-        metadata: {
-          totalPages: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.totalPages || 1 : 1,
-          currentPage: response && typeof response === 'object' && 'metadata' in response && response.metadata ? response.metadata.currentPage || 1 : 1
-        }
-      };
+      return response as EventsResponse;
     },
     placeholderData: (previousData) => previousData, // Use this instead of keepPreviousData
     staleTime: 60 * 1000, // Data remains fresh for 1 minute
@@ -60,7 +66,7 @@ const EventsPage = () => {
     }
   }, [error, toast]);
 
-  const events = eventsData?.events || [];
+  const events = eventsData?.data || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
   const filteredEvents = Array.isArray(events) ? events.filter((event: Event) => {
