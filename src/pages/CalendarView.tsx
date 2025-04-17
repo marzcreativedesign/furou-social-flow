@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/MainLayout";
@@ -39,10 +38,10 @@ const CalendarView = () => {
       
       setLoading(true);
       try {
-        const { data, error } = await EventsService.getEvents();
+        const response = await EventsService.getEvents();
         
-        if (error) {
-          console.error("Error fetching events:", error);
+        if (response && 'error' in response && response.error) {
+          console.error("Error fetching events:", response.error);
           toast({
             title: "Erro",
             description: "Não foi possível carregar seus eventos",
@@ -51,8 +50,8 @@ const CalendarView = () => {
           return;
         }
         
-        if (data) {
-          const formattedEvents: Event[] = data.map(event => {
+        if (response && 'data' in response && response.data) {
+          const formattedEvents: Event[] = response.data.map(event => {
             // Safely access group_events that might be undefined
             const groupInfo = event.group_events && event.group_events[0]?.groups 
               ? event.group_events[0].groups 
@@ -85,7 +84,6 @@ const CalendarView = () => {
     fetchEvents();
   }, [user, toast]);
 
-  // Format events for the selected day
   const selectedDateEvents = useMemo(() => {
     if (!date) return [];
     
@@ -101,12 +99,10 @@ const CalendarView = () => {
     });
   }, [date, events]);
 
-  // Get dates with events for highlighting on the calendar
   const datesWithEvents = useMemo(() => {
     return events.map(event => new Date(event.date));
   }, [events]);
 
-  // Function to get events for each month day (for list view)
   const getEventsForMonth = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();

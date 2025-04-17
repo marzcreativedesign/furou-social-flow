@@ -34,15 +34,15 @@ const EventsPage = () => {
     queryFn: async () => {
       const response = await EventsService.getEvents(currentPage, pageSize);
       
-      if (response.error) {
+      if (response && typeof response === 'object' && 'error' in response && response.error) {
         throw response.error;
       }
       
       return { 
-        events: response.data || [], 
+        events: response && typeof response === 'object' && 'data' in response ? response.data || [] : [], 
         metadata: {
-          totalPages: response.metadata?.totalPages || 1,
-          currentPage: response.metadata?.currentPage || 1
+          totalPages: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.totalPages || 1 : 1,
+          currentPage: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.currentPage || 1 : 1
         }
       };
     },

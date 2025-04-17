@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
 import { NotificationsService } from "@/services/notifications.service";
 import { toast } from "sonner";
+import { ApiResponse } from "@/services/event/cache/event-cache.service";
 
 export interface Event {
   id: string;
@@ -63,14 +64,14 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         if (!user) return;
         
         // Fetch all events the user is related to
-        const { data: userEvents, error: eventsError } = await EventsService.getEvents();
+        const response = await EventsService.getEvents();
         
-        if (eventsError) {
-          console.error("Error fetching events:", eventsError);
+        if (response && 'error' in response && response.error) {
+          console.error("Error fetching events:", response.error);
           toast.error("Error loading events");
-        } else if (userEvents) {
+        } else if (response && 'data' in response && response.data) {
           // Process main events
-          const formattedEvents: Event[] = userEvents
+          const formattedEvents: Event[] = response.data
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
@@ -98,7 +99,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
           setEvents(formattedEvents);
           
           // Process pending invites
-          const pendingInvitesData = userEvents
+          const pendingInvitesData = response.data
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && (p.status === 'invited' || p.status === 'pending')
             ))
@@ -115,12 +116,12 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         }
 
         // Fetch public events
-        const { data: publicEventsData, error: publicEventsError } = await EventsService.getPublicEvents();
+        const publicEventsResponse = await EventsService.getPublicEvents();
         
-        if (publicEventsError) {
-          console.error("Error fetching public events:", publicEventsError);
-        } else if (publicEventsData) {
-          const formattedPublicEvents: Event[] = publicEventsData
+        if (publicEventsResponse && 'error' in publicEventsResponse && publicEventsResponse.error) {
+          console.error("Error fetching public events:", publicEventsResponse.error);
+        } else if (publicEventsResponse && 'data' in publicEventsResponse && publicEventsResponse.data) {
+          const formattedPublicEvents: Event[] = publicEventsResponse.data
             .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
               ...event,
@@ -140,12 +141,12 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         }
 
         // Fetch notifications
-        const { data: notifications, error: notificationsError } = await NotificationsService.getUserNotifications();
+        const notificationsResponse = await NotificationsService.getUserNotifications();
         
-        if (notificationsError) {
-          console.error("Error fetching notifications:", notificationsError);
-        } else if (notifications) {
-          setPendingActions(notifications);
+        if (notificationsResponse && 'error' in notificationsResponse && notificationsResponse.error) {
+          console.error("Error fetching notifications:", notificationsResponse.error);
+        } else if (notificationsResponse && 'data' in notificationsResponse && notificationsResponse.data) {
+          setPendingActions(notificationsResponse.data);
         }
       } catch (error) {
         console.error("Error loading homepage data:", error);
@@ -198,9 +199,9 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     
     if (status === 'confirmed') {
       // Refetch all events to update the confirmed list
-      const { data } = await EventsService.getEvents();
-      if (data) {
-        const formattedEvents = data.map(event => {
+      const response = await EventsService.getEvents();
+      if (response && 'data' in response && response.data) {
+        const formattedEvents = response.data.map(event => {
           const groupInfo = event.group_events && event.group_events[0]?.groups 
             ? event.group_events[0].groups 
             : null;

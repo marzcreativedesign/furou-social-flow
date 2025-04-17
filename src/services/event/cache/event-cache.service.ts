@@ -11,6 +11,17 @@ interface CachedResponse<T> {
   expiresIn: number; // Cache expiry time in milliseconds
 }
 
+// Define response types to align with what the API returns
+export interface ApiResponse<T> {
+  data: T | null;
+  metadata?: {
+    totalPages: number;
+    currentPage: number;
+    totalCount?: number;
+  };
+  error: any | null;
+}
+
 const DEFAULT_CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export const EventCacheService = {

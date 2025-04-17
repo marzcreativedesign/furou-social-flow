@@ -39,12 +39,12 @@ const ExplorePage = () => {
     queryFn: async () => {
       const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
-      if (response.error) {
+      if (response && typeof response === 'object' && 'error' in response && response.error) {
         throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
       }
       
       return { 
-        events: (response.data || []).map(event => ({
+        events: response && typeof response === 'object' && 'data' in response ? (response.data || []).map(event => ({
           ...event,
           date: new Date(event.date).toLocaleString('pt-BR', {
             weekday: 'long',
@@ -52,10 +52,10 @@ const ExplorePage = () => {
             minute: 'numeric'
           }),
           attendees: event.event_participants?.length || 0
-        })),
+        })) : [],
         metadata: {
-          totalPages: response.metadata?.totalPages || 1,
-          currentPage: response.metadata?.currentPage || 1
+          totalPages: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.totalPages || 1 : 1,
+          currentPage: response && typeof response === 'object' && 'metadata' in response ? response.metadata?.currentPage || 1 : 1
         }
       };
     },
