@@ -1,8 +1,7 @@
 
-import { Moon, Sun, Contrast } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
+import { Moon, Sun, Contrast } from "lucide-react";
 
 interface ThemeSectionProps {
   darkMode: boolean;
@@ -17,43 +16,44 @@ const ThemeSection = ({
   highContrast,
   onToggleHighContrast
 }: ThemeSectionProps) => {
-  const { toast } = useToast();
-
   return (
-    <>
-      <div className="space-y-2">
-        <h2 className="text-2xl font-display font-bold">Personalização Visual</h2>
-        <p className="text-muted-foreground">Ajuste a aparência do aplicativo conforme sua preferência</p>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold dark:text-[#EDEDED]">Tema</h2>
       
-      <Separator />
-
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h3 className="text-lg font-medium flex items-center">
-            {darkMode ? <Moon className="mr-2" size={20} /> : <Sun className="mr-2" size={20} />}
-            Modo escuro
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Alterna entre tema claro e escuro
-          </p>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            {darkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            <Label htmlFor="dark-mode" className="text-base cursor-pointer">
+              Modo escuro
+            </Label>
+          </div>
+          <Switch
+            id="dark-mode"
+            checked={darkMode}
+            onCheckedChange={onToggleDarkMode}
+          />
         </div>
-        <Switch checked={darkMode} onCheckedChange={onToggleDarkMode} />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h3 className="text-lg font-medium flex items-center">
-            <Contrast className="mr-2" size={20} />
-            Alto contraste
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Aumenta o contraste para melhor visibilidade
-          </p>
+        
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Contrast className="h-5 w-5" />
+            <Label htmlFor="high-contrast" className="text-base cursor-pointer">
+              Alto contraste
+            </Label>
+          </div>
+          <Switch
+            id="high-contrast"
+            checked={highContrast}
+            onCheckedChange={onToggleHighContrast}
+          />
         </div>
-        <Switch checked={highContrast} onCheckedChange={onToggleHighContrast} />
+        
+        <p className="text-sm text-muted-foreground mt-2">
+          O alto contraste aumenta a diferença entre textos e fundos, melhorando a legibilidade.
+        </p>
       </div>
-    </>
+    </div>
   );
 };
 

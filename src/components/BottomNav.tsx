@@ -1,5 +1,5 @@
 
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Home,
@@ -11,20 +11,21 @@ import {
 
 const BottomNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   // Determine home route based on auth state
-  const homeRoute = user ? "/home" : "/";
+  const homeRoute = user ? "/" : "/auth";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border dark:bg-gray-900/90 dark:border-gray-800 z-50">
       <div className="flex items-center justify-around h-16 relative">
-        {/* Botão Início - agora com rota condicional */}
+        {/* Botão Início */}
         <Link
           to={homeRoute}
           className={`flex flex-col items-center justify-center px-4 py-2 ${
-            (path === "/" && !user) || (path === "/home" && user) 
+            path === "/" || path === "/home" 
               ? "text-[#FF8A1E]" 
               : "text-muted-foreground"
           }`}
@@ -46,7 +47,7 @@ const BottomNav = () => {
           <span className="text-xs mt-1">Eventos</span>
         </Link>
 
-        {/* Botão Criar Evento - agora no centro e mais destacado */}
+        {/* Botão Criar Evento */}
         <Link
           to="/criar"
           className="flex flex-col items-center justify-center"

@@ -1,15 +1,17 @@
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import ProfileAvatar from "./ProfileAvatar";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
+// Define the form schema
 const formSchema = z.object({
   full_name: z.string().min(2, "O nome precisa ter pelo menos 2 caracteres"),
   bio: z.string().optional(),
@@ -18,13 +20,16 @@ const formSchema = z.object({
   newPassword: z.string().optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
+  // If any password field is filled, all password fields must be filled
   const hasPasswordChange = data.currentPassword || data.newPassword || data.confirmPassword;
   if (!hasPasswordChange) return true;
+  
   return !!data.currentPassword && !!data.newPassword && !!data.confirmPassword;
 }, {
   message: "Todos os campos de senha devem ser preenchidos para alterar a senha",
   path: ["newPassword"],
 }).refine((data) => {
+  // New password and confirm password must match
   if (!data.newPassword) return true;
   return data.newPassword === data.confirmPassword;
 }, {
@@ -32,172 +37,178 @@ const formSchema = z.object({
   path: ["confirmPassword"],
 });
 
+type ProfileFormValues = z.infer<typeof formSchema>;
+
 interface ProfileFormProps {
   profile: {
-    id: string;
     full_name: string | null;
-    email: string;
     bio: string | null;
     avatar_url: string | null;
+    email: string;
   };
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: ProfileFormValues) => Promise<void>;
   onCancel: () => void;
   avatarPreview: string | null;
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSubmitting: boolean;
 }
 
-const ProfileForm = ({ 
-  profile, 
-  onSubmit, 
-  onCancel, 
+const ProfileForm = ({
+  profile,
+  onSubmit,
+  onCancel,
   avatarPreview,
   onAvatarChange,
-  isSubmitting 
+  isSubmitting
 }: ProfileFormProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [showPassword, setShowPassword] = useState(false);
+
+  const form = useForm<ProfileFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: profile.full_name || '',
-      bio: profile.bio || '',
-      avatar_url: profile.avatar_url || null,
+      full_name: profile?.full_name || '',
+      bio: profile?.bio || '',
+      avatar_url: profile?.avatar_url || null,
       currentPassword: '',
       newPassword: '',
-      confirmPassword: '',
-    },
+      confirmPassword: ''
+    }
   });
+
+  const handleSubmit = async (values: ProfileFormValues) => {
+    await onSubmit(values);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <ProfileAvatar
-          avatarPreview={avatarPreview}
-          fullName={profile.full_name}
-          email={profile.email}
-          onAvatarChange={onAvatarChange}
-        />
-        
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="flex flex-col items-center mb-4">
+          <ProfileAvatar 
+            url={avatarPreview || ''} 
+            email={profile.email} 
+            onAvatarChange={onAvatarChange} 
+          />
+          <p className="text-sm text-muted-foreground mt-2">
+            Clique na imagem para alterar
+          </p>
+        </div>
+
         <FormField
           control={form.control}
           name="full_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Nome</FormLabel>
+              <FormLabel>Nome completo</FormLabel>
               <FormControl>
-                <Input 
-                  {...field}
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3]"
-                />
+                <Input placeholder="Digite seu nome" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <div className="grid gap-2">
-          <Label htmlFor="email" className="dark:text-[#EDEDED]">Email</Label>
-          <Input 
-            id="email"
-            type="email"
-            value={profile.email}
-            disabled
-            className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3]"
-          />
-        </div>
-        
+
         <FormField
           control={form.control}
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Biografia</FormLabel>
+              <FormLabel>Sobre mim</FormLabel>
               <FormControl>
-                <textarea 
+                <Textarea 
+                  placeholder="Conte um pouco sobre você" 
+                  className="resize-none" 
+                  rows={4}
                   {...field}
-                  rows={3}
-                  className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3] dark:focus:border-primary dark:focus:ring-primary/20 resize-none w-full"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <Separator className="my-4" />
-        
-        <h3 className="font-medium dark:text-[#EDEDED]">Alterar Senha</h3>
-        
-        <FormField
-          control={form.control}
-          name="currentPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Senha Atual</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Nova Senha</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Confirmar Nova Senha</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <DialogFooter>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label>Alterar senha</Label>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "Ocultar" : "Mostrar"}
+            </Button>
+          </div>
+        </div>
+
+        {showPassword && (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha atual</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Digite sua senha atual" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nova senha</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Digite sua nova senha" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirmar senha</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Confirme sua nova senha" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        <div className="flex justify-end space-x-2 pt-4">
           <Button 
-            type="button"
+            type="button" 
             variant="outline" 
             onClick={onCancel}
-            className="dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:hover:bg-[#262626]"
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
           <Button 
             type="submit"
-            className="dark:bg-primary dark:text-white dark:hover:bg-accent"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar alterações'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar alterações'
+            )}
           </Button>
-        </DialogFooter>
+        </div>
       </form>
     </Form>
   );

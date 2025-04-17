@@ -5,7 +5,7 @@ import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import DesktopSidebar from "./layout/DesktopSidebar";
+import NewSidebar from "./layout/NewSidebar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -108,13 +108,6 @@ const MainLayout = ({
     }
   };
 
-  const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
@@ -132,11 +125,9 @@ const MainLayout = ({
       <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
         <div className="lg:flex">
           {isDesktop && (
-            <DesktopSidebar
-              userProfile={userProfile}
+            <NewSidebar
               darkMode={darkMode}
               toggleDarkMode={toggleDarkMode}
-              isActive={isActive}
             />
           )}
           
