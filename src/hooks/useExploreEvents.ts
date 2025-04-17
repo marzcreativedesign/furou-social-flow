@@ -78,14 +78,17 @@ export const useExploreEvents = (pageSize: number = 9) => {
       // Only pre-fetch if not already in cache
       if (!getCache(nextPageCacheKey)) {
         console.log(`[Prefetch] Pre-fetching page ${nextPage}`);
-        EventQueriesService.getPublicEvents(nextPage, pageSize).then((response) => {
+        EventQueriesService.getPublicEvents(nextPage, pageSize).then((response: any) => {
           // Make sure response is valid and has data before processing
           if (response && !response.error && response.data) {
-            // Explicitly check and cast the response to handle the type
-            const responseMetadata = response.metadata || { totalPages: 1, currentPage: nextPage };
+            // Create a safe metadata object, ensuring it has required properties
+            const responseMetadata = {
+              totalPages: response.metadata?.totalPages || 1,
+              currentPage: nextPage
+            };
             
             const result: ExploreEventsData = {
-              events: (response.data || []).map(event => ({
+              events: (response.data || []).map((event: Event) => ({
                 ...event,
                 date: new Date(event.date).toLocaleString('pt-BR', {
                   weekday: 'long',
@@ -94,10 +97,7 @@ export const useExploreEvents = (pageSize: number = 9) => {
                 }),
                 attendees: event.event_participants?.length || 0
               })),
-              metadata: {
-                totalPages: responseMetadata.totalPages || 1,
-                currentPage: nextPage
-              }
+              metadata: responseMetadata
             };
             setCache(nextPageCacheKey, result, { expireTimeInMinutes: 5 });
           }
