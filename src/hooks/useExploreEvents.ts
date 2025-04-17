@@ -1,12 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EventQueriesService } from '@/services/event/queries';
 import { Event, EventServiceResponse } from "@/types/event";
+import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
 
 export const useExploreEvents = (pageSize: number = 9) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Generate a unique cache key for this query
+  const cacheKey = generateCacheKey('exploreEvents', { page: currentPage, pageSize });
   
   const { 
     data: eventsData, 
@@ -15,13 +19,22 @@ export const useExploreEvents = (pageSize: number = 9) => {
   } = useQuery({
     queryKey: ['publicEvents', currentPage, pageSize],
     queryFn: async () => {
+      // Check cache first
+      const cachedData = getCache(cacheKey);
+      if (cachedData) {
+        console.log('[Cache] Using cached explore events data');
+        return cachedData;
+      }
+
+      // If not in cache, fetch from API
+      console.log('[API] Fetching explore events from server');
       const response = await EventQueriesService.getPublicEvents(currentPage, pageSize) as EventServiceResponse;
       
       if (response.error) {
         throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
       }
       
-      return { 
+      const result = { 
         events: (response.data || []).map(event => ({
           ...event,
           date: new Date(event.date).toLocaleString('pt-BR', {
@@ -36,9 +49,49 @@ export const useExploreEvents = (pageSize: number = 9) => {
           currentPage: response.metadata?.currentPage || 1
         }
       };
+      
+      // Store in cache
+      setCache(cacheKey, result, { expireTimeInMinutes: 5 });
+      
+      return result;
     },
     placeholderData: (previousData) => previousData
   });
+
+  // Pre-fetch next page
+  useEffect(() => {
+    const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
+    
+    if (metadata.currentPage < metadata.totalPages) {
+      const nextPage = currentPage + 1;
+      const nextPageCacheKey = generateCacheKey('exploreEvents', { page: nextPage, pageSize });
+      
+      // Only pre-fetch if not already in cache
+      if (!getCache(nextPageCacheKey)) {
+        console.log(`[Prefetch] Pre-fetching page ${nextPage}`);
+        EventQueriesService.getPublicEvents(nextPage, pageSize).then((response) => {
+          if (!response.error && response.data) {
+            const result = {
+              events: (response.data || []).map(event => ({
+                ...event,
+                date: new Date(event.date).toLocaleString('pt-BR', {
+                  weekday: 'long',
+                  hour: 'numeric',
+                  minute: 'numeric'
+                }),
+                attendees: event.event_participants?.length || 0
+              })),
+              metadata: {
+                totalPages: response.metadata?.totalPages || 1,
+                currentPage: nextPage
+              }
+            };
+            setCache(nextPageCacheKey, result, { expireTimeInMinutes: 5 });
+          }
+        });
+      }
+    }
+  }, [currentPage, eventsData, pageSize]);
 
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
