@@ -2,8 +2,6 @@
 import { Calendar, MapPin, Users } from "lucide-react";
 import EventTag from "./EventTag";
 import { Link } from "react-router-dom";
-import LazyImage from "./LazyImage";
-import { memo } from "react";
 
 interface EventCardProps {
   id: string;
@@ -18,8 +16,7 @@ interface EventCardProps {
   size?: "default" | "large";
 }
 
-// Use memo to prevent unnecessary re-renders
-const EventCard = memo(({
+const EventCard = ({
   id,
   title,
   date,
@@ -47,21 +44,14 @@ const EventCard = memo(({
 
   // Determine if the card should be larger
   const isLarge = size === "large";
-  
-  // Use data attributes for selective rendering and better performance
+
   return (
-    <Link 
-      to={`/evento/${id}`} 
-      className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200`}
-      data-event-id={id}
-      data-event-type={type}
-    >
+    <Link to={`/evento/${id}`} className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200`}>
       <div className={`relative ${isLarge ? 'h-60' : 'h-40'}`}>
-        <LazyImage
+        <img
           src={imageUrl}
           alt={title}
           className="w-full h-full object-cover"
-          aspectRatio={isLarge ? "16/9" : "4/3"}
         />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1">
           {type && (
@@ -105,8 +95,6 @@ const EventCard = memo(({
       </div>
     </Link>
   );
-});
-
-EventCard.displayName = "EventCard";
+};
 
 export default EventCard;

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -12,17 +11,6 @@ import { EventQueriesService } from '@/services/event/queries';
 import { useToast } from "@/components/ui/use-toast";
 import { Event } from "@/types/event";
 import EventsPagination from '@/components/events/EventsPagination';
-import { EventCacheService } from '@/services/event/cache/event-cache.service';
-
-interface EventsResponse {
-  data: Event[];
-  metadata: {
-    totalPages: number;
-    currentPage: number;
-    totalCount?: number;
-  };
-  error: null | any;
-}
 
 const ExplorePage = () => {
   const navigate = useNavigate();
@@ -30,38 +18,41 @@ const ExplorePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("events");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6; // Reduced from 9 to 6 items per page for optimized loading
-  
-  // Clear cache when search changes
-  useEffect(() => {
-    if (searchQuery) {
-      const cacheKey = `public_events_${currentPage}_${pageSize}`;
-      EventCacheService.clearCache(cacheKey);
-    }
-  }, [searchQuery, currentPage, pageSize]);
+  const pageSize = 9; // Eventos por página
   
   const { 
     data: eventsData, 
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['publicEvents', currentPage, pageSize, searchQuery],
+    queryKey: ['publicEvents', currentPage, pageSize],
     queryFn: async () => {
       const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
-      if (response && typeof response === 'object' && 'error' in response && response.error) {
-        throw new Error(typeof response.error === 'object' && response.error !== null && 'message' in response.error 
-          ? String(response.error.message) 
-          : 'Erro ao buscar eventos públicos');
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
       }
       
-      return response as EventsResponse;
+      return { 
+        events: (response.data || []).map(event => ({
+          ...event,
+          date: new Date(event.date).toLocaleString('pt-BR', {
+            weekday: 'long',
+            hour: 'numeric',
+            minute: 'numeric'
+          }),
+          attendees: event.event_participants?.length || 0
+        })),
+        metadata: {
+          totalPages: response.metadata?.totalPages || 1,
+          currentPage: response.metadata?.currentPage || 1
+        }
+      };
     },
-    placeholderData: (previousData) => previousData,
-    staleTime: 60 * 1000, // Data remains fresh for 1 minute
+    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
   });
   
-  const events = eventsData?.data || [];
+  const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
   React.useEffect(() => {
@@ -74,7 +65,7 @@ const ExplorePage = () => {
     }
   }, [error, toast]);
 
-  const filteredEvents = Array.isArray(events) ? events.filter(event => {
+  const filteredEvents = events.filter(event => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -84,7 +75,7 @@ const ExplorePage = () => {
       );
     }
     return true;
-  }) : [];
+  });
 
   const handleEventClick = (id: string) => {
     navigate(`/evento/${id}`);
@@ -96,7 +87,7 @@ const ExplorePage = () => {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Smooth scroll to top when changing pages
+    // Scroll para o topo ao mudar de página
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -170,7 +161,7 @@ const ExplorePage = () => {
                         date={event.date}
                         location={event.location || ""}
                         imageUrl={event.image_url || ""}
-                        attendees={event.event_participants?.length || 0}
+                        attendees={event.attendees || 0}
                         type="public"
                         size="large"
                       />

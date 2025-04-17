@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
 import { NotificationsService } from "@/services/notifications.service";
 import { toast } from "sonner";
-import { ApiResponse } from "@/services/event/cache/event-cache.service";
 
 export interface Event {
   id: string;
@@ -64,14 +63,14 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         if (!user) return;
         
         // Fetch all events the user is related to
-        const response = await EventsService.getEvents();
+        const { data: userEvents, error: eventsError } = await EventsService.getEvents();
         
-        if (response && typeof response === 'object' && 'error' in response && response.error) {
-          console.error("Error fetching events:", response.error);
+        if (eventsError) {
+          console.error("Error fetching events:", eventsError);
           toast.error("Error loading events");
-        } else if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
+        } else if (userEvents) {
           // Process main events
-          const formattedEvents: Event[] = response.data
+          const formattedEvents: Event[] = userEvents
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
@@ -99,7 +98,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
           setEvents(formattedEvents);
           
           // Process pending invites
-          const pendingInvitesData = response.data
+          const pendingInvitesData = userEvents
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && (p.status === 'invited' || p.status === 'pending')
             ))
@@ -109,8 +108,6 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
               date: event.date,
               location: event.location,
               image_url: event.image_url,
-              is_public: event.is_public,
-              creator_id: event.creator_id,
               status: event.event_participants?.find(p => p.user_id === user.id)?.status as 'invited' | 'pending'
             }));
           
@@ -118,12 +115,12 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         }
 
         // Fetch public events
-        const publicEventsResponse = await EventsService.getPublicEvents();
+        const { data: publicEventsData, error: publicEventsError } = await EventsService.getPublicEvents();
         
-        if (publicEventsResponse && typeof publicEventsResponse === 'object' && 'error' in publicEventsResponse && publicEventsResponse.error) {
-          console.error("Error fetching public events:", publicEventsResponse.error);
-        } else if (publicEventsResponse && typeof publicEventsResponse === 'object' && 'data' in publicEventsResponse && Array.isArray(publicEventsResponse.data)) {
-          const formattedPublicEvents: Event[] = publicEventsResponse.data
+        if (publicEventsError) {
+          console.error("Error fetching public events:", publicEventsError);
+        } else if (publicEventsData) {
+          const formattedPublicEvents: Event[] = publicEventsData
             .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
               ...event,
@@ -143,12 +140,12 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         }
 
         // Fetch notifications
-        const notificationsResponse = await NotificationsService.getUserNotifications();
+        const { data: notifications, error: notificationsError } = await NotificationsService.getUserNotifications();
         
-        if (notificationsResponse && typeof notificationsResponse === 'object' && 'error' in notificationsResponse && notificationsResponse.error) {
-          console.error("Error fetching notifications:", notificationsResponse.error);
-        } else if (notificationsResponse && typeof notificationsResponse === 'object' && 'data' in notificationsResponse && Array.isArray(notificationsResponse.data)) {
-          setPendingActions(notificationsResponse.data);
+        if (notificationsError) {
+          console.error("Error fetching notifications:", notificationsError);
+        } else if (notifications) {
+          setPendingActions(notifications);
         }
       } catch (error) {
         console.error("Error loading homepage data:", error);
@@ -201,9 +198,9 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     
     if (status === 'confirmed') {
       // Refetch all events to update the confirmed list
-      const response = await EventsService.getEvents();
-      if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
-        const formattedEvents = response.data.map(event => {
+      const { data } = await EventsService.getEvents();
+      if (data) {
+        const formattedEvents = data.map(event => {
           const groupInfo = event.group_events && event.group_events[0]?.groups 
             ? event.group_events[0].groups 
             : null;

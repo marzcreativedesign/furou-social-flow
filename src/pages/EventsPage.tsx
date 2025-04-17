@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import MainLayout from "../components/MainLayout";
@@ -9,67 +9,35 @@ import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import type { Event } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
-import { EventCacheService } from "@/services/event/cache/event-cache.service";
-import { ApiResponse } from "@/services/event/cache/event-cache.service";
-
-interface EventsResponse {
-  data: Event[];
-  metadata: {
-    totalPages: number;
-    currentPage: number;
-    totalCount?: number;
-  };
-  error: null | any;
-}
 
 const EventsPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;  // Reduced from 9 to 6 items per page for optimized loading
-  
-  // Clear cache when filters change
-  useEffect(() => {
-    const cacheKey = `user_events_${currentPage}_${pageSize}`;
-    if (activeFilter !== 'all' || searchQuery || locationQuery) {
-      EventCacheService.clearCache(cacheKey);
-    }
-  }, [activeFilter, searchQuery, locationQuery, currentPage, pageSize]);
+  const pageSize = 9;  // Número de itens por página
 
-  const { data: eventsData, isLoading, error } = useQuery({
-    queryKey: ['events', currentPage, pageSize, activeFilter],
+  const { data: eventsData, isLoading } = useQuery({
+    queryKey: ['events', currentPage, pageSize],
     queryFn: async () => {
       const response = await EventsService.getEvents(currentPage, pageSize);
-      
-      if (response && typeof response === 'object' && 'error' in response && response.error) {
-        throw response.error;
-      }
-      
-      return response as EventsResponse;
+      if (response.error) throw response.error;
+      return { 
+        events: response.data || [], 
+        metadata: {
+          totalPages: response.metadata?.totalPages || 1,
+          currentPage: response.metadata?.currentPage || 1
+        }
+      };
     },
-    placeholderData: (previousData) => previousData, // Use this instead of keepPreviousData
-    staleTime: 60 * 1000, // Data remains fresh for 1 minute
+    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
   });
-  
-  // Display error toast if query fails
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Erro ao carregar eventos",
-        description: error instanceof Error ? error.message : "Ocorreu um erro ao carregar os eventos",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
 
-  const events = eventsData?.data || [];
+  const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
-  const filteredEvents = Array.isArray(events) ? events.filter((event: Event) => {
+  const filteredEvents = events.filter((event: Event) => {
     if (
       (activeFilter === 'public' && !event.is_public) || 
       (activeFilter === 'private' && event.is_public) || 
@@ -95,14 +63,14 @@ const EventsPage = () => {
     }
     
     return true;
-  }) : [];
+  });
 
   const handleBackToHome = () => navigate('/');
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => setLocationQuery(e.target.value);
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Smooth scroll to top when changing pages
+    // Scroll para o topo ao mudar de página
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

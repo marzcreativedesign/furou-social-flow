@@ -40,7 +40,6 @@ export interface EventData {
   created_at?: string | null;
   updated_at?: string | null;
   visibility?: 'public' | 'private' | null;
-  attendees?: number; // Add this property to match what's being used in EventCard
 }
 
 export type Event = EventData;
