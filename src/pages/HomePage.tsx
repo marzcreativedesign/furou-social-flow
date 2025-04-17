@@ -33,6 +33,22 @@ const HomePage = () => {
     setActiveFilter(filter);
   };
 
+  // Transform events from useHomeData to match EventsList component props
+  const formatEventsForList = (events: ReturnType<typeof useHomeData>['filteredEvents']) => {
+    return events.map(event => ({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      image_url: event.image_url,
+      location: event.location || '',
+      status: 'upcoming' as const, // Default to upcoming
+      creator_id: event.creator_id,
+      participants_count: event.attendees || 0,
+      is_group_event: event.type === 'group',
+      is_public: event.is_public
+    }));
+  };
+
   return (
     <MainLayout title="Início">
       <div className="p-4 max-w-6xl mx-auto">
@@ -67,11 +83,10 @@ const HomePage = () => {
           <EventSkeletonList count={6} />
         ) : (
           <EventsList 
-            events={filteredEvents} 
-            emptyStateMessage="Você não tem eventos neste momento."
-            emptyStateAction={() => navigate('/criar-evento')}
-            emptyStateActionText="Criar Evento"
-            className="mb-10"
+            title="Seus Eventos"
+            events={formatEventsForList(filteredEvents)}
+            emptyMessage="Você não tem eventos neste momento."
+            onCreateEvent={() => navigate('/criar-evento')}
           />
         )}
 
@@ -88,9 +103,9 @@ const HomePage = () => {
               <EventSkeletonList count={3} />
             ) : (
               <EventsList 
-                events={publicEvents}
-                emptyStateMessage="Nenhum evento público disponível."
-                className="mb-6"
+                title="Eventos Públicos"
+                events={formatEventsForList(publicEvents)}
+                emptyMessage="Nenhum evento público disponível."
               />
             )}
           </>

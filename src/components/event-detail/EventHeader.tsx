@@ -5,7 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar } from "lucide-react";
-import EventShareButton from '@/components/EventShareButton';
+import EventShareButton from '@/components/event-detail/EventShareButton';
 import EventInviteDialog from "./EventInviteDialog";
 
 interface EventHeaderProps {

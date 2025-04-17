@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -69,7 +70,8 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const result = await ParticipantManagementService.joinEvent(eventId, 'confirmed');
+      // Updated to pass only eventId - the service will handle the status internally
+      const result = await ParticipantManagementService.joinEvent(eventId);
       
       if (result.error) {
         toast({
@@ -107,7 +109,8 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      const result = await ParticipantManagementService.joinEvent(eventId, 'declined');
+      // Updated to use declineEvent which takes only eventId
+      const result = await ParticipantManagementService.declineEvent(eventId);
       
       if (result.error) {
         toast({
