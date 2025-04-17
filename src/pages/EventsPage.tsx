@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
@@ -73,12 +72,15 @@ const EventsPage = () => {
       // Se não existe cache para a próxima página, pré-carrega
       if (!getCache<EventsResponse>(nextPageCacheKey)) {
         console.log(`Pré-carregando página ${nextPage}`);
-        EventsService.getEvents(nextPage, pageSize).then(response => {
-          if (!response.error && response.data) {
+        EventsService.getEvents(nextPage, pageSize).then((response) => {
+          if (response && !response.error && response.data) {
+            // Verifica explicitamente se a resposta tem o formato correto antes de acessar metadata
+            const responseMetadata = 'metadata' in response ? response.metadata : undefined;
+            
             setCache(nextPageCacheKey, { 
               events: response.data, 
               metadata: {
-                totalPages: response.metadata?.totalPages || 1,
+                totalPages: responseMetadata?.totalPages || 1,
                 currentPage: nextPage
               }
             });
