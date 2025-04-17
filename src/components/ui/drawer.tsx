@@ -44,7 +44,7 @@ const DrawerContent = React.forwardRef<
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[10px] border bg-background",
         // Ensure content is positioned properly and doesn't overflow the screen on iOS
-        "mt-24 overflow-y-auto overscroll-contain touch-pan-y",
+        "mt-24 max-h-[85vh] overflow-y-auto overscroll-contain touch-pan-y",
         className
       )}
       {...props}

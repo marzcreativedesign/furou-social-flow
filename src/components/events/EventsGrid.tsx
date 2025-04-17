@@ -4,15 +4,27 @@ import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
 import { useNavigate } from "react-router-dom";
 import type { Event } from "@/types/event";
+import EventsPagination from "./EventsPagination";
 
 interface EventsGridProps {
   events: Event[];
   loading: boolean;
   searchQuery: string;
   locationQuery: string;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
-const EventsGrid = ({ events, loading, searchQuery, locationQuery }: EventsGridProps) => {
+const EventsGrid = ({ 
+  events, 
+  loading, 
+  searchQuery, 
+  locationQuery,
+  pagination 
+}: EventsGridProps) => {
   const navigate = useNavigate();
 
   if (loading) {
@@ -37,27 +49,37 @@ const EventsGrid = ({ events, loading, searchQuery, locationQuery }: EventsGridP
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {events.map(event => (
-        <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
-          <EventCard 
-            id={event.id} 
-            title={event.title} 
-            date={new Date(event.date).toLocaleString('pt-BR', {
-              weekday: 'long',
-              hour: 'numeric',
-              minute: 'numeric'
-            })}
-            location={event.location || ''} 
-            imageUrl={event.image_url || ''} 
-            attendees={event.event_participants?.length || 0}
-            confirmed={event.event_participants?.some(p => p.status === 'confirmed')}
-            type={event.is_public ? "public" : event.group_events?.length ? "group" : "private"}
-            groupName={event.group_events?.[0]?.groups?.name}
-            size="large" 
-          />
-        </div>
-      ))}
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {events.map(event => (
+          <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
+            <EventCard 
+              id={event.id} 
+              title={event.title} 
+              date={new Date(event.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              })}
+              location={event.location || ''} 
+              imageUrl={event.image_url || ''} 
+              attendees={event.event_participants?.length || 0}
+              confirmed={event.event_participants?.some(p => p.status === 'confirmed')}
+              type={event.is_public ? "public" : event.group_events?.length ? "group" : "private"}
+              groupName={event.group_events?.[0]?.groups?.name}
+              size="large" 
+            />
+          </div>
+        ))}
+      </div>
+      
+      {pagination && (
+        <EventsPagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
     </div>
   );
 };

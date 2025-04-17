@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -11,37 +11,47 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventQueriesService } from '@/services/event/queries';
 import { useToast } from "@/components/ui/use-toast";
 import { Event } from "@/types/event";
+import EventsPagination from '@/components/events/EventsPagination';
 
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState("events");
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("events");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9; // Eventos por página
+  
   const { 
-    data: events = [], 
+    data, 
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['publicEvents'],
+    queryKey: ['publicEvents', currentPage, pageSize],
     queryFn: async () => {
-      const { data, error } = await EventQueriesService.getPublicEvents();
+      const { data, metadata, error } = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
       if (error) {
         throw new Error(error.message || 'Erro ao buscar eventos públicos');
       }
       
-      return data.map(event => ({
-        ...event,
-        date: new Date(event.date).toLocaleString('pt-BR', {
-          weekday: 'long',
-          hour: 'numeric',
-          minute: 'numeric'
-        }),
-        attendees: event.event_participants?.length || 0
-      }));
-    }
+      return { 
+        events: data.map(event => ({
+          ...event,
+          date: new Date(event.date).toLocaleString('pt-BR', {
+            weekday: 'long',
+            hour: 'numeric',
+            minute: 'numeric'
+          }),
+          attendees: event.event_participants?.length || 0
+        })),
+        metadata
+      };
+    },
+    keepPreviousData: true
   });
+  
+  const events = data?.events || [];
+  const metadata = data?.metadata || { totalPages: 1, currentPage: 1 };
 
   // Handle error display separately
   React.useEffect(() => {
@@ -72,6 +82,12 @@ const ExplorePage = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll para o topo ao mudar de página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -130,25 +146,33 @@ const ExplorePage = () => {
                 </Button>
               </div>
             ) : filteredEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredEvents.map(event => (
-                  <div 
-                    key={event.id} 
-                    onClick={() => handleEventClick(event.id)} 
-                    className="cursor-pointer"
-                  >
-                    <EventCard 
-                      id={event.id}
-                      title={event.title}
-                      date={event.date}
-                      location={event.location || ""}
-                      imageUrl={event.image_url || ""}
-                      attendees={event.attendees || 0}
-                      type="public"
-                      size="large"
-                    />
-                  </div>
-                ))}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredEvents.map(event => (
+                    <div 
+                      key={event.id} 
+                      onClick={() => handleEventClick(event.id)} 
+                      className="cursor-pointer"
+                    >
+                      <EventCard 
+                        id={event.id}
+                        title={event.title}
+                        date={event.date}
+                        location={event.location || ""}
+                        imageUrl={event.image_url || ""}
+                        attendees={event.attendees || 0}
+                        type="public"
+                        size="large"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                <EventsPagination 
+                  currentPage={metadata.currentPage}
+                  totalPages={metadata.totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             ) : (
               <div className="text-center py-12">
