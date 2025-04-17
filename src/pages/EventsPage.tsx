@@ -18,18 +18,21 @@ const EventsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 9;  // Número de itens por página
 
-  const { data, isLoading } = useQuery({
+  const { data: eventsData, isLoading } = useQuery({
     queryKey: ['events', currentPage, pageSize],
     queryFn: async () => {
-      const { data, metadata, error } = await EventsService.getEvents(currentPage, pageSize);
-      if (error) throw error;
-      return { events: data, metadata };
+      const response = await EventsService.getEvents(currentPage, pageSize);
+      if (response.error) throw response.error;
+      return { 
+        events: response.data || [], 
+        metadata: response.metadata || { totalPages: 1, currentPage: 1 }
+      };
     },
-    keepPreviousData: true // Mantém os dados antigos enquanto carrega novos
+    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
   });
 
-  const events = data?.events || [];
-  const metadata = data?.metadata || { totalPages: 1, currentPage: 1 };
+  const events = eventsData?.events || [];
+  const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
   const filteredEvents = events.filter((event: Event) => {
     if (

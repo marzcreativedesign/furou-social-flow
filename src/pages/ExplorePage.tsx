@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
@@ -22,20 +21,20 @@ const ExplorePage = () => {
   const pageSize = 9; // Eventos por página
   
   const { 
-    data, 
+    data: eventsData, 
     isLoading, 
     error 
   } = useQuery({
     queryKey: ['publicEvents', currentPage, pageSize],
     queryFn: async () => {
-      const { data, metadata, error } = await EventQueriesService.getPublicEvents(currentPage, pageSize);
+      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
-      if (error) {
-        throw new Error(error.message || 'Erro ao buscar eventos públicos');
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
       }
       
       return { 
-        events: data.map(event => ({
+        events: (response.data || []).map(event => ({
           ...event,
           date: new Date(event.date).toLocaleString('pt-BR', {
             weekday: 'long',
@@ -44,14 +43,14 @@ const ExplorePage = () => {
           }),
           attendees: event.event_participants?.length || 0
         })),
-        metadata
+        metadata: response.metadata || { totalPages: 1, currentPage: 1 }
       };
     },
-    keepPreviousData: true
+    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
   });
   
-  const events = data?.events || [];
-  const metadata = data?.metadata || { totalPages: 1, currentPage: 1 };
+  const events = eventsData?.events || [];
+  const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
   // Handle error display separately
   React.useEffect(() => {
