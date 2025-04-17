@@ -33,7 +33,7 @@ const formSchema = z.object({
   email: z.string().email("Insira um e-mail válido"),
 });
 
-// Define the type using z.infer but extract it to a separate type alias to avoid deep instantiation
+// Define the type explicitly without using z.infer to avoid deep type instantiation
 type FormValues = {
   email: string;
 };
