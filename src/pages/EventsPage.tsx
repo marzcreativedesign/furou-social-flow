@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import MainLayout from "../components/MainLayout";
@@ -9,20 +9,35 @@ import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import type { Event } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
+import { EventCacheService } from "@/services/event/cache/event-cache.service";
 
 const EventsPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9;  // Número de itens por página
+  const pageSize = 6;  // Reduced from 9 to 6 items per page for optimized loading
+  
+  // Clear cache when filters change
+  useEffect(() => {
+    const cacheKey = `user_events_${currentPage}_${pageSize}`;
+    if (activeFilter !== 'all' || searchQuery || locationQuery) {
+      EventCacheService.clearCache(cacheKey);
+    }
+  }, [activeFilter, searchQuery, locationQuery, currentPage, pageSize]);
 
-  const { data: eventsData, isLoading } = useQuery({
-    queryKey: ['events', currentPage, pageSize],
+  const { data: eventsData, isLoading, error } = useQuery({
+    queryKey: ['events', currentPage, pageSize, activeFilter],
     queryFn: async () => {
       const response = await EventsService.getEvents(currentPage, pageSize);
-      if (response.error) throw response.error;
+      
+      if (response.error) {
+        throw response.error;
+      }
+      
       return { 
         events: response.data || [], 
         metadata: {
@@ -31,8 +46,20 @@ const EventsPage = () => {
         }
       };
     },
-    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
+    placeholderData: (previousData) => previousData, // Use this instead of keepPreviousData
+    staleTime: 60 * 1000, // Data remains fresh for 1 minute
   });
+  
+  // Display error toast if query fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar eventos",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao carregar os eventos",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
@@ -70,7 +97,7 @@ const EventsPage = () => {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll para o topo ao mudar de página
+    // Smooth scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

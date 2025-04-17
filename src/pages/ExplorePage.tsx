@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { EventQueriesService } from '@/services/event/queries';
 import { useToast } from "@/components/ui/use-toast";
 import { Event } from "@/types/event";
 import EventsPagination from '@/components/events/EventsPagination';
+import { EventCacheService } from '@/services/event/cache/event-cache.service';
 
 const ExplorePage = () => {
   const navigate = useNavigate();
@@ -18,14 +20,22 @@ const ExplorePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("events");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9; // Eventos por página
+  const pageSize = 6; // Reduced from 9 to 6 items per page for optimized loading
+  
+  // Clear cache when search changes
+  useEffect(() => {
+    if (searchQuery) {
+      const cacheKey = `public_events_${currentPage}_${pageSize}`;
+      EventCacheService.clearCache(cacheKey);
+    }
+  }, [searchQuery, currentPage, pageSize]);
   
   const { 
     data: eventsData, 
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['publicEvents', currentPage, pageSize],
+    queryKey: ['publicEvents', currentPage, pageSize, searchQuery],
     queryFn: async () => {
       const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
@@ -49,7 +59,8 @@ const ExplorePage = () => {
         }
       };
     },
-    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
+    placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000, // Data remains fresh for 1 minute
   });
   
   const events = eventsData?.events || [];
@@ -87,7 +98,7 @@ const ExplorePage = () => {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll para o topo ao mudar de página
+    // Smooth scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
