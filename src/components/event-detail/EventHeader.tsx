@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar } from "lucide-react";
 import EventShareButton from '@/components/event-detail/EventShareButton';
-import EventInviteDialog from "./EventInviteDialog";
 
 interface EventHeaderProps {
   id: string;
@@ -63,7 +62,6 @@ const EventHeader = ({
               eventTitle={title} 
               eventUrl={window.location.href}
             />
-            <EventInviteDialog eventId={id} eventTitle={title} eventDate={date} />
           </div>
         </div>
       </div>
