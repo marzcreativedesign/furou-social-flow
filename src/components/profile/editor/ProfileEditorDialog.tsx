@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -43,9 +44,14 @@ interface ProfileEditorDialogProps {
     avatar_url: string | null;
   };
   onProfileUpdated: (formData: { full_name: string; bio: string; avatar_url: string | null }) => void;
+  useResponsiveLayout?: boolean;
 }
 
-export const ProfileEditorDialog = ({ profile, onProfileUpdated }: ProfileEditorDialogProps) => {
+export const ProfileEditorDialog = ({ 
+  profile, 
+  onProfileUpdated,
+  useResponsiveLayout = false
+}: ProfileEditorDialogProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -165,6 +171,39 @@ export const ProfileEditorDialog = ({ profile, onProfileUpdated }: ProfileEditor
     }
   };
 
+  if (useResponsiveLayout) {
+    return (
+      <>
+        <Button 
+          onClick={() => setOpen(true)} 
+          className="w-full"
+        >
+          Editar Perfil
+        </Button>
+
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="h-[85vh] overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle>Editar Perfil</DrawerTitle>
+            </DrawerHeader>
+            
+            <div className="px-4">
+              <ProfileForm
+                profile={profile}
+                onSubmit={handleSubmit}
+                onCancel={() => setOpen(false)}
+                avatarPreview={avatarPreview}
+                onAvatarChange={handleAvatarChange}
+                isSubmitting={uploading}
+                isMobile={true}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </>
+    );
+  }
+
   return (
     <>
       <Button 
@@ -175,7 +214,7 @@ export const ProfileEditorDialog = ({ profile, onProfileUpdated }: ProfileEditor
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="dark:bg-card dark:border-[#2C2C2C] overflow-y-auto max-h-[90vh]">
+        <DialogContent className="dark:bg-card dark:border-[#2C2C2C] overflow-y-auto max-h-[90vh] max-w-xl">
           <DialogHeader>
             <DialogTitle className="dark:text-[#EDEDED]">Editar Perfil</DialogTitle>
           </DialogHeader>
@@ -187,6 +226,7 @@ export const ProfileEditorDialog = ({ profile, onProfileUpdated }: ProfileEditor
             avatarPreview={avatarPreview}
             onAvatarChange={handleAvatarChange}
             isSubmitting={uploading}
+            isMobile={false}
           />
         </DialogContent>
       </Dialog>

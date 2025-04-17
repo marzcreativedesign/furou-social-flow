@@ -427,9 +427,9 @@ export type Database = {
       }
       has_role: {
         Args:
-          | { user_id: string; _role: Database["public"]["Enums"]["app_role"] }
-          | { user_id: number; role_name: string }
           | { role_name: string }
+          | { user_id: number; role_name: string }
+          | { user_id: string; _role: Database["public"]["Enums"]["app_role"] }
           | { user_id: string; role_name: string }
         Returns: boolean
       }

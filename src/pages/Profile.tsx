@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import MainLayout from "@/components/MainLayout";
 import { ProfileStats } from "@/components/profile/ProfileStats";
-import { ProfileEditorDialog } from "@/components/profile/ProfileEditorDialog";
+import { ProfileEditorDialog } from "@/components/profile/editor/ProfileEditorDialog";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -15,6 +16,7 @@ const Profile = () => {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const { profile, userStats, isLoading, setProfile } = useProfile();
+  const isMobile = useIsMobile();
   
   const handleSignOut = async () => {
     try {
@@ -98,6 +100,7 @@ const Profile = () => {
               <ProfileEditorDialog 
                 profile={profile} 
                 onProfileUpdated={handleProfileUpdate} 
+                useResponsiveLayout={isMobile}
               />
             )}
           </div>

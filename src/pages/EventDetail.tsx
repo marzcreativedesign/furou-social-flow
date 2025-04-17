@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -18,12 +17,16 @@ import EventGallery from "@/components/event-detail/EventGallery";
 import { useEventDetail } from "@/hooks/use-event-detail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [showAllAttendees, setShowAllAttendees] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -100,6 +103,9 @@ const EventDetail = () => {
   const eventType = event.is_public ? "public" : (event.group_events && event.group_events.length > 0 ? "group" : "private");
   const groupName = event.group_events?.[0]?.groups?.name || null;
 
+  const EditComponent = isMobile ? Drawer : Dialog;
+  const EditComponentContent = isMobile ? DrawerContent : DialogContent;
+
   return (
     <MainLayout showBack onBack={handleBack} title={event.title}>
       <EventHeader
@@ -124,7 +130,6 @@ const EventDetail = () => {
       />
       
       <div className="p-4">
-        {/* Criador do evento component */}
         {event.profiles && (
           <EventCreator 
             host={{
@@ -177,13 +182,15 @@ const EventDetail = () => {
         />
       </div>
 
-      <EventEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        editEventData={editEventData}
-        onEventDataChange={handleEditEventDataChange}
-        onSave={handleSaveEditedEvent}
-      />
+      <EditComponent open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <EditComponentContent className={isMobile ? "h-[85vh] overflow-y-auto" : "max-w-4xl max-h-[90vh] overflow-y-auto"}>
+          <EventEditDialog
+            editEventData={editEventData}
+            onEventDataChange={handleEditEventDataChange}
+            onSave={handleSaveEditedEvent}
+          />
+        </EditComponentContent>
+      </EditComponent>
     </MainLayout>
   );
 };
