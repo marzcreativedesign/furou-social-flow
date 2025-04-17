@@ -45,6 +45,30 @@ document.addEventListener('DOMContentLoaded', () => {
 // Executa uma vez imediatamente para evitar mudança de layout (CLS)
 initUserPreferences();
 
+// Register service worker for offline support and caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
+
+// Adiciona listener para conexão offline/online
+window.addEventListener('online', () => {
+  document.documentElement.classList.remove('offline-mode');
+  console.log('App is online');
+});
+
+window.addEventListener('offline', () => {
+  document.documentElement.classList.add('offline-mode');
+  console.log('App is offline');
+});
+
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 

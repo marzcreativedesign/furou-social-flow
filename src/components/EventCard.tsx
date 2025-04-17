@@ -2,6 +2,7 @@
 import { Calendar, MapPin, Users } from "lucide-react";
 import EventTag from "./EventTag";
 import { Link } from "react-router-dom";
+import OptimizedImage from "./OptimizedImage";
 
 interface EventCardProps {
   id: string;
@@ -48,10 +49,12 @@ const EventCard = ({
   return (
     <Link to={`/evento/${id}`} className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200`}>
       <div className={`relative ${isLarge ? 'h-60' : 'h-40'}`}>
-        <img
+        <OptimizedImage 
           src={imageUrl}
           alt={title}
           className="w-full h-full object-cover"
+          aspectRatio={isLarge ? "16/9" : "4/3"}
+          lazyLoad={true}
         />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1">
           {type && (

@@ -8,6 +8,8 @@ interface OptimizedImageProps {
   height?: number;
   className?: string;
   aspectRatio?: string;
+  lazyLoad?: boolean; // Nova propriedade para controlar o lazy loading
+  placeholderSrc?: string; // URL para imagem de placeholder
 }
 
 const OptimizedImage = ({
@@ -16,13 +18,18 @@ const OptimizedImage = ({
   width,
   height,
   className = '',
-  aspectRatio
+  aspectRatio,
+  lazyLoad = true, // Por padrão, habilita lazy loading
+  placeholderSrc = '/placeholder.svg'
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(false);
+  const [actualSrc, setActualSrc] = useState(lazyLoad ? placeholderSrc : src);
   const imgRef = useRef<HTMLImageElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
+    // Se não tiver src, não faz nada
     if (!src) {
       return;
     }
@@ -30,18 +37,50 @@ const OptimizedImage = ({
     // Reset state when src changes
     setLoaded(false);
     
-    // Create new image to preload
-    const img = new Image();
-    img.src = src;
+    // Se não utilizar lazy loading, carrega a imagem diretamente
+    if (!lazyLoad) {
+      setActualSrc(src);
+      const img = new Image();
+      img.src = src;
+      img.onload = () => setLoaded(true);
+      return () => { img.onload = null; };
+    }
     
-    img.onload = () => {
-      setLoaded(true);
-    };
+    // Configura o IntersectionObserver para lazy loading
+    if (wrapperRef.current && !observerRef.current) {
+      observerRef.current = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          // Quando o elemento estiver visível, carrega a imagem
+          if (entry.isIntersecting) {
+            setActualSrc(src);
+            
+            // Pré-carrega a imagem
+            const img = new Image();
+            img.src = src;
+            img.onload = () => setLoaded(true);
+            
+            // Para de observar o elemento após carregá-lo
+            if (observerRef.current) {
+              observerRef.current.unobserve(entry.target);
+            }
+          }
+        });
+      }, {
+        rootMargin: '200px', // Carrega a imagem quando estiver a 200px de distância da área visível
+        threshold: 0
+      });
+      
+      observerRef.current.observe(wrapperRef.current);
+    }
     
     return () => {
-      img.onload = null;
+      // Limpa o observer quando o componente for desmontado
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
     };
-  }, [src]);
+  }, [src, lazyLoad, placeholderSrc]);
 
   const wrapperStyle = {
     position: 'relative' as const,
@@ -59,13 +98,18 @@ const OptimizedImage = ({
       {src && (
         <img
           ref={imgRef}
-          src={src}
+          src={actualSrc}
           alt={alt}
           width={width}
           height={height}
           className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-          onLoad={() => setLoaded(true)}
-          loading="lazy"
+          onLoad={() => {
+            if (actualSrc === src) {
+              setLoaded(true);
+            }
+          }}
+          decoding="async" // Hints to browser to decode the image asynchronously
+          loading={lazyLoad ? "lazy" : "eager"} // Usa o lazy loading nativo do navegador também
         />
       )}
     </div>

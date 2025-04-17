@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import MainLayout from "../components/MainLayout";
@@ -9,6 +9,16 @@ import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import type { Event } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
+import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
+
+// Interface para resposta da API de eventos
+interface EventsResponse {
+  events: Event[];
+  metadata: {
+    totalPages: number;
+    currentPage: number;
+  };
+}
 
 const EventsPage = () => {
   const navigate = useNavigate();
@@ -16,26 +26,67 @@ const EventsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9;  // Número de itens por página
+  const pageSize = 6;  // Reduzido de 9 para 6 itens por página
+
+  // Gera uma chave de cache única para esta consulta
+  const cacheKey = generateCacheKey('events', { page: currentPage, pageSize, filter: activeFilter });
 
   const { data: eventsData, isLoading } = useQuery({
     queryKey: ['events', currentPage, pageSize],
     queryFn: async () => {
+      // Verifica se existe cache primeiro
+      const cachedData = getCache<EventsResponse>(cacheKey);
+      if (cachedData) {
+        console.log('Usando dados em cache para eventos');
+        return cachedData;
+      }
+
+      console.log('Buscando dados do servidor para eventos');
       const response = await EventsService.getEvents(currentPage, pageSize);
       if (response.error) throw response.error;
-      return { 
+      
+      const result = { 
         events: response.data || [], 
         metadata: {
           totalPages: response.metadata?.totalPages || 1,
           currentPage: response.metadata?.currentPage || 1
         }
       };
+      
+      // Armazena os resultados em cache
+      setCache(cacheKey, result, { expireTimeInMinutes: 5 });
+      
+      return result;
     },
     placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
   });
 
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
+
+  // Implementação de pre-fetching para a próxima página
+  useEffect(() => {
+    if (metadata.currentPage < metadata.totalPages) {
+      const nextPage = currentPage + 1;
+      const nextPageCacheKey = generateCacheKey('events', { page: nextPage, pageSize, filter: activeFilter });
+      
+      // Se não existe cache para a próxima página, pré-carrega
+      if (!getCache<EventsResponse>(nextPageCacheKey)) {
+        console.log(`Pré-carregando página ${nextPage}`);
+        EventsService.getEvents(nextPage, pageSize).then(response => {
+          if (!response.error && response.data) {
+            setCache(nextPageCacheKey, { 
+              events: response.data, 
+              metadata: {
+                totalPages: response.metadata?.totalPages || 1,
+                currentPage: nextPage
+              }
+            });
+          }
+        });
+      }
+    }
+  }, [currentPage, metadata.totalPages, pageSize, activeFilter]);
 
   const filteredEvents = events.filter((event: Event) => {
     if (

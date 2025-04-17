@@ -2,6 +2,7 @@
 import { Image as ImageIcon } from "lucide-react";
 import OptimizedImage from "../../OptimizedImage";
 import { GalleryImage } from "./types";
+import { useEffect, useRef, useState } from "react";
 
 interface GalleryGridProps {
   images: GalleryImage[];
@@ -10,6 +11,51 @@ interface GalleryGridProps {
 }
 
 const GalleryGrid = ({ images, onImageClick, loading }: GalleryGridProps) => {
+  // Estado para controlar quais imagens estão visíveis para lazy loading
+  const [visibleImages, setVisibleImages] = useState<GalleryImage[]>([]);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // Implementa lazy loading para galeria de imagens usando IntersectionObserver
+  useEffect(() => {
+    // Se não tiver imagens ou estiver carregando, não faz nada
+    if (loading || images.length === 0) {
+      return;
+    }
+    
+    // Inicialmente, mostra apenas as primeiras 6 imagens
+    setVisibleImages(images.slice(0, Math.min(6, images.length)));
+    
+    // Se não tiver mais imagens, não precisa observar
+    if (images.length <= 6) {
+      return;
+    }
+    
+    // Configura o observer para detectar quando a galeria está visível e carregar mais imagens
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Quando a galeria estiver visível, carrega todas as imagens
+          setVisibleImages(images);
+          // Para de observar após carregar todas
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      rootMargin: '100px',  // Começa a carregar quando estiver a 100px da área visível
+      threshold: 0.1
+    });
+    
+    if (gridRef.current) {
+      observer.observe(gridRef.current);
+    }
+    
+    return () => {
+      if (gridRef.current) {
+        observer.unobserve(gridRef.current);
+      }
+    };
+  }, [images, loading]);
+
   if (loading) {
     return (
       <div className="grid grid-cols-3 gap-1">
@@ -33,8 +79,8 @@ const GalleryGrid = ({ images, onImageClick, loading }: GalleryGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-1">
-      {images.map((image) => (
+    <div className="grid grid-cols-3 gap-1" ref={gridRef}>
+      {visibleImages.map((image) => (
         <div 
           key={image.id} 
           className="aspect-square bg-muted cursor-pointer hover:opacity-90 transition-opacity"
@@ -45,9 +91,16 @@ const GalleryGrid = ({ images, onImageClick, loading }: GalleryGridProps) => {
             alt="Event gallery" 
             className="w-full h-full object-cover"
             aspectRatio="1/1"
+            lazyLoad={true}
           />
         </div>
       ))}
+      {/* Placeholders para imagens que ainda não foram carregadas */}
+      {images.length > visibleImages.length && (
+        <div className="col-span-3 text-center py-2 text-sm text-muted-foreground">
+          Carregando mais imagens...
+        </div>
+      )}
     </div>
   );
 };

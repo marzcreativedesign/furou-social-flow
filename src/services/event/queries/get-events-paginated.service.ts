@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "../utils";
 import { getCurrentUser } from "../utils";
@@ -7,7 +6,7 @@ import { fetchEventComments } from "./helpers/fetch-comments";
 import { fetchGroupEvents } from "./helpers/fetch-group-events";
 
 export const GetEventsPaginatedService = {
-  async getEvents(page = 1, pageSize = 9) {
+  async getEvents(page = 1, pageSize = 6) {
     try {
       const user = await getCurrentUser();
       const start = (page - 1) * pageSize;
@@ -66,7 +65,7 @@ export const GetEventsPaginatedService = {
     }
   },
 
-  async getPublicEvents(page = 1, pageSize = 9) {
+  async getPublicEvents(page = 1, pageSize = 6) {
     try {
       const start = (page - 1) * pageSize;
       const end = start + pageSize - 1;
@@ -124,7 +123,7 @@ export const GetEventsPaginatedService = {
     }
   },
 
-  async getUserCreatedEvents(page = 1, pageSize = 9) {
+  async getUserCreatedEvents(page = 1, pageSize = 6) {
     try {
       const user = await getCurrentUser();
       const start = (page - 1) * pageSize;
