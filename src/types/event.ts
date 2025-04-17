@@ -40,6 +40,22 @@ export interface EventData {
   created_at?: string | null;
   updated_at?: string | null;
   visibility?: 'public' | 'private' | null;
+  attendees?: number; // Added attendees property for ExplorePage
 }
 
 export type Event = EventData;
+
+// Add a new interface for pagination metadata
+export interface PaginationMetadata {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+
+// Define the service response type with metadata
+export interface EventServiceResponse {
+  data: Event[];
+  metadata?: PaginationMetadata;
+  error: any;
+}

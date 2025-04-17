@@ -7,11 +7,11 @@ import EventTypeFilters from "../components/home/EventTypeFilters";
 import { EventsService } from "@/services/events.service";
 import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
-import type { Event } from "@/types/event";
+import type { Event, EventServiceResponse } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
 import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
 
-// Interface para resposta da API de eventos
+// Interface for cached response
 interface EventsResponse {
   events: Event[];
   metadata: {
@@ -42,7 +42,7 @@ const EventsPage = () => {
       }
 
       console.log('Buscando dados do servidor para eventos');
-      const response = await EventsService.getEvents(currentPage, pageSize);
+      const response = await EventsService.getEvents(currentPage, pageSize) as EventServiceResponse;
       if (response.error) throw response.error;
       
       const result = { 

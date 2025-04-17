@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
@@ -9,8 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventQueriesService } from '@/services/event/queries';
 import { useToast } from "@/components/ui/use-toast";
-import { Event } from "@/types/event";
+import { Event, EventServiceResponse } from "@/types/event";
 import EventsPagination from '@/components/events/EventsPagination';
+
+interface EventsResponse {
+  events: Event[];
+  metadata: {
+    totalPages: number;
+    currentPage: number;
+  };
+}
 
 const ExplorePage = () => {
   const navigate = useNavigate();
@@ -27,7 +36,7 @@ const ExplorePage = () => {
   } = useQuery({
     queryKey: ['publicEvents', currentPage, pageSize],
     queryFn: async () => {
-      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
+      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize) as EventServiceResponse;
       
       if (response.error) {
         throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
