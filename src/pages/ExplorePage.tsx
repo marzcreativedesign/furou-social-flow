@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Calendar, Users, PlusCircle } from 'lucide-react';
@@ -169,7 +170,7 @@ const ExplorePage = () => {
                         date={event.date}
                         location={event.location || ""}
                         imageUrl={event.image_url || ""}
-                        attendees={event.attendees || 0}
+                        attendees={event.event_participants?.length || 0}
                         type="public"
                         size="large"
                       />
