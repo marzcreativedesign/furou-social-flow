@@ -32,7 +32,10 @@ const formSchema = z.object({
   email: z.string().email("Insira um e-mail válido"),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// Define the type for form values separately to avoid deep type instantiation
+type FormValues = {
+  email: string;
+};
 
 interface EventInviteDialogProps {
   eventId: string;

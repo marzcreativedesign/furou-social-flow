@@ -34,6 +34,8 @@ const formSchema = z.object({
   image_url: z.string().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface CreateGroupDialogProps {
   onGroupCreated: (newGroup: any) => void;
   open?: boolean;
@@ -51,7 +53,7 @@ const CreateGroupDialog = ({ onGroupCreated, open: controlledOpen, onOpenChange:
   const isOpen = isControlled ? controlledOpen : open;
   const setIsOpen = isControlled ? setControlledOpen : setOpen;
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -60,38 +62,38 @@ const CreateGroupDialog = ({ onGroupCreated, open: controlledOpen, onOpenChange:
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     
     try {
       const finalValues = {
-        ...values,
+        name: values.name, // Ensure name is provided as it's required
+        description: values.description,
         image_url: imageUrl || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3"
       };
       
-      const { data, error } = await GroupsService.createGroup(finalValues);
+      const result = await GroupsService.createGroup(finalValues);
       
-      if (error) {
-        console.error("Error creating group:", error);
+      if (Array.isArray(result) && result.length > 0) {
+        toast({
+          title: "Sucesso",
+          description: "Grupo criado com sucesso!",
+        });
+        
+        // Close dialog and reset form
+        setIsOpen(false);
+        form.reset();
+        
+        // Pass the new group data to the parent component
+        onGroupCreated(result[0]);
+      } else {
+        console.error("Error creating group: unexpected response format");
         toast({
           title: "Erro",
           description: "Não foi possível criar o grupo. Tente novamente.",
           variant: "destructive",
         });
-        return;
       }
-      
-      toast({
-        title: "Sucesso",
-        description: "Grupo criado com sucesso!",
-      });
-      
-      // Close dialog and reset form
-      setIsOpen(false);
-      form.reset();
-      
-      // Pass the new group data to the parent component
-      onGroupCreated(data);
     } catch (error) {
       console.error("Error creating group:", error);
       toast({

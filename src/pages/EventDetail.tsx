@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -103,6 +104,8 @@ const EventDetail = () => {
       <EventHeader
         id={event.id}
         title={event.title}
+        date={event.date}
+        location={event.location || "Local não definido"}
         imageUrl={event.image_url || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3"}
         type={eventType}
         groupName={groupName}
