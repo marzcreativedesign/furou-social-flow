@@ -49,6 +49,7 @@ const EventInviteDialog = ({ eventId, eventTitle, eventDate }: EventInviteDialog
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
+  // Use FormValues type directly instead of z.infer
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
