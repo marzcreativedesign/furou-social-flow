@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -185,6 +186,8 @@ const EventDetail = () => {
       <EditComponent open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <EditComponentContent className={isMobile ? "h-[85vh] overflow-y-auto" : "max-w-4xl max-h-[90vh] overflow-y-auto"}>
           <EventEditDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
             editEventData={editEventData}
             onEventDataChange={handleEditEventDataChange}
             onSave={handleSaveEditedEvent}
