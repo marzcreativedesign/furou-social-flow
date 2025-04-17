@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Share2, MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar } from "lucide-react";
 import EventShareButton from '@/components/EventShareButton';
 import EventInviteDialog from "./EventInviteDialog";
 

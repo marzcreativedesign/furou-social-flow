@@ -32,8 +32,10 @@ const formSchema = z.object({
   email: z.string().email("Insira um e-mail válido"),
 });
 
-// Define the type explicitly without relying on inference that can cause excessive type instantiation
-type FormValues = z.infer<typeof formSchema>;
+// Define the type explicitly to avoid deep type instantiation issues
+interface FormValues {
+  email: string;
+}
 
 interface EventInviteDialogProps {
   eventId: string;
@@ -116,7 +118,7 @@ const EventInviteDialog = ({ eventId, eventTitle, eventDate }: EventInviteDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 bg-white text-gray-800 hover:bg-gray-100 border border-gray-300">
           <Mail className="h-4 w-4" />
           <span>Convidar</span>
         </Button>

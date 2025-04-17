@@ -53,6 +53,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [publicEvents, setPublicEvents] = useState<Event[]>([]);
   const [pendingActions, setPendingActions] = useState<Notification[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,32 +62,59 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
       try {
         if (!user) return;
         
+        // Fetch all events the user is related to
         const { data: userEvents, error: eventsError } = await EventsService.getEvents();
         
         if (eventsError) {
           console.error("Error fetching events:", eventsError);
           toast.error("Error loading events");
         } else if (userEvents) {
-          const formattedEvents: Event[] = userEvents.map(event => {
-            // Safely access group_events that might be undefined
-            const groupInfo = event.group_events && event.group_events[0]?.groups ? event.group_events[0].groups : null;
-            
-            return {
-              ...event,
-              confirmed: event.event_participants && event.event_participants.some(p => p.status === 'confirmed'),
-              type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
-              groupName: groupInfo?.name || null,
-              attendees: event.event_participants?.length || 0,
-              date: new Date(event.date).toLocaleString('pt-BR', {
-                weekday: 'long',
-                hour: 'numeric',
-                minute: 'numeric'
-              })
-            };
-          });
+          // Process main events
+          const formattedEvents: Event[] = userEvents
+            .filter(event => event.event_participants?.some(
+              p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
+            ) || event.creator_id === user.id)
+            .map(event => {
+              const groupInfo = event.group_events && event.group_events[0]?.groups 
+                ? event.group_events[0].groups 
+                : null;
+              
+              return {
+                ...event,
+                confirmed: event.event_participants && event.event_participants.some(
+                  p => p.user_id === user.id && p.status === 'confirmed'
+                ),
+                type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+                groupName: groupInfo?.name || null,
+                attendees: event.event_participants?.length || 0,
+                date: new Date(event.date).toLocaleString('pt-BR', {
+                  weekday: 'long',
+                  hour: 'numeric',
+                  minute: 'numeric'
+                })
+              };
+            });
+          
           setEvents(formattedEvents);
+          
+          // Process pending invites
+          const pendingInvitesData = userEvents
+            .filter(event => event.event_participants?.some(
+              p => p.user_id === user.id && (p.status === 'invited' || p.status === 'pending')
+            ))
+            .map(event => ({
+              id: event.id,
+              title: event.title,
+              date: event.date,
+              location: event.location,
+              image_url: event.image_url,
+              status: event.event_participants?.find(p => p.user_id === user.id)?.status as 'invited' | 'pending'
+            }));
+          
+          setPendingInvites(pendingInvitesData);
         }
 
+        // Fetch public events
         const { data: publicEventsData, error: publicEventsError } = await EventsService.getPublicEvents();
         
         if (publicEventsError) {
@@ -96,8 +124,9 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
             .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
               ...event,
-              // Safely access event_participants that might be undefined
-              confirmed: event.event_participants ? event.event_participants.some(p => p.status === 'confirmed') : false,
+              confirmed: event.event_participants ? event.event_participants.some(
+                p => p.user_id === user?.id && p.status === 'confirmed'
+              ) : false,
               type: "public",
               attendees: event.event_participants?.length || 0,
               date: new Date(event.date).toLocaleString('pt-BR', {
@@ -106,9 +135,11 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
                 minute: 'numeric'
               })
             }));
+          
           setPublicEvents(formattedPublicEvents);
         }
 
+        // Fetch notifications
         const { data: notifications, error: notificationsError } = await NotificationsService.getUserNotifications();
         
         if (notificationsError) {
@@ -162,11 +193,41 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
     }
   };
 
+  const handleInviteStatusUpdate = async (eventId: string, status: 'confirmed' | 'declined') => {
+    setPendingInvites(prev => prev.filter(event => event.id !== eventId));
+    
+    if (status === 'confirmed') {
+      // Refetch all events to update the confirmed list
+      const { data } = await EventsService.getEvents();
+      if (data) {
+        const formattedEvents = data.map(event => {
+          const groupInfo = event.group_events && event.group_events[0]?.groups 
+            ? event.group_events[0].groups 
+            : null;
+        
+          return {
+            ...event,
+            confirmed: event.event_participants && event.event_participants.some(
+              p => p.user_id === user?.id && p.status === 'confirmed'
+            ),
+            type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+            groupName: groupInfo?.name || null,
+            attendees: event.event_participants?.length || 0
+          };
+        });
+        
+        setEvents(formattedEvents);
+      }
+    }
+  };
+
   return {
     loading,
     filteredEvents,
     publicEvents,
     pendingActions,
-    handlePendingActionComplete
+    pendingInvites,
+    handlePendingActionComplete,
+    handleInviteStatusUpdate
   };
 };

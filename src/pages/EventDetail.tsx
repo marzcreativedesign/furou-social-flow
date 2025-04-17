@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import MainLayout from "@/components/MainLayout";
 import EventHeader from "@/components/event-detail/EventHeader";
+import EventCreator from "@/components/event-detail/EventCreator";
 import EventInfo from "@/components/event-detail/EventInfo";
 import EventParticipants from "@/components/event-detail/EventParticipants";
 import EventEditDialog from "@/components/event-detail/EventEditDialog";
@@ -76,7 +77,7 @@ const EventDetail = () => {
       
       if (participant.status === 'confirmed') {
         confirmed.push(attendee);
-      } else if (participant.status === 'pending') {
+      } else if (participant.status === 'pending' || participant.status === 'invited') {
         pending.push(attendee);
       } else if (participant.status === 'declined') {
         cancelled.push(attendee);
@@ -123,6 +124,17 @@ const EventDetail = () => {
       />
       
       <div className="p-4">
+        {/* Criador do evento component */}
+        {event.profiles && (
+          <EventCreator 
+            host={{
+              id: event.profiles.id,
+              name: event.profiles.full_name || "Usuário",
+              imageUrl: event.profiles.avatar_url || "https://i.pravatar.cc/150?u=" + event.profiles.id
+            }}
+          />
+        )}
+        
         <EventInfo
           fullDate={formatEventDate(event.date)}
           location={event.location || "Local não definido"}

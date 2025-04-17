@@ -4,98 +4,101 @@ import { handleError } from "./utils";
 import { getCurrentUser } from "./utils";
 
 export const ParticipantManagementService = {
-  async joinEvent(eventId: string, status: 'confirmed' | 'declined' = 'confirmed') {
+  async joinEvent(eventId: string) {
     try {
       const user = await getCurrentUser();
       
-      // Check if user already has a confirmation
-      const { data: existingConfirmation } = await supabase
+      // Check if user is already participating
+      const { data: existingParticipation, error: checkError } = await supabase
         .from("event_confirmations")
         .select("*")
         .eq("event_id", eventId)
         .eq("user_id", user.id)
         .maybeSingle();
       
-      if (existingConfirmation) {
-        // Update existing confirmation
+      if (checkError) {
+        return handleError(checkError, "Erro ao verificar participação existente");
+      }
+      
+      if (existingParticipation) {
+        // Update if already exists
         const { data, error } = await supabase
           .from("event_confirmations")
-          .update({ status })
-          .eq("id", existingConfirmation.id)
-          .select();
+          .update({ status: "confirmed" })
+          .eq("id", existingParticipation.id);
         
         if (error) {
-          return handleError(error, "Erro ao atualizar confirmação");
+          return handleError(error, "Erro ao atualizar participação no evento");
         }
         
         return { data, error: null };
       }
       
-      // Create new confirmation
+      // Create new participation
       const { data, error } = await supabase
         .from("event_confirmations")
         .insert({
           event_id: eventId,
           user_id: user.id,
-          status
-        })
-        .select();
+          status: "confirmed"
+        });
       
       if (error) {
-        return handleError(error, "Erro ao confirmar presença");
+        return handleError(error, "Erro ao participar do evento");
       }
       
       return { data, error: null };
     } catch (error) {
-      return handleError(error, "Erro inesperado ao confirmar presença");
+      return handleError(error, "Erro inesperado ao participar do evento");
     }
   },
   
-  async updateParticipantStatus(eventId: string, userId: string, status: string) {
+  async declineEvent(eventId: string) {
     try {
-      const { data: existingConfirmation } = await supabase
+      const user = await getCurrentUser();
+      
+      // Check if user is already participating
+      const { data: existingParticipation, error: checkError } = await supabase
         .from("event_confirmations")
         .select("*")
         .eq("event_id", eventId)
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .maybeSingle();
       
-      if (existingConfirmation) {
+      if (checkError) {
+        return handleError(checkError, "Erro ao verificar participação existente");
+      }
+      
+      if (existingParticipation) {
+        // Update if already exists
         const { data, error } = await supabase
           .from("event_confirmations")
-          .update({ status })
-          .eq("id", existingConfirmation.id)
-          .select();
+          .update({ status: "declined" })
+          .eq("id", existingParticipation.id);
         
         if (error) {
-          return handleError(error, "Erro ao atualizar status");
+          return handleError(error, "Erro ao atualizar participação no evento");
         }
         
         return { data, error: null };
       }
       
-      // Create new confirmation if none exists
+      // Create new participation with declined status
       const { data, error } = await supabase
         .from("event_confirmations")
         .insert({
           event_id: eventId,
-          user_id: userId,
-          status
-        })
-        .select();
+          user_id: user.id,
+          status: "declined"
+        });
       
       if (error) {
-        return handleError(error, "Erro ao atualizar status");
+        return handleError(error, "Erro ao recusar o evento");
       }
       
       return { data, error: null };
     } catch (error) {
-      return handleError(error, "Erro inesperado ao atualizar status");
+      return handleError(error, "Erro inesperado ao recusar o evento");
     }
   },
-
-  async updateParticipationStatus(eventId: string, status: string) {
-    const user = await getCurrentUser();
-    return this.updateParticipantStatus(eventId, user.id, status);
-  }
 };
