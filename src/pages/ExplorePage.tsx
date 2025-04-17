@@ -43,7 +43,10 @@ const ExplorePage = () => {
           }),
           attendees: event.event_participants?.length || 0
         })),
-        metadata: response.metadata || { totalPages: 1, currentPage: 1 }
+        metadata: {
+          totalPages: response.metadata?.totalPages || 1,
+          currentPage: response.metadata?.currentPage || 1
+        }
       };
     },
     placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
@@ -52,7 +55,6 @@ const ExplorePage = () => {
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
-  // Handle error display separately
   React.useEffect(() => {
     if (error) {
       toast({

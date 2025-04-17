@@ -25,7 +25,10 @@ const EventsPage = () => {
       if (response.error) throw response.error;
       return { 
         events: response.data || [], 
-        metadata: response.metadata || { totalPages: 1, currentPage: 1 }
+        metadata: {
+          totalPages: response.metadata?.totalPages || 1,
+          currentPage: response.metadata?.currentPage || 1
+        }
       };
     },
     placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
