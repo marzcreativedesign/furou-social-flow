@@ -8,31 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import ProfileForm from "./ProfileForm";
+import { PasswordChangeDialog } from "./PasswordChangeDialog";
+import { LockKeyhole } from "lucide-react";
 
 // Define the form schema
 const formSchema = z.object({
   full_name: z.string().min(2, "O nome precisa ter pelo menos 2 caracteres"),
   bio: z.string().optional(),
   avatar_url: z.string().optional().nullable(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  // If any password field is filled, all password fields must be filled
-  const hasPasswordChange = data.currentPassword || data.newPassword || data.confirmPassword;
-  if (!hasPasswordChange) return true;
-  
-  return !!data.currentPassword && !!data.newPassword && !!data.confirmPassword;
-}, {
-  message: "Todos os campos de senha devem ser preenchidos para alterar a senha",
-  path: ["newPassword"],
-}).refine((data) => {
-  // New password and confirm password must match
-  if (!data.newPassword) return true;
-  return data.newPassword === data.confirmPassword;
-}, {
-  message: "As senhas não conferem",
-  path: ["confirmPassword"],
 });
 
 interface ProfileEditorDialogProps {
@@ -57,6 +40,7 @@ export const ProfileEditorDialog = ({
   const [uploading, setUploading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   
   useEffect(() => {
     if (open) {
@@ -117,29 +101,6 @@ export const ProfileEditorDialog = ({
       avatarUrl = await uploadAvatar();
     }
 
-    if (values.currentPassword && values.newPassword) {
-      try {
-        const { error } = await supabase.auth.updateUser({
-          password: values.newPassword
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Senha atualizada",
-          description: "Sua senha foi atualizada com sucesso"
-        });
-      } catch (error) {
-        console.error("Error updating password:", error);
-        toast({
-          title: "Erro ao atualizar senha",
-          description: "Verifique se a senha atual está correta",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
     const updatedProfile = {
       full_name: values.full_name,
       bio: values.bio || null,
@@ -182,12 +143,23 @@ export const ProfileEditorDialog = ({
         </Button>
 
         <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerContent className="h-[85vh] overflow-y-auto">
+          <DrawerContent className="h-[80vh] max-h-[650px] overflow-y-auto">
             <DrawerHeader>
               <DrawerTitle>Editar Perfil</DrawerTitle>
             </DrawerHeader>
             
-            <div className="px-4">
+            <div className="px-4 pt-2">
+              <Button 
+                variant="outline" 
+                className="w-full mb-6 flex gap-2 items-center"
+                onClick={() => {
+                  setPasswordDialogOpen(true);
+                }}
+              >
+                <LockKeyhole size={16} />
+                <span>Alterar Senha</span>
+              </Button>
+              
               <ProfileForm
                 profile={profile}
                 onSubmit={handleSubmit}
@@ -200,6 +172,12 @@ export const ProfileEditorDialog = ({
             </div>
           </DrawerContent>
         </Drawer>
+
+        <PasswordChangeDialog 
+          open={passwordDialogOpen} 
+          onOpenChange={setPasswordDialogOpen} 
+          isMobile={true} 
+        />
       </>
     );
   }
@@ -219,6 +197,17 @@ export const ProfileEditorDialog = ({
             <DialogTitle className="dark:text-[#EDEDED]">Editar Perfil</DialogTitle>
           </DialogHeader>
           
+          <Button 
+            variant="outline" 
+            className="mb-6 flex gap-2 items-center"
+            onClick={() => {
+              setPasswordDialogOpen(true);
+            }}
+          >
+            <LockKeyhole size={16} />
+            <span>Alterar Senha</span>
+          </Button>
+          
           <ProfileForm
             profile={profile}
             onSubmit={handleSubmit}
@@ -230,6 +219,12 @@ export const ProfileEditorDialog = ({
           />
         </DialogContent>
       </Dialog>
+
+      <PasswordChangeDialog 
+        open={passwordDialogOpen} 
+        onOpenChange={setPasswordDialogOpen} 
+        isMobile={false} 
+      />
     </>
   );
 };

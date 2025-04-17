@@ -7,32 +7,12 @@ import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 
 const formSchema = z.object({
   full_name: z.string().min(2, "O nome precisa ter pelo menos 2 caracteres"),
   bio: z.string().optional(),
   avatar_url: z.string().optional().nullable(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  // If any password field is filled, all password fields must be filled
-  const hasPasswordChange = data.currentPassword || data.newPassword || data.confirmPassword;
-  if (!hasPasswordChange) return true;
-  
-  return !!data.currentPassword && !!data.newPassword && !!data.confirmPassword;
-}, {
-  message: "Todos os campos de senha devem ser preenchidos para alterar a senha",
-  path: ["newPassword"],
-}).refine((data) => {
-  // New password and confirm password must match
-  if (!data.newPassword) return true;
-  return data.newPassword === data.confirmPassword;
-}, {
-  message: "As senhas não conferem",
-  path: ["confirmPassword"],
 });
 
 interface ProfileFormProps {
@@ -66,9 +46,6 @@ const ProfileForm = ({
       full_name: profile.full_name || '',
       bio: profile.bio || '',
       avatar_url: profile.avatar_url || null,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
     },
   });
 
@@ -77,9 +54,6 @@ const ProfileForm = ({
       full_name: profile.full_name || '',
       bio: profile.bio || '',
       avatar_url: profile.avatar_url || null,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
     });
   }, [profile, form]);
 
@@ -153,64 +127,6 @@ const ProfileForm = ({
                   {...field}
                   rows={3}
                   className="rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED] dark:placeholder-[#B3B3B3] dark:focus:border-primary dark:focus:ring-primary/20 resize-none w-full"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Separator className="my-4" />
-        
-        <h3 className="font-medium dark:text-[#EDEDED]">Alterar Senha</h3>
-        
-        <FormField
-          control={form.control}
-          name="currentPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Senha Atual</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Nova Senha</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="dark:text-[#EDEDED]">Confirmar Nova Senha</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field}
-                  type="password"
-                  className="dark:bg-[#262626] dark:border-[#2C2C2C] dark:text-[#EDEDED]"
                 />
               </FormControl>
               <FormMessage />

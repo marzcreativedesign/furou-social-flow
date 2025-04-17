@@ -187,6 +187,141 @@ export type Database = {
           },
         ]
       }
+      events_2023: {
+        Row: {
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          estimated_budget: number | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_public: boolean | null
+          location: string | null
+          title: string | null
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date: string
+          id: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: []
+      }
+      events_2024: {
+        Row: {
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          estimated_budget: number | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_public: boolean | null
+          location: string | null
+          title: string | null
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date: string
+          id: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: []
+      }
+      events_partitioned: {
+        Row: {
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          estimated_budget: number | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_public: boolean | null
+          location: string | null
+          title: string | null
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date: string
+          id: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          estimated_budget?: number | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean | null
+          location?: string | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: []
+      }
       group_events: {
         Row: {
           created_at: string | null
