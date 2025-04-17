@@ -10,12 +10,12 @@ interface Event {
   title: string;
   date: string;
   image_url?: string;
+  location?: string;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   creator_id: string;
   participants_count: number;
   is_group_event: boolean;
   is_public: boolean;
-  location?: string;
 }
 
 interface EventsListProps {
@@ -65,7 +65,17 @@ const EventsList = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard 
+              key={event.id}
+              id={event.id}
+              title={event.title}
+              date={event.date}
+              location={event.location || ''}
+              imageUrl={event.image_url || ''}
+              attendees={event.participants_count}
+              type={event.is_group_event ? "group" : event.is_public ? "public" : "private"}
+              confirmed={event.status === 'upcoming' || event.status === 'ongoing'}
+            />
           ))}
         </div>
       )}

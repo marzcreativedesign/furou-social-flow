@@ -11,6 +11,20 @@ import { useHomeData } from "@/hooks/useHomeData";
 
 type FilterType = 'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed';
 
+// Interface to match the props expected by EventsList
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  image_url?: string;
+  location?: string;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  creator_id: string;
+  participants_count: number;
+  is_group_event: boolean;
+  is_public: boolean;
+}
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -23,11 +37,28 @@ const HomePage = () => {
 
   const {
     loading,
-    filteredEvents,
-    publicEvents,
+    filteredEvents: homeEvents,
+    publicEvents: homePublicEvents,
     pendingActions,
     handlePendingActionComplete
   } = useHomeData(searchQuery, activeFilter);
+
+  // Convert the events from useHomeData to match the required Event interface
+  const convertEvent = (event: any): Event => ({
+    id: event.id,
+    title: event.title,
+    date: event.date,
+    image_url: event.image_url,
+    location: event.location,
+    status: event.confirmed ? 'upcoming' : 'cancelled',
+    creator_id: event.creator_id,
+    participants_count: event.attendees || 0,
+    is_group_event: event.type === 'group',
+    is_public: event.is_public
+  });
+
+  const filteredEvents: Event[] = homeEvents.map(convertEvent);
+  const publicEvents: Event[] = homePublicEvents.map(convertEvent);
 
   return (
     <MainLayout title="Furou?!" showSearch onSearch={setSearchQuery} showDock>

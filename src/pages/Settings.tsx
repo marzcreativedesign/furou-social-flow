@@ -18,6 +18,13 @@ const Settings = () => {
     navigate(-1);
   };
 
+  // Create a type-safe font family change handler
+  const handleFontFamilyChange = (value: string) => {
+    // Validate that the value is one of the allowed font families
+    const validFontFamily = value as 'sans' | 'serif' | 'mono' | 'dyslexic';
+    updateSetting('fontFamily', validFontFamily, false);
+  };
+
   return (
     <MainLayout title="Configurações de Acessibilidade" showBack={true} onBack={handleBack}>
       <div className="p-6 space-y-8 max-w-2xl mx-auto">
@@ -34,7 +41,7 @@ const Settings = () => {
           fontSize={settings.fontSize}
           onFontSizeChange={(value) => updateSetting('fontSize', value[0], false)}
           fontFamily={settings.fontFamily}
-          onFontFamilyChange={(value) => updateSetting('fontFamily', value, false)}
+          onFontFamilyChange={handleFontFamilyChange}
         />
         
         <Separator />
