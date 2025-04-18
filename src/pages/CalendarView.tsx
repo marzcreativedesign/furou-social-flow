@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/MainLayout";
@@ -15,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { Event } from "@/hooks/useHomeData"; // Reuse the Event interface
+import { Event } from "@/types/event"; // Importing the Event type from the correct location
 
 const CalendarView = () => {
   const navigate = useNavigate();

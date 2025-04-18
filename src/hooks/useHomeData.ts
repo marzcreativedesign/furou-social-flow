@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
@@ -42,7 +43,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
           toast.error("Error loading events");
         } else if (userEvents) {
           // Process main events
-          const formattedEvents: Event[] = userEvents
+          const formattedEvents = userEvents
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
@@ -51,12 +52,12 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
                 ? event.group_events[0].groups 
                 : null;
               
-              return {
+              const enhancedEvent = {
                 ...event,
                 confirmed: event.event_participants && event.event_participants.some(
                   p => p.user_id === user.id && p.status === 'confirmed'
                 ),
-                type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+                type: event.is_public ? "public" as const : (groupInfo ? "group" as const : "private" as const),
                 groupName: groupInfo?.name || null,
                 attendees: event.event_participants?.length || 0,
                 date: new Date(event.date).toLocaleString('pt-BR', {
@@ -64,7 +65,13 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
                   hour: 'numeric',
                   minute: 'numeric'
                 })
-              } as Event;
+              };
+              
+              return enhancedEvent as Event & {
+                confirmed?: boolean;
+                type?: "public" | "private" | "group";
+                groupName?: string | null;
+              };
             });
           
           setEvents(formattedEvents);
@@ -75,6 +82,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
               p => p.user_id === user.id && (p.status === 'invited' || p.status === 'pending')
             ))
             .map(event => ({
+              ...event,
               id: event.id,
               title: event.title,
               date: event.date,
@@ -92,21 +100,28 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
         if (publicEventsError) {
           console.error("Error fetching public events:", publicEventsError);
         } else if (publicEventsData) {
-          const formattedPublicEvents: Event[] = publicEventsData
+          const formattedPublicEvents = publicEventsData
             .filter(event => !user || event.creator_id !== user.id)
-            .map(event => ({
-              ...event,
-              confirmed: event.event_participants ? event.event_participants.some(
-                p => p.user_id === user?.id && p.status === 'confirmed'
-              ) : false,
-              type: "public",
-              attendees: event.event_participants?.length || 0,
-              date: new Date(event.date).toLocaleString('pt-BR', {
-                weekday: 'long',
-                hour: 'numeric',
-                minute: 'numeric'
-              })
-            } as Event));
+            .map(event => {
+              const enhancedEvent = {
+                ...event,
+                confirmed: event.event_participants ? event.event_participants.some(
+                  p => p.user_id === user?.id && p.status === 'confirmed'
+                ) : false,
+                type: "public" as const,
+                attendees: event.event_participants?.length || 0,
+                date: new Date(event.date).toLocaleString('pt-BR', {
+                  weekday: 'long',
+                  hour: 'numeric',
+                  minute: 'numeric'
+                })
+              };
+              
+              return enhancedEvent as Event & {
+                confirmed?: boolean;
+                type?: "public" | "private" | "group";
+              };
+            });
           
           setPublicEvents(formattedPublicEvents);
         }
@@ -133,12 +148,18 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
   }, [user]);
 
   const filteredEvents = events.filter(event => {
+    const eventWithType = event as Event & {
+      confirmed?: boolean;
+      type?: "public" | "private" | "group";
+      groupName?: string | null;
+    };
+    
     if (
       (activeFilter === 'public' && !event.is_public) || 
-      (activeFilter === 'private' && (event.is_public || event.type === 'group')) || 
-      (activeFilter === 'group' && event.type !== 'group') || 
-      (activeFilter === 'confirmed' && !event.confirmed) || 
-      (activeFilter === 'missed' && event.confirmed !== false)
+      (activeFilter === 'private' && (event.is_public || eventWithType.type === 'group')) || 
+      (activeFilter === 'group' && eventWithType.type !== 'group') || 
+      (activeFilter === 'confirmed' && !eventWithType.confirmed) || 
+      (activeFilter === 'missed' && eventWithType.confirmed !== false)
     ) {
       return false;
     }
@@ -148,7 +169,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
       return (
         event.title.toLowerCase().includes(query) || 
         (event.location && event.location.toLowerCase().includes(query)) || 
-        (event.groupName && event.groupName.toLowerCase().includes(query))
+        (eventWithType.groupName && eventWithType.groupName.toLowerCase().includes(query))
       );
     }
     
@@ -177,14 +198,20 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
             ? event.group_events[0].groups 
             : null;
         
-          return {
+          const enhancedEvent = {
             ...event,
             confirmed: event.event_participants && event.event_participants.some(
               p => p.user_id === user?.id && p.status === 'confirmed'
             ),
-            type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
+            type: event.is_public ? "public" as const : (groupInfo ? "group" as const : "private" as const),
             groupName: groupInfo?.name || null,
             attendees: event.event_participants?.length || 0
+          };
+          
+          return enhancedEvent as Event & {
+            confirmed?: boolean;
+            type?: "public" | "private" | "group";
+            groupName?: string | null;
           };
         });
         

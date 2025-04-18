@@ -56,6 +56,9 @@ const EventCard = ({
           aspectRatio={isLarge ? "16/9" : "4/3"}
           lazyLoad={true}
         />
+        {/* Add a dark gradient overlay for better text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
+        
         <div className="absolute top-3 left-3 flex flex-wrap gap-1">
           {type && (
             <EventTag 
@@ -78,21 +81,23 @@ const EventCard = ({
             {confirmed ? "Confirmado" : "Pendente"}
           </div>
         )}
-      </div>
-      <div className={`p-4 ${isLarge ? 'space-y-3' : ''}`}>
-        <h3 className={`font-bold ${isLarge ? 'text-xl' : 'text-lg'} line-clamp-1`}>{title}</h3>
-        <div className={`${isLarge ? 'mt-3' : 'mt-2'} space-y-2`}>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar size={isLarge ? 16 : 14} className="mr-1" />
-            <span>{date}</span>
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <MapPin size={isLarge ? 16 : 14} className="mr-1" />
-            <span className="line-clamp-1">{location}</span>
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Users size={isLarge ? 16 : 14} className="mr-1" />
-            <span>{attendees} confirmados</span>
+        
+        {/* Move event information to overlay on image */}
+        <div className={`absolute bottom-0 left-0 right-0 p-4 text-white`}>
+          <h3 className={`font-bold ${isLarge ? 'text-xl' : 'text-lg'} line-clamp-2 text-shadow-sm`}>{title}</h3>
+          <div className={`mt-1 space-y-1`}>
+            <div className="flex items-center text-sm text-white/90">
+              <Calendar size={isLarge ? 16 : 14} className="mr-1" />
+              <span className="line-clamp-1">{date}</span>
+            </div>
+            <div className="flex items-center text-sm text-white/90">
+              <MapPin size={isLarge ? 16 : 14} className="mr-1" />
+              <span className="line-clamp-1">{location}</span>
+            </div>
+            <div className="flex items-center text-sm text-white/90">
+              <Users size={isLarge ? 16 : 14} className="mr-1" />
+              <span>{attendees} confirmados</span>
+            </div>
           </div>
         </div>
       </div>
