@@ -27,7 +27,7 @@ export const useExploreEvents = (pageSize: number = 9) => {
       }
 
       console.log('[API] Fetching explore events from server');
-      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize) as ExploreEventsResponse;
+      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
       
       if (response.error) {
         throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
@@ -55,12 +55,15 @@ export const useExploreEvents = (pageSize: number = 9) => {
       
       if (!getCachedEvents(nextPageCacheKey)) {
         console.log(`[Prefetch] Pre-fetching page ${nextPage}`);
-        EventQueriesService.getPublicEvents(nextPage, pageSize).then((response: ExploreEventsResponse) => {
-          if (response && !response.error && response.data) {
+        EventQueriesService.getPublicEvents(nextPage, pageSize).then((apiResponse: any) => {
+          if (apiResponse && !apiResponse.error && apiResponse.data) {
+            const responseData = apiResponse.data as Event[];
+            const responseMetadata = apiResponse.metadata || { totalPages: 1, currentPage: nextPage };
+            
             const result = createEventResponse(
-              response.data,
+              responseData,
               nextPage,
-              response.metadata?.totalPages || 1
+              responseMetadata.totalPages || 1
             );
             cacheEvents(nextPageCacheKey, result);
           }

@@ -43,6 +43,7 @@ export interface EventData {
   attendees?: number; // Added attendees property for ExplorePage
 }
 
+// Define Event as EventData to ensure compatibility
 export type Event = EventData;
 
 // Add a new interface for pagination metadata

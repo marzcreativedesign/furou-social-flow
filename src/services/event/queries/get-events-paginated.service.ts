@@ -1,9 +1,12 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "../utils";
 import { getCurrentUser } from "../utils";
 import { fetchEventConfirmations } from "./helpers/fetch-confirmations";
 import { fetchEventComments } from "./helpers/fetch-comments";
 import { fetchGroupEvents } from "./helpers/fetch-group-events";
+import { Event, PaginationMetadata } from "@/types/event";
+import { ExploreEventsResponse } from "@/types/explore";
 
 export const GetEventsPaginatedService = {
   async getEvents(page = 1, pageSize = 6) {
@@ -47,17 +50,19 @@ export const GetEventsPaginatedService = {
           event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
-        };
+        } as Event;
       }));
+      
+      const metadata: PaginationMetadata = {
+        totalCount: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize),
+        currentPage: page,
+        pageSize: pageSize
+      };
       
       return { 
         data, 
-        metadata: {
-          totalCount: count,
-          totalPages: Math.ceil(count / pageSize),
-          currentPage: page,
-          pageSize: pageSize
-        }, 
+        metadata, 
         error: null 
       };
     } catch (error) {
@@ -65,7 +70,7 @@ export const GetEventsPaginatedService = {
     }
   },
 
-  async getPublicEvents(page = 1, pageSize = 6) {
+  async getPublicEvents(page = 1, pageSize = 6): Promise<ExploreEventsResponse> {
     try {
       const start = (page - 1) * pageSize;
       const end = start + pageSize - 1;
@@ -105,14 +110,14 @@ export const GetEventsPaginatedService = {
           event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
-        };
+        } as Event;
       }));
       
       return { 
         data, 
         metadata: {
-          totalCount: count,
-          totalPages: Math.ceil(count / pageSize),
+          totalCount: count || 0,
+          totalPages: Math.ceil((count || 0) / pageSize),
           currentPage: page,
           pageSize: pageSize
         },
@@ -164,14 +169,14 @@ export const GetEventsPaginatedService = {
           event_participants: eventParticipants,
           comments: comments || [],
           group_events: groupEvents || []
-        };
+        } as Event;
       }));
       
       return { 
         data, 
         metadata: {
-          totalCount: count,
-          totalPages: Math.ceil(count / pageSize),
+          totalCount: count || 0,
+          totalPages: Math.ceil((count || 0) / pageSize),
           currentPage: page,
           pageSize: pageSize
         },

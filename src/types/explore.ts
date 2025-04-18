@@ -1,4 +1,6 @@
 
+import { Event } from "./event";
+
 export interface ExploreEventsData {
   events: Event[];
   metadata: {
@@ -12,6 +14,8 @@ export interface ExploreEventsResponse {
   metadata?: {
     totalPages: number;
     currentPage: number;
+    totalCount?: number;
+    pageSize?: number;
   };
   error?: any;
 }
