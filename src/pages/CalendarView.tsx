@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/MainLayout";
@@ -14,7 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { Event } from "@/types/event"; // Importing the Event type from the correct location
+import { Event, EventData } from "@/types/event"; // Import both types
 
 const CalendarView = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const CalendarView = () => {
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
   const [view, setView] = useState<"calendar" | "list">("calendar");
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -51,20 +52,27 @@ const CalendarView = () => {
         }
         
         if (data) {
-          const formattedEvents: Event[] = data.map(event => {
+          const formattedEvents: EventData[] = data.map(event => {
             // Safely access group_events that might be undefined
             const groupInfo = event.group_events && event.group_events[0]?.groups 
               ? event.group_events[0].groups 
               : null;
             
-            return {
+            // Create a typed event object with explicit confirmed property
+            const enhancedEvent: EventData & { 
+              confirmed?: boolean,
+              type?: "public" | "private" | "group",
+              groupName?: string | null,
+              attendees?: number
+            } = {
               ...event,
               confirmed: event.event_participants && event.event_participants.some(p => p.status === 'confirmed'),
               type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
               groupName: groupInfo?.name || null,
-              attendees: event.event_participants?.length || 0,
-              date: event.date // Keep original date for calendar
+              attendees: event.event_participants?.length || 0
             };
+            
+            return enhancedEvent;
           });
           
           setEvents(formattedEvents);
@@ -113,7 +121,7 @@ const CalendarView = () => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     
-    const daysWithEvents: {date: Date, events: Event[]}[] = [];
+    const daysWithEvents: {date: Date, events: EventData[]}[] = [];
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const currentDate = new Date(year, month, day);
@@ -217,25 +225,33 @@ const CalendarView = () => {
                   </div>
                 ) : selectedDateEvents.length > 0 ? (
                   <div className="space-y-3">
-                    {selectedDateEvents.map(event => (
-                      <div 
-                        key={event.id}
-                        className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigateToEvent(event.id)}
-                      >
-                        <div className={`w-2 h-10 rounded-full ${
-                          event.confirmed ? 'bg-green-500' : 'bg-orange-500'
-                        }`} />
-                        <div className="flex-1">
-                          <p className="font-medium">{event.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                            {event.location && ` • ${event.location}`}
-                          </p>
+                    {selectedDateEvents.map(event => {
+                      // Type assertion to access our custom properties
+                      const typedEvent = event as EventData & { 
+                        confirmed?: boolean,
+                        type?: "public" | "private" | "group" 
+                      };
+                      
+                      return (
+                        <div 
+                          key={event.id}
+                          className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => navigateToEvent(event.id)}
+                        >
+                          <div className={`w-2 h-10 rounded-full ${
+                            typedEvent.confirmed ? 'bg-green-500' : 'bg-orange-500'
+                          }`} />
+                          <div className="flex-1">
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                              {event.location && ` • ${event.location}`}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-5 w-5 opacity-50" />
                         </div>
-                        <ChevronRight className="h-5 w-5 opacity-50" />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
@@ -280,25 +296,32 @@ const CalendarView = () => {
                     {day.date.toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})}
                   </div>
                   <div className="p-2">
-                    {day.events.map(event => (
-                      <div 
-                        key={event.id}
-                        className="flex items-center gap-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigateToEvent(event.id)}
-                      >
-                        <div className={`w-2 h-10 rounded-full ${
-                          event.confirmed ? 'bg-green-500' : 'bg-orange-500'
-                        }`} />
-                        <div className="flex-1">
-                          <p className="font-medium">{event.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                            {event.location && ` • ${event.location}`}
-                          </p>
+                    {day.events.map(event => {
+                      // Type assertion to access our custom properties
+                      const typedEvent = event as EventData & { 
+                        confirmed?: boolean
+                      };
+                      
+                      return (
+                        <div 
+                          key={event.id}
+                          className="flex items-center gap-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => navigateToEvent(event.id)}
+                        >
+                          <div className={`w-2 h-10 rounded-full ${
+                            typedEvent.confirmed ? 'bg-green-500' : 'bg-orange-500'
+                          }`} />
+                          <div className="flex-1">
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                              {event.location && ` • ${event.location}`}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-5 w-5 opacity-50" />
                         </div>
-                        <ChevronRight className="h-5 w-5 opacity-50" />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))
