@@ -1,5 +1,16 @@
 
-import { Event, Notification } from "@/types/event";
+import { Event } from "@/types/event";
+
+// Define our own Notification type since it doesn't exist in @/types/event
+export interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  related_id: string | null;
+  type: string;
+  is_read?: boolean;
+}
 
 export interface UseHomeEventsReturn {
   loading: boolean;

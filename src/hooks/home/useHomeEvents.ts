@@ -6,13 +6,21 @@ import { toast } from "sonner";
 import { Event } from "@/types/event";
 import { FilterType, UseHomeEventsReturn } from "./types";
 
+// Define extended event type with the custom properties we need
+interface ExtendedEvent extends Event {
+  type?: 'public' | 'private' | 'group';
+  groupName?: string | null;
+  confirmed?: boolean;
+  attendees?: number;
+}
+
 export const useHomeEvents = (
   searchQuery: string,
   activeFilter: FilterType
 ): UseHomeEventsReturn => {
   const { user } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [publicEvents, setPublicEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<ExtendedEvent[]>([]);
+  const [publicEvents, setPublicEvents] = useState<ExtendedEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +53,7 @@ export const useHomeEvents = (
                 type: event.is_public ? "public" as const : (groupInfo ? "group" as const : "private" as const),
                 groupName: groupInfo?.name || null,
                 attendees: event.event_participants?.length || 0
-              };
+              } as ExtendedEvent;
             });
           
           setEvents(formattedEvents);
@@ -66,7 +74,7 @@ export const useHomeEvents = (
               ) : false,
               type: "public" as const,
               attendees: event.event_participants?.length || 0
-            }));
+            } as ExtendedEvent));
           
           setPublicEvents(formattedPublicEvents);
         }

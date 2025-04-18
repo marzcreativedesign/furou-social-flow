@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useHomeData } from "@/hooks/useHomeData";
+import { useHomeData, FilterType } from "@/hooks/home/useHomeData";
 import MainLayout from "@/components/MainLayout";
 import EventsList from "@/components/home/EventsList";
 import EventTypeFilters from "@/components/home/EventTypeFilters";
@@ -13,7 +14,7 @@ import { Event } from "@/types/event";
 const HomePage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed'>('all');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   
   const {
     loading,
@@ -43,7 +44,7 @@ const HomePage = () => {
       location: event.location || '',
       status: 'upcoming' as const, // Default to upcoming
       creator_id: event.creator_id,
-      participants_count: event.attendees || 0,
+      participants_count: (event as any).attendees || 0,
       is_group_event: (event as any).type === 'group', // Use type assertion for custom property
       is_public: event.is_public
     }));
