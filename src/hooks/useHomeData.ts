@@ -1,37 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
 import { NotificationsService } from "@/services/notifications.service";
 import { toast } from "sonner";
-
-export interface Event {
-  id: string;
-  title: string;
-  date: string;
-  location: string | null;
-  image_url: string | null;
-  is_public: boolean;
-  creator_id: string;
-  event_participants?: {
-    id: string;
-    user_id: string;
-    status: string;
-  }[];
-  group_events?: {
-    id: string;
-    group_id: string;
-    groups?: { 
-      id: string;
-      name: string 
-    };
-  }[];
-  confirmed?: boolean;
-  type?: "public" | "private" | "group";
-  groupName?: string | null;
-  attendees?: number;
-  profiles?: any; // Add this to handle the profiles relation
-}
+import { Event } from "@/types/event";
 
 export interface Notification {
   id: string;
@@ -92,7 +64,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
                   hour: 'numeric',
                   minute: 'numeric'
                 })
-              };
+              } as Event;
             });
           
           setEvents(formattedEvents);
@@ -111,7 +83,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
               status: event.event_participants?.find(p => p.user_id === user.id)?.status as 'invited' | 'pending'
             }));
           
-          setPendingInvites(pendingInvitesData);
+          setPendingInvites(pendingInvitesData as Event[]);
         }
 
         // Fetch public events
@@ -134,7 +106,7 @@ export const useHomeData = (searchQuery: string, activeFilter: FilterType) => {
                 hour: 'numeric',
                 minute: 'numeric'
               })
-            }));
+            } as Event));
           
           setPublicEvents(formattedPublicEvents);
         }

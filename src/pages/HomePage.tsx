@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useHomeData } from "@/hooks/useHomeData";
 import MainLayout from "@/components/MainLayout";
@@ -9,6 +8,7 @@ import SearchInput from "@/components/home/SearchInput";
 import PendingActions from "@/components/home/PendingActions";
 import PendingInvites from "@/components/home/PendingInvites";
 import { EventSkeletonList } from "@/components/home/EventSkeleton";
+import { Event } from "@/types/event";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const HomePage = () => {
   };
 
   // Transform events from useHomeData to match EventsList component props
-  const formatEventsForList = (events: ReturnType<typeof useHomeData>['filteredEvents']) => {
+  const formatEventsForList = (events: Event[]) => {
     return events.map(event => ({
       id: event.id,
       title: event.title,
@@ -44,7 +44,7 @@ const HomePage = () => {
       status: 'upcoming' as const, // Default to upcoming
       creator_id: event.creator_id,
       participants_count: event.attendees || 0,
-      is_group_event: event.type === 'group',
+      is_group_event: (event as any).type === 'group', // Use type assertion for custom property
       is_public: event.is_public
     }));
   };
@@ -65,7 +65,7 @@ const HomePage = () => {
         
         {pendingInvites && pendingInvites.length > 0 && (
           <PendingInvites 
-            events={pendingInvites}
+            events={pendingInvites as any}
             loading={loading}
             onStatusUpdate={handleInviteStatusUpdate}
           />
