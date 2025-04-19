@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { FormLabel } from "@/components/ui/form";
 import { Upload, Loader2 } from "lucide-react";
@@ -12,10 +12,6 @@ interface GroupImageUploadProps {
 
 const GroupImageUpload = ({ imageUrl, uploadingImage, onImageSelected }: GroupImageUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
 
   return (
     <div>
@@ -42,7 +38,7 @@ const GroupImageUpload = ({ imageUrl, uploadingImage, onImageSelected }: GroupIm
               variant="outline"
               size="sm"
               className="absolute bottom-1 right-1"
-              onClick={handleImageClick}
+              onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
             >
               {uploadingImage ? (
@@ -56,7 +52,7 @@ const GroupImageUpload = ({ imageUrl, uploadingImage, onImageSelected }: GroupIm
           <Button
             type="button"
             variant="outline"
-            onClick={handleImageClick}
+            onClick={() => fileInputRef.current?.click()}
             className="h-24 w-24"
             disabled={uploadingImage}
           >

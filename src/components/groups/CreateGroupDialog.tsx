@@ -47,12 +47,7 @@ const CreateGroupDialog = ({ onGroupCreated, open: controlledOpen, onOpenChange:
         setIsOpen(false);
         onGroupCreated(result[0]);
       } else {
-        console.error("Error creating group: unexpected response format", result);
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar o grupo. Tente novamente.",
-          variant: "destructive",
-        });
+        throw new Error("Erro ao criar grupo: formato de resposta inesperado");
       }
     } catch (error) {
       console.error("Error creating group:", error);
