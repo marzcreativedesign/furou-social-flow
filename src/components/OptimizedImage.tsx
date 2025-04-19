@@ -8,8 +8,10 @@ interface OptimizedImageProps {
   height?: number;
   className?: string;
   aspectRatio?: string;
-  lazyLoad?: boolean; // Nova propriedade para controlar o lazy loading
-  placeholderSrc?: string; // URL para imagem de placeholder
+  lazyLoad?: boolean;
+  placeholderSrc?: string;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  objectPosition?: string;
 }
 
 const OptimizedImage = ({
@@ -19,8 +21,10 @@ const OptimizedImage = ({
   height,
   className = '',
   aspectRatio,
-  lazyLoad = true, // Por padrão, habilita lazy loading
-  placeholderSrc = '/placeholder.svg'
+  lazyLoad = true,
+  placeholderSrc = '/placeholder.svg',
+  objectFit = 'cover',
+  objectPosition = 'center'
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(false);
   const [actualSrc, setActualSrc] = useState(lazyLoad ? placeholderSrc : src);
@@ -82,30 +86,44 @@ const OptimizedImage = ({
     };
   }, [src, lazyLoad, placeholderSrc]);
 
-  const wrapperStyle = {
-    position: 'relative' as const,
-    aspectRatio: aspectRatio || (width && height ? `${width}/${height}` : undefined),
-    width: width ? `${width}px` : undefined,
-    height: height ? `${height}px` : undefined
-  };
-
+  // Garante que há um src definido para evitar erros
+  const imgSrc = actualSrc || placeholderSrc;
+  
   return (
     <div 
       ref={wrapperRef} 
-      className={`relative ${!loaded ? 'bg-muted/30 animate-pulse' : ''}`}
-      style={wrapperStyle}
+      className={`relative overflow-hidden ${!loaded ? 'bg-muted/30 animate-pulse' : ''}`}
+      style={{
+        position: 'relative',
+        aspectRatio: aspectRatio || (width && height ? `${width}/${height}` : undefined),
+        width: width ? `${width}px` : undefined,
+        height: height ? `${height}px` : undefined
+      }}
     >
-      {src && (
+      {imgSrc && (
         <img
           ref={imgRef}
-          src={actualSrc}
+          src={imgSrc}
           alt={alt}
           width={width}
           height={height}
           className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{
+            objectFit,
+            objectPosition,
+            width: '100%',
+            height: '100%'
+          }}
           onLoad={() => {
             if (actualSrc === src) {
               setLoaded(true);
+            }
+          }}
+          onError={() => {
+            // Se a imagem falhar, tenta usar o placeholder
+            if (actualSrc !== placeholderSrc && placeholderSrc) {
+              console.warn(`Failed to load image: ${actualSrc}, using placeholder instead`);
+              setActualSrc(placeholderSrc);
             }
           }}
           decoding="async" // Hints to browser to decode the image asynchronously

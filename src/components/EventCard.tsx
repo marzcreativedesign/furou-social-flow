@@ -45,12 +45,15 @@ const EventCard = ({
 
   // Determine if the card should be larger
   const isLarge = size === "large";
+  
+  // Default fallback image if imageUrl is empty
+  const fallbackImage = "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3";
 
   return (
-    <Link to={`/evento/${id}`} className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200`}>
+    <Link to={`/evento/${id}`} className={`event-card animate-fade-in ${getCardBorder()} block hover:shadow-md transition-shadow duration-200 bg-card`}>
       <div className={`relative ${isLarge ? 'h-60' : 'h-40'}`}>
         <OptimizedImage 
-          src={imageUrl}
+          src={imageUrl || fallbackImage}
           alt={title}
           className="w-full h-full object-cover"
           aspectRatio={isLarge ? "16/9" : "4/3"}

@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import { GalleryImage } from "@/components/event-detail/gallery/types";
+import { StorageService } from "@/services/storage.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useEventGallery = (eventId: string) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,17 +47,24 @@ export const useEventGallery = (eventId: string) => {
       const imageList = await Promise.all(
         files.map(async (file) => {
           const filePath = `${eventId}/${file.name}`;
-          const userId = file.name.split('-')[0];
+          const userId = file.name.split('-')[0] || 'unknown';
           
           const { data: urlData } = supabase.storage
             .from('event-gallery')
             .getPublicUrl(filePath);
             
-          const { data: userData } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', userId)
-            .single();
+          let userData = null;
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', userId)
+              .single();
+              
+            userData = data;
+          } catch (err) {
+            console.warn("Could not fetch user data for image:", err);
+          }
             
           return {
             id: file.id || uuidv4(),
@@ -64,8 +74,8 @@ export const useEventGallery = (eventId: string) => {
             event_id: eventId,
             created_at: file.created_at || new Date().toISOString(),
             user: {
-              fullName: userData?.full_name,
-              avatarUrl: userData?.avatar_url
+              fullName: userData?.full_name || 'Usuário',
+              avatarUrl: userData?.avatar_url || null
             }
           };
         })
@@ -86,39 +96,35 @@ export const useEventGallery = (eventId: string) => {
   };
 
   const handleUpload = async (files: File[]) => {
+    if (!user) {
+      toast({
+        title: "Você precisa estar logado",
+        description: "Faça login para adicionar fotos ao evento",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setUploading(true);
     
     try {
-      // Check if event-gallery bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(bucket => bucket.name === 'event-gallery')) {
-        await supabase.storage.createBucket('event-gallery', { public: true });
+      const results = await StorageService.uploadImages(
+        files, 
+        'event-gallery', 
+        eventId
+      );
+      
+      if (results.length > 0) {
+        toast({
+          title: "Imagens enviadas",
+          description: `${results.length} foto(s) adicionada(s) à galeria`
+        });
+        
+        // Refresh gallery
+        fetchEventImages();
+      } else {
+        throw new Error("Nenhuma imagem foi enviada");
       }
-      
-      const uploadPromises = files.map(async (file) => {
-        // Create filename with format: user_id-uuid.ext
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${eventId}/${uuidv4()}-${uuidv4()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('event-gallery')
-          .upload(fileName, file, { upsert: true });
-          
-        if (uploadError) throw uploadError;
-        
-        return fileName;
-      });
-      
-      await Promise.all(uploadPromises);
-      
-      toast({
-        title: "Imagens enviadas",
-        description: "Suas fotos foram adicionadas à galeria"
-      });
-      
-      // Refresh gallery
-      fetchEventImages();
-      
     } catch (error) {
       console.error("Error uploading images:", error);
       toast({
@@ -143,7 +149,7 @@ export const useEventGallery = (eventId: string) => {
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = image.filename.split('-').slice(1).join('-');
+      a.download = image.filename.split('-').slice(1).join('-') || 'imagem.jpg';
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
