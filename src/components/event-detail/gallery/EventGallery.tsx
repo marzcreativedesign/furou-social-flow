@@ -16,9 +16,9 @@ const EventGallery = ({ eventId }: EventGalleryProps) => {
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const { images, loading, uploading, handleUpload, handleDownload } = useEventGallery(eventId);
   
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    await handleUpload(Array.from(e.target.files));
+  // Updated to match the expected type (File[] instead of React.ChangeEvent<HTMLInputElement>)
+  const handleFileSelect = async (files: File[]) => {
+    await handleUpload(files);
   };
   
   return (
