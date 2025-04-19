@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import * as React from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '@/services/auth.service';
@@ -15,15 +15,15 @@ type AuthContextType = {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const { data: { subscription } } = AuthService.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
