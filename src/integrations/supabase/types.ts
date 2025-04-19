@@ -609,11 +609,11 @@ export type Database = {
         Returns: boolean
       }
       is_group_admin: {
-        Args: Record<PropertyKey, never> | { p_group_id: string }
+        Args: Record<PropertyKey, never> | { group_id: string }
         Returns: boolean
       }
       is_group_member: {
-        Args: { p_group_id: string }
+        Args: { group_id: string }
         Returns: boolean
       }
     }
