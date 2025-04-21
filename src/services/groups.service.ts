@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const GroupsService = {
@@ -10,12 +11,12 @@ export const GroupsService = {
       }
       
       const { data, error } = await supabase
-        .from('groups')
+        .from('group_members')
         .select(`
           *,
-          group_members!inner(user_id)
+          groups(*)
         `)
-        .eq('group_members.user_id', user.user.id);
+        .eq('user_id', user.user.id);
         
       return { data, error };
     } catch (error) {

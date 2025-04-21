@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
 import { toast } from "sonner";
 import { GroupsService } from "@/services/groups.service";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
 import NoGroups from "@/components/groups/NoGroups";
