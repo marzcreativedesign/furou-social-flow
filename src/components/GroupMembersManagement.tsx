@@ -45,6 +45,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 import { GroupsService } from "@/services/groups.service";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -77,6 +78,7 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   const [emailInvite, setEmailInvite] = useState("");
   const [selectedMember, setSelectedMember] = useState<GroupMember | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const { toast } = useToast();
 
   // Gerar link simples de convite
   const inviteLink = `https://furou.app/convite/${groupId}/${Date.now()}`;
@@ -130,13 +132,21 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
 
   const handleUpdateRole = async (member: GroupMember, isNewAdmin: boolean) => {
     await GroupsService.updateMember(groupId, member.user_id, isNewAdmin);
-    const updatedMembers = members.map(m => 
-      m.id === member.id ? { 
-        ...m, 
-        role: isNewAdmin ? "admin" : "member",
-        is_admin: isNewAdmin
-      } : m
-    );
+    
+    // Update the members state with the correct MemberRole type
+    const updatedMembers = members.map(m => {
+      if (m.id === member.id) {
+        // Explicitly set role as MemberRole type
+        const newRole: MemberRole = isNewAdmin ? "admin" : "member";
+        return { 
+          ...m, 
+          role: newRole,
+          is_admin: isNewAdmin
+        };
+      }
+      return m;
+    });
+    
     setMembers(updatedMembers);
   };
 
