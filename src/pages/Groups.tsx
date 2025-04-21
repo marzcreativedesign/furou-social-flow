@@ -1,19 +1,20 @@
 
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
-import { toast } from "sonner";
 import { GroupsService } from "@/services/groups.service";
 import { useAuth } from "@/hooks/use-auth";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
 import NoGroups from "@/components/groups/NoGroups";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface Group {
   id: string;
   name: string;
-  description?: string;
-  image_url?: string;
+  description?: string | null;
+  image_url?: string | null;
   members?: number;
   lastActivity?: string;
   created_at?: string;
@@ -43,46 +44,34 @@ const Groups = () => {
       
       setIsFetching(true);
       try {
-        const { data: groupMembers, error } = await GroupsService.getUserGroups();
-        
-        if (error) {
-          console.error("Error fetching groups:", error);
-          toast.error("Não foi possível carregar seus grupos");
-          return;
-        }
-        
+        const { data: groupMembers } = await GroupsService.getUserGroups();
+
         if (groupMembers && groupMembers.length > 0) {
-          // Create a map to track unique groups and avoid duplicate keys
+          // Map para evitar grupos duplicados
           const groupsMap = new Map<string, Group>();
-          
+
           groupMembers.forEach(item => {
             if (item.groups?.id) {
               const groupId = item.groups.id;
-              
-              // If we haven't added this group yet, add it
               if (!groupsMap.has(groupId)) {
                 groupsMap.set(groupId, {
                   id: groupId,
                   name: item.groups?.name || "",
                   description: item.groups?.description || "",
-                  image_url: item.groups?.image_url || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-4.0.3",
-                  members: 1, // Will be updated with actual count in future
-                  lastActivity: "Recentemente",
-                  created_at: item.groups?.created_at
+                  image_url: item.groups?.image_url || "",
+                  members: 1, // Poderia ser atualizado no futuro
+                  lastActivity: "",
+                  created_at: item.groups?.created_at,
                 });
               }
             }
           });
-          
-          // Convert map to array
+
           const formattedGroups = Array.from(groupsMap.values());
           setGroups(formattedGroups);
         } else {
           setGroups([]);
         }
-      } catch (error) {
-        console.error("Error fetching groups:", error);
-        toast.error("Ocorreu um erro ao carregar os grupos");
       } finally {
         setIsFetching(false);
       }
@@ -93,21 +82,29 @@ const Groups = () => {
 
   const handleGroupCreated = (newGroup: Group) => {
     setGroups(prevGroups => [...prevGroups, newGroup]);
-    toast.success("Grupo criado com sucesso!");
+    // Não exibe toast ou notificação
   };
 
   return (
     <MainLayout title="Seus Grupos">
       <div className="px-4 py-4">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap gap-2 justify-between items-center mb-6">
           <h2 className="text-lg font-bold">Seus grupos</h2>
-          <CreateGroupDialog 
-            onGroupCreated={handleGroupCreated} 
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          />
+          <Button 
+            className="gap-2"
+            onClick={() => setIsDialogOpen(true)}
+            data-testid="create-group-global-cta"
+          >
+            <Plus className="h-4 w-4" />
+            Criar grupo
+          </Button>
         </div>
-        
+        <CreateGroupDialog 
+          onGroupCreated={handleGroupCreated} 
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
+
         {isFetching ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[1, 2, 3, 4].map((i) => (
@@ -121,7 +118,9 @@ const Groups = () => {
             ))}
           </div>
         ) : (
-          <NoGroups onCreateClick={() => setIsDialogOpen(true)} />
+          <div className="py-6 text-center text-muted-foreground">
+            Nenhum grupo encontrado.
+          </div>
         )}
       </div>
     </MainLayout>
