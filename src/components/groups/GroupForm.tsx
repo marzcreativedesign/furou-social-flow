@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { StorageService } from "@/services/storage.service";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ interface GroupFormProps {
 const GroupForm = ({ onSubmit, isLoading }: GroupFormProps) => {
   const [imageUrl, setImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const { toast } = useToast();
 
   const form = useForm<GroupFormValues>({
     resolver: zodResolver(groupFormSchema),
@@ -50,20 +48,10 @@ const GroupForm = ({ onSubmit, isLoading }: GroupFormProps) => {
       if (result) {
         setImageUrl(result.url);
         form.setValue("image_url", result.url);
-        toast({
-          title: "Imagem carregada",
-          description: "Sua imagem foi carregada com sucesso.",
-        });
-      } else {
-        throw new Error("Falha ao carregar imagem");
+        // Nenhuma notificação.
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar a imagem. Tente novamente.",
-        variant: "destructive",
-      });
+      // Nenhuma mensagem de erro (apenas silêncio)
     } finally {
       setUploadingImage(false);
     }

@@ -5,7 +5,6 @@ import { GroupsService } from "@/services/groups.service";
 import { useAuth } from "@/hooks/use-auth";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
-import NoGroups from "@/components/groups/NoGroups";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -59,7 +58,7 @@ const Groups = () => {
                   name: item.groups?.name || "",
                   description: item.groups?.description || "",
                   image_url: item.groups?.image_url || "",
-                  members: 1, // Poderia ser atualizado no futuro
+                  members: 1,
                   lastActivity: "",
                   created_at: item.groups?.created_at,
                 });
@@ -82,12 +81,12 @@ const Groups = () => {
 
   const handleGroupCreated = (newGroup: Group) => {
     setGroups(prevGroups => [...prevGroups, newGroup]);
-    // Não exibe toast ou notificação
   };
 
   return (
     <MainLayout title="Seus Grupos">
       <div className="px-4 py-4">
+        {/* Botão Criar grupo, sempre fixo no topo à direita */}
         <div className="flex flex-wrap gap-2 justify-between items-center mb-6">
           <h2 className="text-lg font-bold">Seus grupos</h2>
           <Button 

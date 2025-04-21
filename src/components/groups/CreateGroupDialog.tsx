@@ -39,9 +39,8 @@ const CreateGroupDialog = ({ onGroupCreated, open: controlledOpen, onOpenChange:
       if (Array.isArray(result) && result.length > 0) {
         setIsOpen(false);
         onGroupCreated(result[0]);
-      } else {
-        // Não faz nada. Sem notificações de erro fake.
       }
+      // Nenhuma notificação (nem erro).
     } finally {
       setIsLoading(false);
     }
