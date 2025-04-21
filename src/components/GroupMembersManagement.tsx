@@ -81,7 +81,7 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   // Gerar link simples de convite
   const inviteLink = `https://furou.app/convite/${groupId}/${Date.now()}`;
 
-  // Buscar membros do grupo (apenas dados reais)
+  // Buscar membros do grupo
   useEffect(() => {
     const fetchGroupMembers = async () => {
       setLoading(true);
@@ -89,15 +89,26 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
         const { data: groupMembers } = await GroupsService.getGroupMembers(groupId);
         if (groupMembers && groupMembers.length > 0) {
           const { data: currentUser } = await supabase.auth.getUser();
-          const formattedMembers = groupMembers.map(member => ({
-            id: member.id,
-            user_id: member.user_id,
-            name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
-            email: member.profiles?.email || undefined,
-            avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
-            role: member.is_admin ? (member.user_id === currentUser.user?.id ? "owner" : "admin")  : "member",
-            is_admin: member.is_admin
-          }));
+          
+          // Properly type the member roles to ensure they match MemberRole type
+          const formattedMembers: GroupMember[] = groupMembers.map(member => {
+            // Determine the role using proper type assertion
+            let role: MemberRole = "member";
+            if (member.is_admin) {
+              role = member.user_id === currentUser.user?.id ? "owner" : "admin";
+            }
+            
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
+              email: member.profiles?.email || undefined,
+              avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+              role: role,
+              is_admin: member.is_admin
+            };
+          });
+          
           setMembers(formattedMembers);
         } else {
           setMembers([]);
