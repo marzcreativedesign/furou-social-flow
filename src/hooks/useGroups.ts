@@ -61,8 +61,10 @@ export const useGroups = () => {
       
       return [];
     },
-    onError: (error: any) => {
-      ErrorService.handleError(error, 'Carregando grupos');
+    meta: {
+      onError: (error: any) => {
+        ErrorService.handleError(error, 'Carregando grupos');
+      }
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
