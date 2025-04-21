@@ -17,17 +17,36 @@ export const useHomePending = (): UseHomePendingReturn => {
       try {
         if (!user) return;
 
-        // Fetch notifications for pending actions
+        // Fetch unread notifications relevant to invites/pending actions
         const { data: notifications, error: notificationsError } = 
           await NotificationsService.getUserNotifications();
         
         if (notificationsError) {
           console.error("Error fetching notifications:", notificationsError);
         } else if (notifications) {
-          setPendingActions(notifications);
+          // Map notification types so invites can be used as pending actions
+          const mappedActions = notifications.map((notif) => {
+            // For group_invite or event_invite, try to add extra visuals
+            let imageUrl, eventName;
+            if (notif.type === 'event_invite' && notif.related_id) {
+              // Later on details page, fetch event details for extra UI
+              imageUrl = notif.image_url;
+              eventName = notif.title;
+            } else if (notif.type === 'group_invite' && notif.related_id) {
+              imageUrl = notif.image_url;
+              eventName = notif.title;
+            }
+            return {
+              ...notif,
+              imageUrl: imageUrl || "https://images.unsplash.com/photo-1529156069898-49953e39b3ac",
+              eventName: eventName || "",
+              created_at: notif.created_at,
+            }
+          });
+          setPendingActions(mappedActions);
         }
 
-        // Process pending invites from events data
+        // Pending event invites (those where status is invited or pending)
         const { data: eventsData } = await EventsService.getEvents();
         if (eventsData) {
           const pendingInvitesData = eventsData
@@ -81,3 +100,4 @@ export const useHomePending = (): UseHomePendingReturn => {
     handleInviteStatusUpdate
   };
 };
+
