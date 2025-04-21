@@ -5,7 +5,7 @@ import { EventsService } from "@/services/events.service";
 import { NotificationsService } from "@/services/notifications.service";
 import { toast } from "@/hooks/use-toast";
 import { Event } from "@/types/event";
-import { UseHomePendingReturn } from "./types";
+import { UseHomePendingReturn, Notification } from "./types";
 
 export const useHomePending = (): UseHomePendingReturn => {
   const { user } = useAuth();
@@ -25,21 +25,18 @@ export const useHomePending = (): UseHomePendingReturn => {
           console.error("Error fetching notifications:", notificationsError);
         } else if (notifications) {
           // Map notification types so invites can be used as pending actions
-          const mappedActions = notifications.map((notif) => {
-            // For group_invite or event_invite, try to add extra visuals
-            let imageUrl, eventName;
-            if (notif.type === 'event_invite' && notif.related_id) {
-              // Later on details page, fetch event details for extra UI
-              imageUrl = notif.image_url;
-              eventName = notif.title;
-            } else if (notif.type === 'group_invite' && notif.related_id) {
-              imageUrl = notif.image_url;
-              eventName = notif.title;
-            }
+          const mappedActions = notifications.map((notif: Notification) => {
+            // Use default image instead of trying to access non-existent image_url property
+            const defaultImage = "https://images.unsplash.com/photo-1529156069898-49953e39b3ac";
+            
+            // Set default eventName as empty string
+            let eventName = "";
+            
+            // We're not setting imageUrl based on notification properties since they don't have image_url
             return {
               ...notif,
-              imageUrl: imageUrl || "https://images.unsplash.com/photo-1529156069898-49953e39b3ac",
-              eventName: eventName || "",
+              imageUrl: defaultImage,
+              eventName: eventName,
               created_at: notif.created_at,
             }
           });
@@ -100,4 +97,3 @@ export const useHomePending = (): UseHomePendingReturn => {
     handleInviteStatusUpdate
   };
 };
-
