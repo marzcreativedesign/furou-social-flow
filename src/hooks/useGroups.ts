@@ -14,7 +14,6 @@ interface CreateGroupData {
 export const useGroups = () => {
   const queryClient = useQueryClient();
   
-  // Consulta para buscar grupos do usuário
   const {
     data: groups,
     isLoading,
@@ -25,14 +24,18 @@ export const useGroups = () => {
     queryFn: async () => {
       LoggerService.info('Fetching user groups');
       
-      const { data, error } = await GroupsService.getUserGroups();
-      
-      if (error) {
-        LoggerService.error('Error fetching user groups', error);
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
+      try {
+        const { data, error } = await GroupsService.getUserGroups();
+        
+        if (error) {
+          LoggerService.error('Error fetching user groups', error);
+          throw error;
+        }
+        
+        if (!data) {
+          return [];
+        }
+
         // Map para evitar grupos duplicados
         const groupsMap = new Map<string, TransformedGroup>();
 
@@ -57,30 +60,32 @@ export const useGroups = () => {
         });
 
         return Array.from(groupsMap.values());
-      }
-      
-      return [];
-    },
-    meta: {
-      onError: (error: any) => {
+      } catch (error) {
         ErrorService.handleError(error, 'Carregando grupos');
+        return [];
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
   });
   
-  // Mutação para criar um novo grupo
   const createGroupMutation = useMutation({
     mutationFn: async (groupData: CreateGroupData) => {
       LoggerService.info('Creating new group', groupData);
-      return await GroupsService.createGroup(groupData);
+      try {
+        const { data, error } = await GroupsService.createGroup(groupData);
+        
+        if (error) {
+          throw error;
+        }
+        
+        return data;
+      } catch (error) {
+        ErrorService.handleError(error, 'Criando grupo');
+        throw error;
+      }
     },
     onSuccess: () => {
       LoggerService.info('Group created successfully');
       queryClient.invalidateQueries({ queryKey: ['userGroups'] });
-    },
-    onError: (error: any) => {
-      ErrorService.handleError(error, 'Criando grupo');
     }
   });
   

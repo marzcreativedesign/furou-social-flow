@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const GroupsService = {
@@ -6,7 +5,7 @@ export const GroupsService = {
     try {
       const { data: user } = await supabase.auth.getUser();
       
-      if (!user.user) {
+      if (!user?.user) {
         throw new Error('User not authenticated');
       }
       
@@ -14,7 +13,7 @@ export const GroupsService = {
         .from('group_members')
         .select(`
           *,
-          groups(*)
+          groups:group_id(*)
         `)
         .eq('user_id', user.user.id);
         
@@ -86,19 +85,23 @@ export const GroupsService = {
     try {
       const { data: user } = await supabase.auth.getUser();
       
-      if (!user.user) {
+      if (!user?.user) {
         throw new Error('User not authenticated');
       }
       
       // Create the group
       const { data: createdGroup, error: groupError } = await supabase
         .from('groups')
-        .insert(data)
+        .insert({
+          name: data.name,
+          description: data.description,
+          image_url: data.image_url
+        })
         .select()
         .single();
         
       if (groupError || !createdGroup) {
-        throw new Error(groupError?.message || 'Error creating group');
+        throw groupError || new Error('Error creating group');
       }
       
       // Add the creator as an admin member
@@ -111,13 +114,13 @@ export const GroupsService = {
         });
         
       if (memberError) {
-        throw new Error(memberError.message);
+        throw memberError;
       }
       
-      return [createdGroup];
+      return { data: createdGroup, error: null };
     } catch (error) {
       console.error("Error creating group:", error);
-      throw error;
+      return { data: null, error };
     }
   },
   
