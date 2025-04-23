@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GroupsService } from '@/services/groups.service';
 import { ErrorService } from '@/services/error.service';
@@ -65,9 +64,8 @@ export const useGroups = () => {
         return [];
       }
     },
-    // Adicionando cache e stale time para reduzir chamadas à API
     staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos (previously cacheTime)
   });
   
   const createGroupMutation = useMutation({

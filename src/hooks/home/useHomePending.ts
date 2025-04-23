@@ -39,17 +39,20 @@ export const useHomePending = (): UseHomePendingReturn => {
           setPendingActions(mappedActions);
         }
 
-        // Otimize a busca para obter apenas os convites pendentes, não todos os eventos
-        const { data: pendingInvitesData } = await EventsService.getPendingInvites();
+        // Fetch pending invites using the optimized function
+        const { data: pendingInvitesData, error: pendingInvitesError } = 
+          await EventsService.getPendingInvites();
         
-        if (pendingInvitesData && pendingInvitesData.length > 0) {
-          // Transformamos os dados para o formato que a interface espera
+        if (pendingInvitesError) {
+          console.error("Error fetching pending invites:", pendingInvitesError);
+        } else if (pendingInvitesData && pendingInvitesData.length > 0) {
+          // Transform data to expected format
           const formattedInvites = pendingInvitesData.map(event => ({
             ...event,
             id: event.id,
             title: event.title,
             date: event.date,
-            location: event.location,
+            location: event.location || "",
             image_url: event.image_url,
             status: event.status
           }));

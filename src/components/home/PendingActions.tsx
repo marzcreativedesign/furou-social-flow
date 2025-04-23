@@ -35,13 +35,21 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
       // Realizar ação específica dependendo do tipo de notificação
       if (type === 'event_invite' && relatedId) {
         // Aceitar convite para evento
-        await EventsService.joinEvent(relatedId);
+        const { error } = await EventsService.joinEvent(relatedId);
+        if (error) {
+          throw error;
+        }
         toast.success("Você aceitou participar do evento!");
         navigate(`/evento/${relatedId}`);
       } else if (type === 'group_invite' && relatedId) {
         // Aceitar convite para grupo
-        const { error } = await GroupsService.addMemberToGroup(relatedId, 
-          (await supabase.auth.getUser()).data.user?.id || '', false);
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        
+        if (!userId) {
+          throw new Error('Usuário não autenticado');
+        }
+        
+        const { error } = await GroupsService.addMemberToGroup(relatedId, userId, false);
           
         if (error) {
           throw error;

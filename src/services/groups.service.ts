@@ -1,6 +1,21 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
+type GroupMemberProfile = {
+  id: string;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  email?: string | null;
+}
+
+type GroupMember = {
+  id: string;
+  user_id: string;
+  is_admin: boolean;
+  profiles?: GroupMemberProfile;
+}
+
 export const GroupsService = {
   getUserGroups: async () => {
     try {
@@ -55,7 +70,7 @@ export const GroupsService = {
         `)
         .eq('group_id', groupId);
         
-      return { data, error };
+      return { data: data as GroupMember[], error };
     } catch (error) {
       console.error("Error fetching group members:", error);
       return { data: null, error };

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "../utils";
 import { getCurrentUser } from "../utils";
@@ -54,10 +55,11 @@ export const GetEventsService = {
     try {
       const user = await getCurrentUser();
       
-      // Busca direta de participações com status pendente ou convidado
+      // Buscar diretamente as confirmações de eventos com status pendente ou convidado
       const { data: participations, error: participationsError } = await supabase
-        .from("event_participants")
+        .from("event_confirmations")
         .select(`
+          id, 
           event_id,
           status
         `)
