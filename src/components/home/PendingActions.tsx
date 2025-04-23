@@ -3,7 +3,9 @@ import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
-import { EventsService } from "@/services/events.service"; // Add the missing import
+import { GroupsService } from "@/services/groups.service"; 
+import { EventsService } from "@/services/events.service";
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from "react-router-dom";
 
 interface PendingAction {
@@ -27,6 +29,7 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
 
   const handleAcceptAction = async (id: string, relatedId: string | null, type: string) => {
     try {
+      // Primeiro, marcar a notificação como lida para evitar duplicações
       await NotificationsService.markAsRead(id);
       
       // Realizar ação específica dependendo do tipo de notificação
@@ -37,6 +40,13 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
         navigate(`/evento/${relatedId}`);
       } else if (type === 'group_invite' && relatedId) {
         // Aceitar convite para grupo
+        const { error } = await GroupsService.addMemberToGroup(relatedId, 
+          (await supabase.auth.getUser()).data.user?.id || '', false);
+          
+        if (error) {
+          throw error;
+        }
+        
         toast.success("Você aceitou participar do grupo!");
         navigate(`/grupo/${relatedId}`);
       } else {
@@ -71,7 +81,7 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
           <div key={action.id} className="bg-accent/10 dark:bg-[#FF6B00]/20 p-4 rounded-lg flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full overflow-hidden">
-                <img src={action.imageUrl} alt={action.eventName} className="w-full h-full object-cover" />
+                <img src={action.imageUrl} alt={action.eventName || action.title} className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-medium dark:text-[#EDEDED]">{action.title}</h3>

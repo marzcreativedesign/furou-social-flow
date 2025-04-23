@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "@/hooks/use-toast";
 
 export const GroupsService = {
   getUserGroups: async () => {
@@ -12,8 +13,10 @@ export const GroupsService = {
       const { data, error } = await supabase
         .from('group_members')
         .select(`
-          *,
-          groups:group_id(*)
+          id, user_id, is_admin, 
+          groups:group_id(
+            id, name, description, image_url, created_at
+          )
         `)
         .eq('user_id', user.user.id);
         
@@ -29,9 +32,8 @@ export const GroupsService = {
       const { data, error } = await supabase
         .from('groups')
         .select(`
-          *,
-          group_members(*),
-          group_events(*, events(*))
+          id, name, description, image_url, created_at,
+          group_members(id, user_id, is_admin)
         `)
         .eq('id', groupId)
         .single();
@@ -48,8 +50,8 @@ export const GroupsService = {
       const { data, error } = await supabase
         .from('group_members')
         .select(`
-          *,
-          profiles:user_id(*)
+          id, user_id, is_admin,
+          profiles:user_id(id, username, full_name, avatar_url, email)
         `)
         .eq('group_id', groupId);
         
@@ -65,10 +67,11 @@ export const GroupsService = {
       const { data, error } = await supabase
         .from('events')
         .select(`
-          *,
-          group_events!inner(*)
+          id, title, date, location, image_url,
+          group_events!inner(group_id)
         `)
-        .eq('group_events.group_id', groupId);
+        .eq('group_events.group_id', groupId)
+        .limit(10);
         
       return { data, error };
     } catch (error) {
@@ -89,7 +92,6 @@ export const GroupsService = {
         throw new Error('User not authenticated');
       }
       
-      // Create the group
       const { data: createdGroup, error: groupError } = await supabase
         .from('groups')
         .insert({
@@ -104,7 +106,6 @@ export const GroupsService = {
         throw groupError || new Error('Error creating group');
       }
       
-      // Add the creator as an admin member
       const { error: memberError } = await supabase
         .from('group_members')
         .insert({
@@ -114,6 +115,12 @@ export const GroupsService = {
         });
         
       if (memberError) {
+        console.error("Error adding member:", memberError);
+        await supabase
+          .from('groups')
+          .delete()
+          .eq('id', createdGroup.id);
+          
         throw memberError;
       }
       
@@ -126,17 +133,93 @@ export const GroupsService = {
   
   addMemberToGroup: async (groupId: string, userId: string, isAdmin: boolean = false) => {
     try {
+      const { data: existingMember } = await supabase
+        .from('group_members')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (existingMember) {
+        return { data: existingMember, error: null };
+      }
+      
       const { data, error } = await supabase
         .from('group_members')
         .insert({
           group_id: groupId,
           user_id: userId,
           is_admin: isAdmin
-        });
+        })
+        .select()
+        .single();
         
       return { data, error };
     } catch (error) {
       console.error("Error adding member to group:", error);
+      return { data: null, error };
+    }
+  },
+  
+  inviteUserToGroup: async (groupId: string, email: string) => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user?.user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const { data: isAdmin } = await supabase
+        .from('group_members')
+        .select('is_admin')
+        .eq('group_id', groupId)
+        .eq('user_id', user.user.id)
+        .eq('is_admin', true)
+        .maybeSingle();
+        
+      if (!isAdmin) {
+        throw new Error('Você não tem permissão para convidar usuários para este grupo');
+      }
+      
+      const { data: invitedUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (!invitedUser) {
+        return { 
+          data: null, 
+          error: { message: 'Usuário não encontrado com este email' }
+        };
+      }
+      
+      const { data: group } = await supabase
+        .from('groups')
+        .select('name')
+        .eq('id', groupId)
+        .single();
+        
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: invitedUser.id,
+          title: 'Convite para grupo',
+          content: `Você foi convidado para participar do grupo "${group?.name}"`,
+          type: 'group_invite',
+          related_id: groupId
+        });
+        
+      if (notificationError) {
+        throw notificationError;
+      }
+      
+      return { 
+        data: { success: true, message: 'Convite enviado com sucesso' }, 
+        error: null 
+      };
+    } catch (error) {
+      console.error("Error inviting user to group:", error);
       return { data: null, error };
     }
   },

@@ -29,38 +29,32 @@ export const useHomePending = (): UseHomePendingReturn => {
             // Use default image instead of trying to access non-existent image_url property
             const defaultImage = "https://images.unsplash.com/photo-1529156069898-49953e39b3ac";
             
-            // Set default eventName as empty string
-            let eventName = "";
-            
-            // We're not setting imageUrl based on notification properties since they don't have image_url
             return {
               ...notif,
               imageUrl: defaultImage,
-              eventName: eventName,
+              eventName: "",  // Default empty string for eventName
               created_at: notif.created_at,
             }
           });
           setPendingActions(mappedActions);
         }
 
-        // Pending event invites (those where status is invited or pending)
-        const { data: eventsData } = await EventsService.getEvents();
-        if (eventsData) {
-          const pendingInvitesData = eventsData
-            .filter(event => event.event_participants?.some(
-              p => p.user_id === user.id && (p.status === 'invited' || p.status === 'pending')
-            ))
-            .map(event => ({
-              ...event,
-              id: event.id,
-              title: event.title,
-              date: event.date,
-              location: event.location,
-              image_url: event.image_url,
-              status: event.event_participants?.find(p => p.user_id === user.id)?.status
-            }));
+        // Otimize a busca para obter apenas os convites pendentes, não todos os eventos
+        const { data: pendingInvitesData } = await EventsService.getPendingInvites();
+        
+        if (pendingInvitesData && pendingInvitesData.length > 0) {
+          // Transformamos os dados para o formato que a interface espera
+          const formattedInvites = pendingInvitesData.map(event => ({
+            ...event,
+            id: event.id,
+            title: event.title,
+            date: event.date,
+            location: event.location,
+            image_url: event.image_url,
+            status: event.status
+          }));
           
-          setPendingInvites(pendingInvitesData as Event[]);
+          setPendingInvites(formattedInvites as Event[]);
         }
       } catch (error) {
         console.error("Error fetching pending data:", error);

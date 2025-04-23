@@ -65,6 +65,9 @@ export const useGroups = () => {
         return [];
       }
     },
+    // Adicionando cache e stale time para reduzir chamadas à API
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
   });
   
   const createGroupMutation = useMutation({
@@ -88,6 +91,27 @@ export const useGroups = () => {
       queryClient.invalidateQueries({ queryKey: ['userGroups'] });
     }
   });
+
+  const inviteToGroupMutation = useMutation({
+    mutationFn: async ({ groupId, email }: { groupId: string, email: string }) => {
+      LoggerService.info('Inviting user to group', { groupId, email });
+      try {
+        const { data, error } = await GroupsService.inviteUserToGroup(groupId, email);
+        
+        if (error) {
+          throw error;
+        }
+        
+        return data;
+      } catch (error) {
+        ErrorService.handleError(error, 'Enviando convite');
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      LoggerService.info('Invitation sent successfully');
+    }
+  });
   
   return {
     groups,
@@ -95,6 +119,8 @@ export const useGroups = () => {
     error,
     refetch,
     createGroup: createGroupMutation.mutate,
-    isCreating: createGroupMutation.isPending
+    isCreating: createGroupMutation.isPending,
+    inviteToGroup: inviteToGroupMutation.mutate,
+    isInviting: inviteToGroupMutation.isPending
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Users,
@@ -49,7 +48,6 @@ import { useToast } from "@/hooks/use-toast";
 import { GroupsService } from "@/services/groups.service";
 import { supabase } from "@/integrations/supabase/client";
 
-// Tipos para os membros do grupo
 type MemberRole = "owner" | "admin" | "member";
 
 interface GroupMember {
@@ -80,10 +78,8 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const { toast } = useToast();
 
-  // Gerar link simples de convite
   const inviteLink = `https://furou.app/convite/${groupId}/${Date.now()}`;
 
-  // Buscar membros do grupo
   useEffect(() => {
     const fetchGroupMembers = async () => {
       setLoading(true);
@@ -92,9 +88,7 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
         if (groupMembers && groupMembers.length > 0) {
           const { data: currentUser } = await supabase.auth.getUser();
           
-          // Properly type the member roles to ensure they match MemberRole type
           const formattedMembers: GroupMember[] = groupMembers.map(member => {
-            // Determine the role using proper type assertion
             let role: MemberRole = "member";
             if (member.is_admin) {
               role = member.user_id === currentUser.user?.id ? "owner" : "admin";
@@ -133,10 +127,8 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   const handleUpdateRole = async (member: GroupMember, isNewAdmin: boolean) => {
     await GroupsService.updateMember(groupId, member.user_id, isNewAdmin);
     
-    // Update the members state with the correct MemberRole type
     const updatedMembers = members.map(m => {
       if (m.id === member.id) {
-        // Explicitly set role as MemberRole type
         const newRole: MemberRole = isNewAdmin ? "admin" : "member";
         return { 
           ...m, 
@@ -153,8 +145,42 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
   const handleInviteByEmail = async () => {
-    setEmailInvite("");
-    setShowInviteDialog(false);
+    if (!validateEmail(emailInvite)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, forneça um endereço de email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await GroupsService.inviteUserToGroup(groupId, emailInvite);
+      
+      if (error) {
+        toast({
+          title: "Erro ao enviar convite",
+          description: error.message || "Não foi possível enviar o convite. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      toast({
+        title: "Convite enviado",
+        description: `Um convite foi enviado para ${emailInvite}.`
+      });
+      
+      setEmailInvite("");
+      setShowInviteDialog(false);
+    } catch (error) {
+      console.error("Error inviting user:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar o convite. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const copyInviteLink = () => {
@@ -285,7 +311,6 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
         </CardFooter>
       )}
 
-      {/* Diálogo de confirmação para remoção */}
       <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
         <DialogContent>
           <DialogHeader>
@@ -330,7 +355,6 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de convite */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
           <DialogHeader>
