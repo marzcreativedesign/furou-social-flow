@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GroupMembersService, GroupInvitesService } from "@/services/groups";
-import { GroupMember } from "../types";
+import { GroupMember, MemberRole } from "../types";
 
 export const useGroupMembers = (groupId: string) => {
   const [members, setMembers] = useState<GroupMember[]>([]);
@@ -17,15 +17,24 @@ export const useGroupMembers = (groupId: string) => {
       if (error) throw new Error(error.message);
       
       if (data) {
-        const formattedMembers = data.map(member => ({
-          id: member.id,
-          user_id: member.user_id,
-          name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
-          email: member.profiles?.email,
-          avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
-          role: member.is_admin ? "admin" : "member",
-          is_admin: member.is_admin
-        }));
+        const formattedMembers = data.map(member => {
+          // Determine role
+          let role: MemberRole = "member";
+          if (member.is_admin) {
+            role = "admin"; // Default admins to "admin" role
+          }
+          
+          return {
+            id: member.id,
+            user_id: member.user_id,
+            name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
+            email: member.profiles?.email,
+            avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+            role: role,
+            is_admin: member.is_admin
+          };
+        });
+        
         setMembers(formattedMembers);
       }
     } catch (error) {
@@ -67,7 +76,7 @@ export const useGroupMembers = (groupId: string) => {
       
       setMembers(prev => prev.map(m => 
         m.id === member.id 
-          ? { ...m, role: isNewAdmin ? "admin" : "member", is_admin: isNewAdmin }
+          ? { ...m, role: isNewAdmin ? "admin" : "member" as MemberRole, is_admin: isNewAdmin }
           : m
       ));
       

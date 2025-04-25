@@ -9,11 +9,11 @@ import GroupEvents from '@/components/group-detail/GroupEvents';
 import GroupAbout from '@/components/group-detail/GroupAbout';
 import GroupMembersManagement from '@/components/group-detail/GroupMembersManagement';
 import GroupRanking from '@/components/GroupRanking';
-import { GroupsService, GroupEventsService, GroupMembersService } from '@/services/groups';
+import { GroupsService, GroupEventsService } from '@/services/groups';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { GroupMember } from '@/services/groups/types';
+import { MemberWithProfile } from '@/services/groups/types';
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,30 +65,28 @@ const GroupDetail = () => {
           
           if (!eventsError && groupEvents) {
             const formattedEvents = groupEvents.map((item: any) => ({
-              id: item.events.id,
-              title: item.events.title,
-              date: new Date(item.events.date).toLocaleString('pt-BR', {
+              id: item.id,
+              title: item.title,
+              date: new Date(item.date).toLocaleString('pt-BR', {
                 weekday: 'long',
                 hour: 'numeric',
                 minute: 'numeric'
               }),
-              location: item.events.location,
-              image_url: item.events.image_url,
+              location: item.location,
+              image_url: item.image_url,
               attendees: 0 // Will update with actual count
             }));
             
             setEvents(formattedEvents);
           }
           
-          // Get group members
-          const { data: groupMembers, error: membersError } = await GroupMembersService.getGroupMembers(id);
-          
-          if (!membersError && groupMembers) {
-            // Convert to the format expected by GroupRanking
-            const formattedMembers = groupMembers.map((member: GroupMember) => ({
+          // Get group members data from group_members relationship
+          if (groupData.group_members && Array.isArray(groupData.group_members)) {
+            // Format members data for GroupRanking
+            const formattedMembers = groupData.group_members.map((member: any) => ({
               id: member.user_id,
-              name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
-              image: member.profiles?.avatar_url || 'https://i.pravatar.cc/150?u=' + member.user_id,
+              name: 'Member', // Default name
+              image: `https://i.pravatar.cc/150?u=${member.user_id}`,
               isAdmin: member.is_admin,
               stats: { 
                 participated: Math.floor(Math.random() * 10), // Mock stats for now

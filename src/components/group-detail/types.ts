@@ -1,10 +1,12 @@
 
+export type MemberRole = "owner" | "admin" | "member";
+
 export interface GroupMember {
   id: string;
   name: string;
   email?: string;
   avatarUrl?: string;
-  role: "owner" | "admin" | "member";
+  role: MemberRole;
   user_id: string;
   is_admin: boolean;
 }

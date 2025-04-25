@@ -30,7 +30,7 @@ export const GroupInvitesService = {
         .from('profiles')
         .select('id, email')
         .eq('email', email)
-        .single();
+        .maybeSingle();
         
       if (!profileData) {
         return { data: null, error: { message: 'User not found with this email' } };

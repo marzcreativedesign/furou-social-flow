@@ -15,6 +15,13 @@ export interface GroupMember {
   user_id: string;
   is_admin: boolean;
   joined_at?: string;
+  profiles?: {
+    id: string;
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    email?: string;
+  };
 }
 
 export interface GroupProfile {
@@ -36,3 +43,14 @@ export interface ApiResponse<T> {
   data: T | null;
   error: { message: string } | null;
 }
+
+// Member with profile type for internal use
+export type MemberWithProfile = GroupMember & {
+  profiles?: {
+    id: string;
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    email?: string;
+  };
+};
