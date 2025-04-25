@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
@@ -187,6 +188,7 @@ export const GroupsService = {
         throw new Error('User not authenticated');
       }
       
+      // Check if user is an admin of the group
       const { data: isAdmin } = await supabase
         .from('group_members')
         .select('is_admin')
@@ -199,6 +201,7 @@ export const GroupsService = {
         throw new Error('Você não tem permissão para convidar usuários para este grupo');
       }
       
+      // Find the user by email
       const { data: invitedUser } = await supabase
         .from('profiles')
         .select('id')
@@ -212,12 +215,14 @@ export const GroupsService = {
         };
       }
       
+      // Get the group name for the notification
       const { data: group } = await supabase
         .from('groups')
         .select('name')
         .eq('id', groupId)
         .single();
         
+      // Create a notification for the invited user
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
