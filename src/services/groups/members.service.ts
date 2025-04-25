@@ -1,30 +1,43 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { GroupMember } from './types';
+import { ApiResponse, GroupMember } from './types';
+
+type MemberWithProfile = GroupMember & {
+  profiles?: {
+    id: string;
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    email?: string;
+  }
+};
 
 export const GroupMembersService = {
-  getGroupMembers: async (groupId: string) => {
+  getGroupMembers: async (groupId: string): Promise<ApiResponse<MemberWithProfile[]>> => {
     try {
       const { data, error } = await supabase
         .from('group_members')
         .select(`
-          id, user_id, is_admin,
+          id, group_id, user_id, is_admin,
           profiles:user_id(id, username, full_name, avatar_url, email)
         `)
         .eq('group_id', groupId);
       
-      return { 
-        data: data as unknown as GroupMember[], 
-        error 
-      };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data, error: null };
     } catch (error) {
       console.error("Error fetching group members:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   },
 
-  addMemberToGroup: async (groupId: string, userId: string, isAdmin: boolean = false) => {
+  addMemberToGroup: async (groupId: string, userId: string, isAdmin: boolean = false): Promise<ApiResponse<GroupMember>> => {
     try {
+      // Check if user is already a member
       const { data: existingMember } = await supabase
         .from('group_members')
         .select('id')
@@ -33,9 +46,10 @@ export const GroupMembersService = {
         .maybeSingle();
         
       if (existingMember) {
-        return { data: existingMember, error: null };
+        return { data: existingMember as GroupMember, error: null };
       }
       
+      // Add new member
       const { data, error } = await supabase
         .from('group_members')
         .insert({
@@ -46,40 +60,55 @@ export const GroupMembersService = {
         .select()
         .single();
         
-      return { data, error };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data, error: null };
     } catch (error) {
       console.error("Error adding member to group:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   },
 
-  updateMember: async (groupId: string, userId: string, isAdmin: boolean) => {
+  updateMember: async (groupId: string, userId: string, isAdmin: boolean): Promise<ApiResponse<null>> => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('group_members')
         .update({ is_admin: isAdmin })
         .eq('group_id', groupId)
         .eq('user_id', userId);
         
-      return { data, error };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data: null, error: null };
     } catch (error) {
       console.error("Error updating group member:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   },
   
-  removeMember: async (groupId: string, userId: string) => {
+  removeMember: async (groupId: string, userId: string): Promise<ApiResponse<null>> => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('group_members')
         .delete()
         .eq('group_id', groupId)
         .eq('user_id', userId);
         
-      return { data, error };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data: null, error: null };
     } catch (error) {
       console.error("Error removing group member:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   }
 };

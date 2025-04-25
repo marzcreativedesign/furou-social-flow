@@ -1,14 +1,21 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GroupsService, GroupMembersService, GroupInvitesService } from '@/services/groups';
-import { ErrorService } from '@/services/error.service';
-import { LoggerService } from '@/services/logger.service';
-import { DataTransformerService, TransformedGroup } from '@/services/data-transformer.service';
+import { GroupsService, GroupInvitesService } from '@/services/groups';
+import { toast } from 'sonner';
 
 interface CreateGroupData {
   name: string;
   description?: string;
   image_url?: string;
+}
+
+interface TransformedGroup {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  members?: number;
+  created_at?: string;
 }
 
 export const useGroups = () => {
@@ -22,14 +29,11 @@ export const useGroups = () => {
   } = useQuery({
     queryKey: ['userGroups'],
     queryFn: async () => {
-      LoggerService.info('Fetching user groups');
-      
       try {
         const { data, error } = await GroupsService.getUserGroups();
         
         if (error) {
-          LoggerService.error('Error fetching user groups', error);
-          throw error;
+          throw new Error(error.message);
         }
         
         if (!data) {
@@ -43,72 +47,62 @@ export const useGroups = () => {
           if (item.groups?.id) {
             const groupId = item.groups.id;
             if (!groupsMap.has(groupId)) {
-              const transformedGroup = DataTransformerService.transformGroupData({
+              groupsMap.set(groupId, {
                 id: groupId,
                 name: item.groups?.name || "",
                 description: item.groups?.description || "",
                 image_url: item.groups?.image_url || "",
                 created_at: item.groups?.created_at,
-                group_members: [item]
               });
-              
-              if (transformedGroup) {
-                groupsMap.set(groupId, transformedGroup);
-              }
             }
           }
         });
 
         return Array.from(groupsMap.values());
       } catch (error) {
-        ErrorService.handleError(error, 'Carregando grupos');
+        console.error('Error loading groups:', error);
+        toast.error('Erro ao carregar grupos');
         return [];
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos (previously cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
   
   const createGroupMutation = useMutation({
     mutationFn: async (groupData: CreateGroupData) => {
-      LoggerService.info('Creating new group', groupData);
-      try {
-        const { data, error } = await GroupsService.createGroup(groupData);
+      const { data, error } = await GroupsService.createGroup(groupData);
         
-        if (error) {
-          throw error;
-        }
-        
-        return data;
-      } catch (error) {
-        ErrorService.handleError(error, 'Criando grupo');
-        throw error;
+      if (error) {
+        throw new Error(error.message);
       }
+        
+      return data;
     },
     onSuccess: () => {
-      LoggerService.info('Group created successfully');
+      toast.success('Grupo criado com sucesso');
       queryClient.invalidateQueries({ queryKey: ['userGroups'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar grupo: ${error.message}`);
     }
   });
 
   const inviteToGroupMutation = useMutation({
     mutationFn: async ({ groupId, email }: { groupId: string, email: string }) => {
-      LoggerService.info('Inviting user to group', { groupId, email });
-      try {
-        const { data, error } = await GroupInvitesService.inviteUserToGroup(groupId, email);
+      const { data, error } = await GroupInvitesService.inviteUserToGroup(groupId, email);
         
-        if (error) {
-          throw error;
-        }
-        
-        return data;
-      } catch (error) {
-        ErrorService.handleError(error, 'Enviando convite');
-        throw error;
+      if (error) {
+        throw new Error(error.message);
       }
+        
+      return data;
     },
     onSuccess: () => {
-      LoggerService.info('Invitation sent successfully');
+      toast.success('Convite enviado com sucesso');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao enviar convite: ${error.message}`);
     }
   });
   

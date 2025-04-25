@@ -1,29 +1,38 @@
 
-export type GroupMemberProfile = {
-  id: string;
-  username?: string | null;
-  full_name?: string | null;
-  avatar_url?: string | null;
-  email?: string | null;
-}
-
-export type GroupMember = {
-  id: string;
-  user_id: string;
-  is_admin: boolean;
-  profiles?: GroupMemberProfile;
-}
-
-export type CreateGroupData = {
-  name: string;
-  description?: string;
-  image_url?: string;
-}
-
-export type Group = {
+// Basic type definitions for group-related data
+export interface Group {
   id: string;
   name: string;
   description?: string;
   image_url?: string;
   created_at?: string;
+  updated_at?: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  is_admin: boolean;
+  joined_at?: string;
+}
+
+export interface GroupProfile {
+  id: string;
+  full_name?: string;
+  username?: string;
+  avatar_url?: string;
+  email?: string;
+}
+
+// Simple request/response types
+export interface CreateGroupRequest {
+  name: string;
+  description?: string;
+  image_url?: string;
+}
+
+export interface ApiResponse<T> {
+  data: T | null;
+  error: { message: string } | null;
 }

@@ -1,8 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { ApiResponse } from './types';
 
 export const GroupEventsService = {
-  getGroupEvents: async (groupId: string) => {
+  getGroupEvents: async (groupId: string): Promise<ApiResponse<any[]>> => {
     try {
       const { data, error } = await supabase
         .from('events')
@@ -13,26 +14,36 @@ export const GroupEventsService = {
         .eq('group_events.group_id', groupId)
         .limit(10);
         
-      return { data, error };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data, error: null };
     } catch (error) {
       console.error("Error fetching group events:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   },
 
-  addEventToGroup: async (groupId: string, eventId: string) => {
+  addEventToGroup: async (groupId: string, eventId: string): Promise<ApiResponse<null>> => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('group_events')
         .insert({
           group_id: groupId,
           event_id: eventId
         });
         
-      return { data, error };
+      if (error) {
+        return { data: null, error: { message: error.message } };
+      }
+      
+      return { data: null, error: null };
     } catch (error) {
       console.error("Error adding event to group:", error);
-      return { data: null, error };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   }
 };

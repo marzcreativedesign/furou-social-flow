@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { GroupsService } from '@/services/groups';
 
@@ -25,7 +26,7 @@ interface GroupState {
   fetchGroups: () => Promise<void>;
 }
 
-export const useGroupStore = create<GroupState>((set, get) => ({
+export const useGroupStore = create<GroupState>((set) => ({
   groups: [],
   currentGroup: null,
   loading: false,
@@ -42,7 +43,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       const { data: groupMembers, error } = await GroupsService.getUserGroups();
       
       if (error) {
-        set({ error: error.message || 'Erro ao carregar grupos', loading: false });
+        set({ error: error.message, loading: false });
         return;
       }
       

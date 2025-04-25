@@ -1,24 +1,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
-
-// Error interface for consistent error responses
-interface ErrorResponse {
-  message: string;
-}
-
-// Success response interface
-interface SuccessResponse {
-  success: boolean;
-  message: string;
-}
+import { ApiResponse } from './types';
 
 export const GroupInvitesService = {
-  inviteUserToGroup: async (groupId: string, email: string) => {
+  inviteUserToGroup: async (groupId: string, email: string): Promise<ApiResponse<{success: boolean}>> => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       
-      if (!userData?.user) {
-        throw new Error('User not authenticated');
+      if (userError || !userData?.user) {
+        return { data: null, error: { message: 'User not authenticated' } };
       }
       
       // Check if user is admin in the group
@@ -28,24 +19,21 @@ export const GroupInvitesService = {
         .eq('group_id', groupId)
         .eq('user_id', userData.user.id)
         .eq('is_admin', true)
-        .maybeSingle();
+        .single();
         
       if (!adminCheck) {
-        throw new Error('Você não tem permissão para convidar usuários para este grupo');
+        return { data: null, error: { message: 'You don\'t have permission to invite users to this group' } };
       }
       
       // Find the invited user
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email')
         .eq('email', email)
-        .maybeSingle();
+        .single();
         
-      if (!profileData || !profileData.id) {
-        return { 
-          data: null, 
-          error: { message: 'Usuário não encontrado com este email' }
-        };
+      if (!profileData) {
+        return { data: null, error: { message: 'User not found with this email' } };
       }
       
       // Get group name for the notification
@@ -55,31 +43,30 @@ export const GroupInvitesService = {
         .eq('id', groupId)
         .single();
         
+      if (!group) {
+        return { data: null, error: { message: 'Group not found' } };
+      }
+      
       // Create notification for the invited user
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_id: profileData.id,
-          title: 'Convite para grupo',
-          content: `Você foi convidado para participar do grupo "${group?.name}"`,
+          title: 'Group Invitation',
+          content: `You've been invited to join the group "${group.name}"`,
           type: 'group_invite',
           related_id: groupId
         });
         
       if (notificationError) {
-        throw notificationError;
+        return { data: null, error: { message: 'Failed to send invitation notification' } };
       }
       
-      return { 
-        data: { success: true, message: 'Convite enviado com sucesso' }, 
-        error: null 
-      };
+      return { data: { success: true }, error: null };
     } catch (error) {
       console.error("Error inviting user to group:", error);
-      return { 
-        data: null, 
-        error: error instanceof Error ? { message: error.message } : { message: 'Unknown error occurred' }
-      };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { data: null, error: { message } };
     }
   }
 };

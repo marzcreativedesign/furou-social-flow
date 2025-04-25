@@ -3,7 +3,6 @@ import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GroupMembersService, GroupInvitesService } from "@/services/groups";
 import { GroupMember } from "../types";
-import { supabase } from "@/integrations/supabase/client";
 
 export const useGroupMembers = (groupId: string) => {
   const [members, setMembers] = useState<GroupMember[]>([]);
@@ -15,7 +14,7 @@ export const useGroupMembers = (groupId: string) => {
     try {
       const { data, error } = await GroupMembersService.getGroupMembers(groupId);
       
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       
       if (data) {
         const formattedMembers = data.map(member => ({
@@ -44,7 +43,7 @@ export const useGroupMembers = (groupId: string) => {
   const removeMember = async (member: GroupMember) => {
     try {
       const { error } = await GroupMembersService.removeMember(groupId, member.user_id);
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       
       setMembers(prev => prev.filter(m => m.id !== member.id));
       toast({
@@ -64,7 +63,7 @@ export const useGroupMembers = (groupId: string) => {
   const updateRole = async (member: GroupMember, isNewAdmin: boolean) => {
     try {
       const { error } = await GroupMembersService.updateMember(groupId, member.user_id, isNewAdmin);
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       
       setMembers(prev => prev.map(m => 
         m.id === member.id 
@@ -86,10 +85,10 @@ export const useGroupMembers = (groupId: string) => {
     }
   };
 
-  const inviteMember = async (email: string) => {
+  const inviteMember = async (email: string): Promise<boolean> => {
     try {
-      const { error } = await GroupInvitesService.inviteUserToGroup(groupId, email);
-      if (error) throw error;
+      const { data, error } = await GroupInvitesService.inviteUserToGroup(groupId, email);
+      if (error) throw new Error(error.message);
       
       toast({
         title: "Sucesso",
