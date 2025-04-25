@@ -28,14 +28,8 @@ export const GroupInvitesService = {
         .eq('email', email)
         .maybeSingle();
         
-      // Use a type annotation without direct reference to avoid deep nesting
-      type ProfileData = {
-        id: string;
-      };
-        
-      const invitedUser = invitedUserResult as ProfileData | null;
-        
-      if (!invitedUser) {
+      // Simplify type handling to avoid deep instantiation
+      if (!invitedUserResult || !invitedUserResult.id) {
         return { 
           data: null, 
           error: { message: 'Usuário não encontrado com este email' }
@@ -51,7 +45,7 @@ export const GroupInvitesService = {
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
-          user_id: invitedUser.id,
+          user_id: invitedUserResult.id,
           title: 'Convite para grupo',
           content: `Você foi convidado para participar do grupo "${group?.name}"`,
           type: 'group_invite',
