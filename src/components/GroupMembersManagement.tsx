@@ -48,6 +48,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { GroupMembersService, GroupInvitesService } from "@/services/groups";
 import { supabase } from "@/integrations/supabase/client";
+import { GroupMemberWithProfile } from "@/services/groups/types";
 
 type MemberRole = "owner" | "admin" | "member";
 
@@ -98,9 +99,9 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
             return {
               id: member.id,
               user_id: member.user_id,
-              name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
-              email: member.profiles?.email || undefined,
-              avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+              name: member.profile?.full_name || member.profile?.username || 'Usuário',
+              email: member.profile?.email || undefined,
+              avatarUrl: member.profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
               role: role,
               is_admin: member.is_admin
             };

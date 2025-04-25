@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -83,8 +84,8 @@ const GroupDetail = () => {
             // Format members data for GroupRanking
             const formattedMembers = groupData.group_members.map((member: any) => ({
               id: member.user_id,
-              name: 'Member', // Default name
-              image: `https://i.pravatar.cc/150?u=${member.user_id}`,
+              name: member.profile?.full_name || member.profile?.username || 'Member', // Updated from profiles to profile
+              image: member.profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
               isAdmin: member.is_admin,
               stats: { 
                 participated: Math.floor(Math.random() * 10), // Mock stats for now
@@ -153,7 +154,7 @@ const GroupDetail = () => {
           imageUrl={group.image_url}
           membersCount={members.length}
           eventsCount={events.length}
-          activeEventsCount={events.filter(e => new Date(e.date) > new Date()).length}
+          activeEventsCount={events.filter((e: any) => new Date(e.date) > new Date()).length}
         />
 
         <Tabs 
@@ -204,7 +205,7 @@ const GroupDetail = () => {
             <GroupAbout
               description={group.description}
               createdAt={group.created_at}
-              admins={members.filter(m => m.isAdmin)}
+              admins={members.filter((m: any) => m.isAdmin)}
               isOwner={isOwner}
               onSettingsClick={() => {}}
             />

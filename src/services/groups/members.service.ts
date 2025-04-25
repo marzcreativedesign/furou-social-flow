@@ -5,11 +5,11 @@ import { ApiResponse, GroupMember, GroupMemberWithProfile } from './types';
 export const GroupMembersService = {
   getGroupMembers: async (groupId: string): Promise<ApiResponse<GroupMemberWithProfile[]>> => {
     try {
+      // First get members
       const { data, error } = await supabase
         .from('group_members')
         .select(`
-          id, group_id, user_id, is_admin, joined_at,
-          profile:profiles(id, username, full_name, avatar_url, email)
+          id, group_id, user_id, is_admin, joined_at
         `)
         .eq('group_id', groupId);
       
@@ -17,8 +17,25 @@ export const GroupMembersService = {
         return { data: null, error: { message: error.message } };
       }
       
-      const members = data as GroupMemberWithProfile[];
-      return { data: members, error: null };
+      const members = data as GroupMember[];
+      
+      // Now get profiles for these members
+      const membersWithProfiles: GroupMemberWithProfile[] = await Promise.all(
+        members.map(async (member) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, email')
+            .eq('id', member.user_id)
+            .single();
+            
+          return {
+            ...member,
+            profile: profileData || undefined
+          };
+        })
+      );
+      
+      return { data: membersWithProfiles, error: null };
     } catch (error) {
       console.error("Error fetching group members:", error);
       const message = error instanceof Error ? error.message : 'Unknown error occurred';

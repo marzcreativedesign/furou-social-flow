@@ -25,18 +25,18 @@ export const GroupInvitesService = {
         return { data: null, error: { message: 'You don\'t have permission to invite users to this group' } };
       }
       
-      // Find the invited user
-      const { data: profileData, error: profileError } = await supabase
+      // Find the invited user by email
+      const { data: users, error: usersError } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id')
         .eq('email', email)
         .maybeSingle();
         
-      if (profileError) {
+      if (usersError) {
         return { data: null, error: { message: 'Error finding user profile' } };
       }
-        
-      if (!profileData) {
+      
+      if (!users) {
         return { data: null, error: { message: 'User not found with this email' } };
       }
       
@@ -55,7 +55,7 @@ export const GroupInvitesService = {
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
-          user_id: profileData.id,
+          user_id: users.id,
           title: 'Group Invitation',
           content: `You've been invited to join the group "${group.name}"`,
           type: 'group_invite',
