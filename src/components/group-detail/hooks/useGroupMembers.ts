@@ -17,7 +17,7 @@ export const useGroupMembers = (groupId: string) => {
       if (error) throw new Error(error.message);
       
       if (data) {
-        const formattedMembers = data.map(member => {
+        const formattedMembers: GroupMember[] = data.map(member => {
           // Determine role
           let role: MemberRole = "member";
           if (member.is_admin) {
@@ -27,9 +27,9 @@ export const useGroupMembers = (groupId: string) => {
           return {
             id: member.id,
             user_id: member.user_id,
-            name: member.profiles?.full_name || member.profiles?.username || 'Usuário',
-            email: member.profiles?.email,
-            avatarUrl: member.profiles?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+            name: member.profile?.full_name || member.profile?.username || 'Usuário',
+            email: member.profile?.email,
+            avatarUrl: member.profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
             role: role,
             is_admin: member.is_admin
           };
@@ -76,7 +76,7 @@ export const useGroupMembers = (groupId: string) => {
       
       setMembers(prev => prev.map(m => 
         m.id === member.id 
-          ? { ...m, role: isNewAdmin ? "admin" : "member" as MemberRole, is_admin: isNewAdmin }
+          ? { ...m, role: isNewAdmin ? "admin" : "member", is_admin: isNewAdmin }
           : m
       ));
       

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -13,7 +12,6 @@ import { GroupsService, GroupEventsService } from '@/services/groups';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { MemberWithProfile } from '@/services/groups/types';
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();

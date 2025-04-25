@@ -26,11 +26,15 @@ export const GroupInvitesService = {
       }
       
       // Find the invited user
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
         .eq('email', email)
         .maybeSingle();
+        
+      if (profileError) {
+        return { data: null, error: { message: 'Error finding user profile' } };
+      }
         
       if (!profileData) {
         return { data: null, error: { message: 'User not found with this email' } };
