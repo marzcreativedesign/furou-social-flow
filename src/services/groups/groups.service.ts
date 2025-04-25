@@ -95,6 +95,7 @@ export const GroupsService = {
   }
 };
 
+// Export the other services to maintain compatibility
 export { GroupMembersService } from './members.service';
 export { GroupInvitesService } from './invites.service';
 export { GroupEventsService } from './events.service';

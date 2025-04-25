@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GroupsService } from '@/services/groups';
+import { GroupsService, GroupMembersService, GroupInvitesService } from '@/services/groups';
 import { ErrorService } from '@/services/error.service';
 import { LoggerService } from '@/services/logger.service';
 import { DataTransformerService, TransformedGroup } from '@/services/data-transformer.service';
@@ -95,7 +95,7 @@ export const useGroups = () => {
     mutationFn: async ({ groupId, email }: { groupId: string, email: string }) => {
       LoggerService.info('Inviting user to group', { groupId, email });
       try {
-        const { data, error } = await GroupsService.inviteUserToGroup(groupId, email);
+        const { data, error } = await GroupInvitesService.inviteUserToGroup(groupId, email);
         
         if (error) {
           throw error;
