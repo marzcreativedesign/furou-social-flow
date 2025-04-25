@@ -1,55 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
-import GroupMembersManagement from '../components/GroupMembersManagement';
-import GroupRanking from '../components/GroupRanking';
-import { Button } from '@/components/ui/button';
+import { Calendar, Info, Users, Badge } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Info, Map, MessageCircle, Plus, Settings, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import GroupHeader from '@/components/group-detail/GroupHeader';
+import GroupEvents from '@/components/group-detail/GroupEvents';
+import GroupAbout from '@/components/group-detail/GroupAbout';
+import GroupMembersManagement from '@/components/GroupMembersManagement';
+import GroupRanking from '@/components/GroupRanking';
 import { GroupsService } from '@/services/groups';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Group {
-  id: string;
-  name: string;
-  description?: string;
-  image_url?: string;
-  created_at?: string;
-}
-
-interface GroupMember {
-  id: string;
-  user_id: string;
-  group_id: string;
-  is_admin: boolean;
-  joined_at: string;
-  profiles?: {
-    id: string;
-    full_name?: string;
-    username?: string;
-    avatar_url?: string;
-  };
-}
-
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  location?: string;
-  image_url?: string;
-  attendees?: number;
-}
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [group, setGroup] = useState<Group | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [group, setGroup] = useState<any>(null);
+  const [events, setEvents] = useState([]);
+  const [members, setMembers] = useState([]);
   const [activeTab, setActiveTab] = useState('eventos');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
@@ -179,39 +148,15 @@ const GroupDetail = () => {
       onBack={() => navigate('/grupos')}
     >
       <div className="p-4">
-        {/* Header do grupo com imagem de capa */}
-        <div className="relative w-full h-40 rounded-xl overflow-hidden mb-6">
-          <img 
-            src={group.image_url || 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac'} 
-            alt={group.name} 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-4 text-white">
-            <h1 className="text-2xl font-bold">{group.name}</h1>
-            <p className="text-sm text-white/80">{group.description}</p>
-          </div>
-        </div>
+        <GroupHeader 
+          name={group.name}
+          description={group.description}
+          imageUrl={group.image_url}
+          membersCount={members.length}
+          eventsCount={events.length}
+          activeEventsCount={events.filter(e => new Date(e.date) > new Date()).length}
+        />
 
-        {/* Estatísticas do grupo */}
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">{members.length}</div>
-            <div className="text-sm text-muted-foreground">Membros</div>
-          </div>
-          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">{events.length}</div>
-            <div className="text-sm text-muted-foreground">Eventos</div>
-          </div>
-          <div className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-            <div className="text-lg font-bold">
-              {events.filter(e => new Date(e.date) > new Date()).length}
-            </div>
-            <div className="text-sm text-muted-foreground">Ativos</div>
-          </div>
-        </div>
-
-        {/* Abas de navegação */}
         <Tabs 
           defaultValue="eventos" 
           value={activeTab} 
@@ -237,61 +182,10 @@ const GroupDetail = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Conteúdo da aba Eventos */}
-          <TabsContent value="eventos" className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Eventos do Grupo</h2>
-              <Button size="sm" onClick={() => navigate('/criar')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Evento
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {events.length > 0 ? (
-                events.map(event => (
-                  <div 
-                    key={event.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-border dark:border-gray-700"
-                    onClick={() => navigate(`/evento/${event.id}`)}
-                  >
-                    <div className="h-32 overflow-hidden">
-                      <img 
-                        src={event.image_url || 'https://images.unsplash.com/photo-1506157786151-b8491531f063'} 
-                        alt={event.title} 
-                        className="w-full h-full object-cover transition-transform hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold">{event.title}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {event.attendees || 0} confirmados
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-1">{event.date}</p>
-                      <p className="text-sm text-muted-foreground flex items-center">
-                        <Map className="h-3 w-3 mr-1" />
-                        {event.location || 'Local não definido'}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-3 py-10 text-center">
-                  <p className="text-muted-foreground mb-4">Este grupo ainda não possui eventos.</p>
-                  {isAdmin && (
-                    <Button onClick={() => navigate('/criar')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar primeiro evento
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+          <TabsContent value="eventos">
+            <GroupEvents events={events} isAdmin={isAdmin} />
           </TabsContent>
           
-          {/* Conteúdo da aba Membros */}
           <TabsContent value="membros">
             <GroupMembersManagement 
               groupId={id || '0'}
@@ -300,7 +194,6 @@ const GroupDetail = () => {
             />
           </TabsContent>
           
-          {/* Conteúdo da aba Ranking */}
           <TabsContent value="ranking">
             <div className="space-y-4">
               <h2 className="text-xl font-bold mb-4">Ranking de Participação</h2>
@@ -308,43 +201,14 @@ const GroupDetail = () => {
             </div>
           </TabsContent>
           
-          {/* Conteúdo da aba Sobre */}
-          <TabsContent value="sobre" className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-              <h3 className="font-semibold mb-2">Sobre o grupo</h3>
-              <p className="text-muted-foreground text-sm mb-4">{group.description || 'Sem descrição'}</p>
-              
-              <h4 className="font-medium mb-2">Criado em</h4>
-              <p className="text-muted-foreground text-sm mb-4">
-                {group.created_at 
-                  ? new Date(group.created_at).toLocaleDateString('pt-BR') 
-                  : 'Data desconhecida'}
-              </p>
-              
-              <h4 className="font-medium mb-2">Criado por</h4>
-              {members.filter(m => m.isAdmin).length > 0 ? (
-                <div className="flex items-center">
-                  <Avatar className="h-8 w-8 mr-2">
-                    <AvatarImage src={members.find(m => m.isAdmin)?.image} />
-                    <AvatarFallback>
-                      {members.find(m => m.isAdmin)?.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{members.find(m => m.isAdmin)?.name}</span>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">Informação não disponível</p>
-              )}
-            </div>
-            
-            {isOwner && (
-              <div className="mt-4">
-                <Button variant="outline" className="w-full" onClick={() => {}}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configurações do grupo
-                </Button>
-              </div>
-            )}
+          <TabsContent value="sobre">
+            <GroupAbout
+              description={group.description}
+              createdAt={group.created_at}
+              admins={members.filter(m => m.isAdmin)}
+              isOwner={isOwner}
+              onSettingsClick={() => {}}
+            />
           </TabsContent>
         </Tabs>
       </div>
