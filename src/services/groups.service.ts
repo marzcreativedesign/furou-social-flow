@@ -69,8 +69,11 @@ export const GroupsService = {
           profiles:user_id(id, username, full_name, avatar_url, email)
         `)
         .eq('group_id', groupId);
-        
-      return { data: data as GroupMember[], error };
+      
+      return { 
+        data: data as unknown as GroupMember[], 
+        error 
+      };
     } catch (error) {
       console.error("Error fetching group members:", error);
       return { data: null, error };
