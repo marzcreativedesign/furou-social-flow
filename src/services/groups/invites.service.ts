@@ -22,11 +22,14 @@ export const GroupInvitesService = {
         throw new Error('Você não tem permissão para convidar usuários para este grupo');
       }
       
-      const { data: invitedUser } = await supabase
+      // Using maybeSingle and explicit type assertion to avoid deep type instantiation
+      const { data: invitedUserResult } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
         .maybeSingle();
+        
+      const invitedUser = invitedUserResult as { id: string } | null;
         
       if (!invitedUser) {
         return { 

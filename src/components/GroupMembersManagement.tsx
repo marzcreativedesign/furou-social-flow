@@ -45,7 +45,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { GroupsService } from "@/services/groups.service";
+import { GroupsService } from "@/services/groups";
 import { supabase } from "@/integrations/supabase/client";
 
 type MemberRole = "owner" | "admin" | "member";

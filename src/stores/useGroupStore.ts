@@ -1,6 +1,5 @@
-
 import { create } from 'zustand';
-import { GroupsService } from '@/services/groups.service';
+import { GroupsService } from '@/services/groups';
 
 interface Group {
   id: string;

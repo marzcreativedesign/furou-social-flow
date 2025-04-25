@@ -1,5 +1,6 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GroupsService } from '@/services/groups.service';
+import { GroupsService } from '@/services/groups';
 import { ErrorService } from '@/services/error.service';
 import { LoggerService } from '@/services/logger.service';
 import { DataTransformerService, TransformedGroup } from '@/services/data-transformer.service';

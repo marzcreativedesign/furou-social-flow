@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/MainLayout";
-import { GroupsService } from "@/services/groups.service";
+import { GroupsService } from "@/services/groups";
 import { useAuth } from "@/hooks/use-auth";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupDialog from "@/components/groups/CreateGroupDialog";
@@ -19,7 +18,6 @@ interface Group {
   created_at?: string;
 }
 
-// Skeleton for loading state
 const GroupSkeleton = () => (
   <div className="flex flex-col rounded-lg border border-border overflow-hidden">
     <Skeleton className="h-40 w-full" />
@@ -46,7 +44,6 @@ const Groups = () => {
         const { data: groupMembers } = await GroupsService.getUserGroups();
 
         if (groupMembers && groupMembers.length > 0) {
-          // Map para evitar grupos duplicados
           const groupsMap = new Map<string, Group>();
 
           groupMembers.forEach(item => {
@@ -86,7 +83,6 @@ const Groups = () => {
   return (
     <MainLayout title="Seus Grupos">
       <div className="px-4 py-4">
-        {/* Botão Criar grupo, sempre fixo no topo à direita */}
         <div className="flex flex-wrap gap-2 justify-between items-center mb-6">
           <h2 className="text-lg font-bold">Seus grupos</h2>
           <Button 

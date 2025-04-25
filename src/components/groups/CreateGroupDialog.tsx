@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { GroupsService } from "@/services/groups.service";
+import { GroupsService } from "@/services/groups";
 
 import {
   Dialog,
