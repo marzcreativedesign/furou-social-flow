@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -8,10 +9,11 @@ import GroupEvents from '@/components/group-detail/GroupEvents';
 import GroupAbout from '@/components/group-detail/GroupAbout';
 import GroupMembersManagement from '@/components/group-detail/GroupMembersManagement';
 import GroupRanking from '@/components/GroupRanking';
-import { GroupsService } from '@/services/groups';
+import { GroupsService, GroupEventsService, GroupMembersService } from '@/services/groups';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { GroupMember } from '@/services/groups/types';
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +61,7 @@ const GroupDetail = () => {
           setIsOwner(firstAdmin?.user_id === user.user?.id);
           
           // Get group events
-          const { data: groupEvents, error: eventsError } = await GroupsService.getGroupEvents(id);
+          const { data: groupEvents, error: eventsError } = await GroupEventsService.getGroupEvents(id);
           
           if (!eventsError && groupEvents) {
             const formattedEvents = groupEvents.map((item: any) => ({
@@ -79,7 +81,7 @@ const GroupDetail = () => {
           }
           
           // Get group members
-          const { data: groupMembers, error: membersError } = await GroupsService.getGroupMembers(id);
+          const { data: groupMembers, error: membersError } = await GroupMembersService.getGroupMembers(id);
           
           if (!membersError && groupMembers) {
             // Convert to the format expected by GroupRanking

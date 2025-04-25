@@ -1,8 +1,9 @@
+
 import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
-import { GroupsService } from "@/services/groups"; 
+import { GroupMembersService } from "@/services/groups"; 
 import { EventsService } from "@/services/events.service";
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from "react-router-dom";
@@ -44,7 +45,7 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
           throw new Error('Usuário não autenticado');
         }
         
-        const { error } = await GroupsService.addMemberToGroup(relatedId, userId, false);
+        const { error } = await GroupMembersService.addMemberToGroup(relatedId, userId, false);
           
         if (error) {
           throw error;

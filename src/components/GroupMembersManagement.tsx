@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Users,
@@ -45,7 +46,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { GroupsService } from "@/services/groups";
+import { GroupMembersService, GroupInvitesService } from "@/services/groups";
 import { supabase } from "@/integrations/supabase/client";
 
 type MemberRole = "owner" | "admin" | "member";
@@ -84,7 +85,7 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
     const fetchGroupMembers = async () => {
       setLoading(true);
       try {
-        const { data: groupMembers } = await GroupsService.getGroupMembers(groupId);
+        const { data: groupMembers } = await GroupMembersService.getGroupMembers(groupId);
         if (groupMembers && groupMembers.length > 0) {
           const { data: currentUser } = await supabase.auth.getUser();
           
@@ -120,12 +121,12 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
   }, [groupId]);
 
   const handleRemoveMember = async (member: GroupMember) => {
-    await GroupsService.removeMember(groupId, member.user_id);
+    await GroupMembersService.removeMember(groupId, member.user_id);
     setMembers(members.filter(m => m.id !== member.id));
   };
 
   const handleUpdateRole = async (member: GroupMember, isNewAdmin: boolean) => {
-    await GroupsService.updateMember(groupId, member.user_id, isNewAdmin);
+    await GroupMembersService.updateMember(groupId, member.user_id, isNewAdmin);
     
     const updatedMembers = members.map(m => {
       if (m.id === member.id) {
@@ -155,7 +156,7 @@ const GroupMembersManagement: React.FC<GroupMembersManagementProps> = ({
     }
 
     try {
-      const { error } = await GroupsService.inviteUserToGroup(groupId, emailInvite);
+      const { error } = await GroupInvitesService.inviteUserToGroup(groupId, emailInvite);
       
       if (error) {
         toast({

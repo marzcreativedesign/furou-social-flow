@@ -22,14 +22,18 @@ export const GroupInvitesService = {
         throw new Error('Você não tem permissão para convidar usuários para este grupo');
       }
       
-      // Using maybeSingle and explicit type assertion to avoid deep type instantiation
       const { data: invitedUserResult } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
         .maybeSingle();
         
-      const invitedUser = invitedUserResult as { id: string } | null;
+      // Using explicit type to avoid deep nesting
+      interface ProfileResult {
+        id: string;
+      }
+        
+      const invitedUser = invitedUserResult as ProfileResult | null;
         
       if (!invitedUser) {
         return { 
