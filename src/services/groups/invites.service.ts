@@ -28,12 +28,12 @@ export const GroupInvitesService = {
         .eq('email', email)
         .maybeSingle();
         
-      // Using explicit type to avoid deep nesting
-      interface ProfileResult {
+      // Use a type annotation without direct reference to avoid deep nesting
+      type ProfileData = {
         id: string;
-      }
+      };
         
-      const invitedUser = invitedUserResult as ProfileResult | null;
+      const invitedUser = invitedUserResult as ProfileData | null;
         
       if (!invitedUser) {
         return { 

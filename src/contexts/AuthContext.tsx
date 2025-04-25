@@ -17,19 +17,21 @@ type AuthContextType = {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = React.useState<Session | null>(null);
   const [user, setUser] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const navigate = useNavigate();
 
   React.useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = AuthService.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
     });
 
+    // THEN check for existing session
     AuthService.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
