@@ -19,7 +19,7 @@ export interface GroupMember {
 
 export interface GroupMemberProfile {
   id: string;
-  user_id: string;
+  user_id: string; // This field is required for proper typing
   username?: string;
   full_name?: string;
   avatar_url?: string;
