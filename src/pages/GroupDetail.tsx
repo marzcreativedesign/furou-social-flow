@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import GroupHeader from '@/components/group-detail/GroupHeader';
 import GroupEvents from '@/components/group-detail/GroupEvents';
 import GroupAbout from '@/components/group-detail/GroupAbout';
-import GroupMembersManagement from '@/components/GroupMembersManagement';
+import GroupMembersManagement from '@/components/group-detail/GroupMembersManagement';
 import GroupRanking from '@/components/GroupRanking';
 import { GroupsService } from '@/services/groups';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
