@@ -1,21 +1,19 @@
 
 import { Routes, Route } from 'react-router-dom';
-import PrivateRoute from './PrivateRoute';
 import Home from '@/pages/Home';
 import EventsPage from '@/pages/EventsPage';
 import EventDetail from '@/pages/EventDetail';
 import Login from '@/pages/Login';
-import Register from '@/pages/Register';
 import Profile from '@/pages/Profile';
 import CreateEvent from '@/pages/CreateEvent';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/registro" element={<Register />} />
       
-      <Route element={<PrivateRoute />}>
+      <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
         <Route path="/eventos" element={<EventsPage />} />
         <Route path="/criar" element={<CreateEvent />} />

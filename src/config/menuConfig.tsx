@@ -1,6 +1,6 @@
 
 import {
-  Home, Calendar, Users, Bell, Settings,
+  Home, Calendar, Bell, Settings,
   Calculator, ScrollText, Globe, User
 } from "lucide-react";
 
@@ -17,12 +17,6 @@ export const menuCategories = [
       { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
       { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
       { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' }
-    ]
-  },
-  {
-    title: 'Grupos',
-    items: [
-      { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' }
     ]
   },
   {

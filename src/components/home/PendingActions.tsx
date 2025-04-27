@@ -1,9 +1,7 @@
-
 import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
-import { GroupMembersService } from "@/services/groups/members.service"; 
 import { EventsService } from "@/services/events.service";
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from "react-router-dom";
@@ -33,26 +31,9 @@ const PendingActions = ({ actions, onActionComplete }: PendingActionsProps) => {
       
       if (type === 'event_invite' && relatedId) {
         const { error } = await EventsService.joinEvent(relatedId);
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
         toast.success("Você aceitou participar do evento!");
         navigate(`/evento/${relatedId}`);
-      } else if (type === 'group_invite' && relatedId) {
-        const userId = (await supabase.auth.getUser()).data.user?.id;
-        
-        if (!userId) {
-          throw new Error('Usuário não autenticado');
-        }
-        
-        const { error } = await GroupMembersService.addMemberToGroup(relatedId, userId, false);
-          
-        if (error) {
-          throw error;
-        }
-        
-        toast.success("Você aceitou participar do grupo!");
-        navigate(`/grupo/${relatedId}`);
       } else {
         toast.success("Ação aceita com sucesso");
       }

@@ -1,4 +1,3 @@
-
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
@@ -65,8 +64,7 @@ const EventsGrid = ({
               imageUrl={event.image_url || ''} 
               attendees={event.event_participants?.length || 0}
               confirmed={event.event_participants?.some(p => p.status === 'confirmed')}
-              type={event.is_public ? "public" : event.group_events?.length ? "group" : "private"}
-              groupName={event.group_events?.[0]?.groups?.name}
+              type={event.is_public ? "public" : "private"}
               size="large" 
             />
           </div>
