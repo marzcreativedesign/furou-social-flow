@@ -25,7 +25,7 @@ export const GroupInvitesService = {
         return { data: null, error: { message: 'You don\'t have permission to invite users to this group' } };
       }
       
-      // Find the invited user by email using the new email column
+      // Find the invited user by email using the profile email column
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -70,4 +70,3 @@ export const GroupInvitesService = {
     }
   }
 };
-
