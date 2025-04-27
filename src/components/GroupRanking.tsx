@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,27 +10,15 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-
-type MemberStats = {
-  id: string;
-  name: string;
-  image: string;
-  isAdmin: boolean;
-  stats: {
-    participated: number;
-    missed: number;
-    pending: number;
-  };
-};
+import { MemberWithStats } from "@/types/group";
 
 interface GroupRankingProps {
-  members: MemberStats[];
+  members: MemberWithStats[];
 }
 
 const GroupRanking = ({ members }: GroupRankingProps) => {
   const [activeFilter, setActiveFilter] = useState<'participation' | 'missed'>('participation');
   
-  // Sort members based on the active filter
   const sortedMembers = [...members].sort((a, b) => {
     if (activeFilter === 'participation') {
       const totalA = a.stats.participated + a.stats.missed + a.stats.pending;
@@ -145,7 +132,6 @@ const GroupRanking = ({ members }: GroupRankingProps) => {
                     </span>
                   </div>
                   
-                  {/* Participation Bar */}
                   <div className="mt-2">
                     <div className="w-full h-2 flex rounded-full overflow-hidden">
                       <div 

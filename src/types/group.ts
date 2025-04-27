@@ -35,3 +35,16 @@ export interface GroupWithMembers extends Group {
     };
   }>;
 }
+
+// Add a new interface for the member with stats specifically for the ranking component
+export interface MemberWithStats {
+  id: string;
+  name: string;
+  image: string;
+  isAdmin: boolean;
+  stats: {
+    participated: number;
+    missed: number;
+    pending: number;
+  };
+}

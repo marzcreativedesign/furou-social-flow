@@ -13,6 +13,7 @@ import GroupTabs from '@/components/group-detail/GroupTabs';
 import { Button } from '@/components/ui/button';
 import { useGroupData } from '@/hooks/useGroupData';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { MemberWithStats } from '@/types/group';
 
 const GroupDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +60,19 @@ const GroupDetail = () => {
   }
 
   const activeEventsCount = events.filter((e: any) => new Date(e.date) > new Date()).length;
+
+  // Convert members to the MemberWithStats format required by GroupRanking
+  const membersWithStats: MemberWithStats[] = members.map(member => ({
+    id: member.id,
+    name: member.name,
+    image: member.image || `https://i.pravatar.cc/150?u=${member.id}`,
+    isAdmin: member.isAdmin || false,
+    stats: member.stats || {
+      participated: Math.floor(Math.random() * 10),
+      missed: Math.floor(Math.random() * 5),
+      pending: Math.floor(Math.random() * 3)
+    }
+  }));
 
   return (
     <MainLayout 
@@ -110,7 +124,7 @@ const GroupDetail = () => {
               <ErrorBoundary>
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold mb-4">Ranking de Participação</h2>
-                  <GroupRanking members={members} />
+                  <GroupRanking members={membersWithStats} />
                 </div>
               </ErrorBoundary>
             </TabsContent>
