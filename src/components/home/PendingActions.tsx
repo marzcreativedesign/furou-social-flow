@@ -3,7 +3,7 @@ import { X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { NotificationsService } from "@/services/notifications.service";
-import { GroupMembersService } from "@/services/groups"; 
+import { GroupMembersService } from "@/services/groups/members.service"; 
 import { EventsService } from "@/services/events.service";
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from "react-router-dom";

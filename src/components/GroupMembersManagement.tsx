@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Users,
@@ -46,7 +45,8 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { GroupMembersService, GroupInvitesService } from "@/services/groups";
+import { GroupMembersService } from "@/services/groups/members.service";
+import { GroupInvitesService } from "@/services/groups/invites.service";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupMemberWithProfile } from "@/services/groups/types";
 
