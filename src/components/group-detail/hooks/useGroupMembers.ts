@@ -1,7 +1,8 @@
 
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { GroupMembersService, GroupInvitesService } from "@/services/groups";
+import { GroupMembersService } from "@/services/groups/members.service";
+import { GroupInvitesService } from "@/services/groups/invites.service";
 import { GroupMember, MemberRole } from "../types";
 
 export const useGroupMembers = (groupId: string) => {

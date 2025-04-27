@@ -1,6 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GroupsService, GroupInvitesService } from '@/services/groups';
+import { GroupsService } from '@/services/groups/groups.service';
+import { GroupInvitesService } from '@/services/groups/invites.service';
 import { toast } from 'sonner';
 
 interface CreateGroupData {
@@ -40,7 +40,6 @@ export const useGroups = () => {
           return [];
         }
 
-        // Map para evitar grupos duplicados
         const groupsMap = new Map<string, TransformedGroup>();
 
         data.forEach(item => {
