@@ -3,6 +3,7 @@ import { Calendar, MapPin, Users } from "lucide-react";
 import EventTag from "./EventTag";
 import { Link } from "react-router-dom";
 import OptimizedImage from "./OptimizedImage";
+import { memo } from "react";
 
 interface EventCardProps {
   id: string;
@@ -17,7 +18,8 @@ interface EventCardProps {
   size?: "default" | "large";
 }
 
-const EventCard = ({
+// Usando memo para evitar re-renderizações desnecessárias do EventCard
+const EventCard = memo(({
   id,
   title,
   date,
@@ -115,6 +117,9 @@ const EventCard = ({
       </div>
     </Link>
   );
-};
+});
+
+// Display name para facilitar depuração
+EventCard.displayName = 'EventCard';
 
 export default EventCard;

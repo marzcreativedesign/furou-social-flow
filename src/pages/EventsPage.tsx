@@ -9,9 +9,10 @@ import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import type { Event, EventServiceResponse } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
-import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
+import { getCache, setCache, generateCacheKey, isCacheStale } from "@/utils/clientCache";
+import { useDebounce } from "@/utils/debounce";
 
-// Interface for cached response
+// Interface para resposta em cache
 interface EventsResponse {
   events: Event[];
   metadata: {
@@ -26,18 +27,38 @@ const EventsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;  // Reduzido de 9 para 6 itens por página
+  const pageSize = 6;
+  
+  // Aplica debounce na busca para evitar chamadas API excessivas
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const debouncedLocation = useDebounce(locationQuery, 500);
 
   // Gera uma chave de cache única para esta consulta
-  const cacheKey = generateCacheKey('events', { page: currentPage, pageSize, filter: activeFilter });
+  const cacheKey = generateCacheKey('events', { 
+    page: currentPage, 
+    pageSize, 
+    filter: activeFilter,
+    search: debouncedSearch,
+    location: debouncedLocation
+  });
+  
+  // Verifica se o cache está "stale" (expirado mas ainda utilizável)
+  const isStale = isCacheStale<EventsResponse>(cacheKey);
 
-  const { data: eventsData, isLoading } = useQuery({
-    queryKey: ['events', currentPage, pageSize],
+  const { 
+    data: eventsData, 
+    isLoading,
+    refetch 
+  } = useQuery({
+    queryKey: ['events', currentPage, pageSize, activeFilter, debouncedSearch, debouncedLocation],
     queryFn: async () => {
-      // Verifica se existe cache primeiro
+      console.time('fetchEvents');
+      
+      // Verifica cache primeiro
       const cachedData = getCache<EventsResponse>(cacheKey);
       if (cachedData) {
         console.log('Usando dados em cache para eventos');
+        console.timeEnd('fetchEvents');
         return cachedData;
       }
 
@@ -54,44 +75,76 @@ const EventsPage = () => {
       };
       
       // Armazena os resultados em cache
-      setCache(cacheKey, result, { expireTimeInMinutes: 5 });
+      setCache(cacheKey, result, { 
+        expireTimeInMinutes: 5,
+        staleWhileRevalidate: true
+      });
       
+      console.timeEnd('fetchEvents');
       return result;
     },
-    placeholderData: (previousData) => previousData // Use this instead of keepPreviousData
+    staleTime: 5 * 60 * 1000, // Dados permanecem "frescos" por 5 minutos
+    gcTime: 10 * 60 * 1000    // Dados são mantidos no cache por 10 minutos
   });
+
+  // Atualiza se os dados estão stale
+  useEffect(() => {
+    if (isStale && !isLoading) {
+      console.log('Dados em cache expirados, atualizando em segundo plano');
+      refetch(); // Recarrega em segundo plano
+    }
+  }, [isStale, isLoading, refetch]);
 
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
-  // Implementação de pre-fetching para a próxima página
+  // Implementação aprimorada de pre-fetching para a próxima página
   useEffect(() => {
     if (metadata.currentPage < metadata.totalPages) {
       const nextPage = currentPage + 1;
-      const nextPageCacheKey = generateCacheKey('events', { page: nextPage, pageSize, filter: activeFilter });
+      const nextPageCacheKey = generateCacheKey('events', { 
+        page: nextPage, 
+        pageSize, 
+        filter: activeFilter,
+        search: debouncedSearch,
+        location: debouncedLocation
+      });
       
-      // Se não existe cache para a próxima página, pré-carrega
+      // Se não existe cache para a próxima página, pré-carrega com atraso
       if (!getCache<EventsResponse>(nextPageCacheKey)) {
-        console.log(`Pré-carregando página ${nextPage}`);
-        EventsService.getEvents(nextPage, pageSize).then((response) => {
-          if (response && !response.error && response.data) {
-            // Verifica explicitamente se a resposta tem o formato correto antes de acessar metadata
-            const responseMetadata = 'metadata' in response ? response.metadata : undefined;
-            
-            setCache(nextPageCacheKey, { 
-              events: response.data, 
-              metadata: {
-                totalPages: responseMetadata?.totalPages || 1,
-                currentPage: nextPage
+        const prefetchTimer = setTimeout(() => {
+          console.log(`Pré-carregando página ${nextPage}`);
+          EventsService.getEvents(nextPage, pageSize)
+            .then((response) => {
+              if (response && !response.error && response.data) {
+                // Verifica explicitamente se a resposta tem o formato correto
+                const responseMetadata = 'metadata' in response ? response.metadata : undefined;
+                
+                setCache(nextPageCacheKey, { 
+                  events: response.data, 
+                  metadata: {
+                    totalPages: responseMetadata?.totalPages || 1,
+                    currentPage: nextPage
+                  }
+                }, { 
+                  expireTimeInMinutes: 5,
+                  staleWhileRevalidate: true
+                });
               }
+            })
+            .catch(err => {
+              console.error("Erro durante prefetch:", err);
             });
-          }
-        });
+        }, 2000); // Atraso para priorizar a renderização atual
+        
+        return () => clearTimeout(prefetchTimer);
       }
     }
-  }, [currentPage, metadata.totalPages, pageSize, activeFilter]);
+  }, [currentPage, metadata.totalPages, pageSize, activeFilter, debouncedSearch, debouncedLocation]);
 
+  // Filtra os eventos com base nos critérios selecionados
   const filteredEvents = events.filter((event: Event) => {
+    // Filtra por tipo de evento
     if (
       (activeFilter === 'public' && !event.is_public) || 
       (activeFilter === 'private' && event.is_public) || 
@@ -102,8 +155,9 @@ const EventsPage = () => {
       return false;
     }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // Filtra por termos de busca (já com debounce aplicado)
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       const matchesTitle = event.title.toLowerCase().includes(query);
       const matchesLocation = event.location?.toLowerCase().includes(query) || false;
       const matchesGroup = event.group_events?.[0]?.groups?.name?.toLowerCase().includes(query) || false;
@@ -112,7 +166,8 @@ const EventsPage = () => {
       }
     }
 
-    if (locationQuery && !event.location?.toLowerCase().includes(locationQuery.toLowerCase())) {
+    // Filtra por localização (já com debounce aplicado)
+    if (debouncedLocation && !event.location?.toLowerCase().includes(debouncedLocation.toLowerCase())) {
       return false;
     }
     

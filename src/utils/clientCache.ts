@@ -1,12 +1,13 @@
 
 /**
- * Utilitários para cache no lado do cliente
- * Reduz tráfego de rede armazenando dados localmente
+ * Utilitários aprimorados para cache no lado do cliente
+ * Reduz tráfego de rede armazenando dados localmente com controle de expiração
  */
 
 // Tipo para configuração de cache
 type CacheConfig = {
   expireTimeInMinutes?: number;
+  staleWhileRevalidate?: boolean; // Permite usar dados expirados enquanto recarrega
 };
 
 // Tipo para dados em cache com timestamp
@@ -18,6 +19,7 @@ type CachedData<T> = {
 // Configuração padrão: 5 minutos
 const defaultConfig: CacheConfig = {
   expireTimeInMinutes: 5,
+  staleWhileRevalidate: false,
 };
 
 /**
@@ -57,6 +59,12 @@ export const getCache = <T>(key: string, config: CacheConfig = defaultConfig): T
     
     // Verifica se o cache expirou
     if (Date.now() - timestamp > expireTime) {
+      // Se configurado para usar dados expirados enquanto recarrega, retorna os dados
+      if (config.staleWhileRevalidate) {
+        console.log(`[Cache] Usando dados expirados (stale): ${key}`);
+        return data;
+      }
+      
       console.log(`[Cache] Dados expirados: ${key}`);
       localStorage.removeItem(key);
       return null;
@@ -67,6 +75,26 @@ export const getCache = <T>(key: string, config: CacheConfig = defaultConfig): T
   } catch (error) {
     console.error("[Cache] Erro ao recuperar dados:", error);
     return null;
+  }
+};
+
+/**
+ * Verifica se o cache está expirado mas ainda utilizável (stale)
+ */
+export const isCacheStale = <T>(key: string, config: CacheConfig = defaultConfig): boolean => {
+  try {
+    const cachedItem = localStorage.getItem(key);
+    if (!cachedItem) {
+      return false;
+    }
+
+    const { timestamp } = JSON.parse(cachedItem) as CachedData<T>;
+    const expireTime = (config.expireTimeInMinutes || defaultConfig.expireTimeInMinutes!) * 60 * 1000;
+    
+    // Verifica se o cache expirou
+    return Date.now() - timestamp > expireTime;
+  } catch {
+    return false;
   }
 };
 
