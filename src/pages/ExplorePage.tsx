@@ -63,7 +63,6 @@ const ExplorePage = () => {
         ) : (
           <GroupsComingSoon 
             onExploreEvents={() => setActiveTab("events")}
-            onCreateGroup={() => navigate('/grupos')}
           />
         )}
       </div>

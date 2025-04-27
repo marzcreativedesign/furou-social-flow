@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import EventManagement from "./EventManagement";
 import UserManagement from "./UserManagement";
-import AdminCharts from "../charts/AdminCharts";
+import { BarChart, LineChart, PieChart } from "../charts/AdminCharts";
 import GroupManagement from "./GroupManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -96,7 +96,14 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <h3 className="text-lg font-medium mb-4">Métricas do sistema</h3>
-          <AdminCharts />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="h-64">
+              <LineChart />
+            </div>
+            <div className="h-64">
+              <BarChart />
+            </div>
+          </div>
         </Card>
       </div>
 

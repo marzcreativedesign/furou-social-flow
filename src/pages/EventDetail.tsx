@@ -101,8 +101,7 @@ const EventDetail = () => {
 
   const { confirmedAttendees, pendingAttendees, cancelledAttendees } = processParticipants();
   const isEventHost = event.creator_id === user?.id;
-  const eventType = event.is_public ? "public" : (event.group_events && event.group_events.length > 0 ? "group" : "private");
-  const groupName = event.group_events?.[0]?.groups?.name || null;
+  const eventType = event.is_public ? "public" : "private";
 
   const EditComponent = isMobile ? Drawer : Dialog;
   const EditComponentContent = isMobile ? DrawerContent : DialogContent;
@@ -116,7 +115,6 @@ const EventDetail = () => {
         location={event.location || "Local não definido"}
         imageUrl={event.image_url || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3"}
         type={eventType}
-        groupName={groupName}
         host={event.profiles ? {
           id: event.profiles.id,
           name: event.profiles.full_name || "Usuário",

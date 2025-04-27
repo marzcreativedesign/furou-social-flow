@@ -17,8 +17,7 @@ interface CachedHomeEvents {
 
 // Define extended event type com as propriedades personalizadas necessárias
 interface ExtendedEvent extends Event {
-  type?: 'public' | 'private' | 'group';
-  groupName?: string | null;
+  type?: 'public' | 'private';
   confirmed?: boolean;
   attendees?: number;
 }
@@ -78,7 +77,7 @@ export const useHomeEvents = (
         // Fetch eventos relacionados ao usuário
         const { data: userEvents, error: eventsError } = await EventsService.getEvents();
         
-        let processedEvents: ExtendedEvent[] = []; // Declare processedEvents here
+        let processedEvents: ExtendedEvent[] = []; 
 
         if (eventsError) {
           console.error("Error fetching events:", eventsError);
@@ -90,17 +89,12 @@ export const useHomeEvents = (
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
             .map(event => {
-              const groupInfo = event.group_events && event.group_events[0]?.groups 
-                ? event.group_events[0].groups 
-                : null;
-              
               return {
                 ...event,
                 confirmed: event.event_participants && event.event_participants.some(
                   p => p.user_id === user.id && p.status === 'confirmed'
                 ),
-                type: event.is_public ? "public" as const : (groupInfo ? "group" as const : "private" as const),
-                groupName: groupInfo?.name || null,
+                type: event.is_public ? "public" as const : "private" as const,
                 attendees: event.event_participants?.length || 0
               } as ExtendedEvent;
             });
@@ -111,7 +105,7 @@ export const useHomeEvents = (
         // Fetch eventos públicos (otimizado)
         const { data: publicEventsData, error: publicEventsError } = await EventsService.getPublicEvents();
         
-        let formattedPublicEvents: ExtendedEvent[] = []; // Add this declaration
+        let formattedPublicEvents: ExtendedEvent[] = [];
 
         if (publicEventsError) {
           console.error("Error fetching public events:", publicEventsError);
@@ -131,7 +125,7 @@ export const useHomeEvents = (
           
           // Armazena os dados em cache para uso futuro
           const cacheData: CachedHomeEvents = {
-            events: processedEvents || [], // Fixed: using processedEvents 
+            events: processedEvents || [],
             publicEvents: formattedPublicEvents || [],
             timestamp: Date.now()
           };
@@ -158,8 +152,7 @@ export const useHomeEvents = (
   const filteredEvents = events.filter(event => {
     if (
       (activeFilter === 'public' && !event.is_public) || 
-      (activeFilter === 'private' && (event.is_public || event.type === 'group')) || 
-      (activeFilter === 'group' && event.type !== 'group') || 
+      (activeFilter === 'private' && event.is_public) || 
       (activeFilter === 'confirmed' && !event.confirmed) || 
       (activeFilter === 'missed' && event.confirmed !== false)
     ) {
@@ -170,8 +163,7 @@ export const useHomeEvents = (
       const query = debouncedSearch.toLowerCase();
       return (
         event.title.toLowerCase().includes(query) || 
-        (event.location && event.location.toLowerCase().includes(query)) || 
-        (event.groupName && event.groupName.toLowerCase().includes(query))
+        (event.location && event.location.toLowerCase().includes(query))
       );
     }
     
@@ -180,4 +172,3 @@ export const useHomeEvents = (
 
   return { loading, filteredEvents, publicEvents };
 };
-

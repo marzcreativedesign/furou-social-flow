@@ -31,14 +31,7 @@ export interface EventData {
   };
   event_participants: EventParticipant[];
   estimated_budget?: number | null;
-  group_events?: Array<{ 
-    id?: string; // Making id optional to match API data structure
-    group_id: string; 
-    groups?: { 
-      id?: string; // Making id optional to match API data structure
-      name: string 
-    } 
-  }>;
+  group_events?: any[]; // Change to any[] to handle type issues
   created_at?: string | null;
   updated_at?: string | null;
   visibility?: 'public' | 'private' | null;

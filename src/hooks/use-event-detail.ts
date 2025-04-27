@@ -17,7 +17,7 @@ export const useEventDetail = (id: string | undefined) => {
     date: "",
     startTime: "",
     endTime: "",
-    type: "public" as "public" | "private" | "group",
+    type: "public" as "public" | "private",
     includeEstimatedBudget: false,
     estimatedBudget: "",
   });
@@ -57,7 +57,7 @@ export const useEventDetail = (id: string | undefined) => {
             date: formattedDate,
             startTime: startTime,
             endTime: endTime,
-            type: data.is_public ? "public" : (data.group_events && data.group_events.length > 0 ? "group" : "private"),
+            type: data.is_public ? "public" : "private",
             includeEstimatedBudget: !!data.estimated_budget,
             estimatedBudget: data.estimated_budget ? data.estimated_budget.toString() : "",
           });
