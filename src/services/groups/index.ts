@@ -5,5 +5,5 @@ export { GroupMembersService } from './members.service';
 export { GroupInvitesService } from './invites.service';
 export { GroupEventsService } from './events.service';
 
-// Export types
-export * from './types';
+// Export types only - no services
+export type * from './types';
