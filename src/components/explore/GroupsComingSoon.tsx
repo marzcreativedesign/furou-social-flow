@@ -1,13 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { Users, PlusCircle } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface GroupsComingSoonProps {
   onExploreEvents: () => void;
-  onCreateGroup: () => void;
 }
 
-const GroupsComingSoon = ({ onExploreEvents, onCreateGroup }: GroupsComingSoonProps) => {
+const GroupsComingSoon = ({ onExploreEvents }: GroupsComingSoonProps) => {
   return (
     <div className="text-center py-12">
       <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
@@ -16,15 +15,11 @@ const GroupsComingSoon = ({ onExploreEvents, onCreateGroup }: GroupsComingSoonPr
         Estamos trabalhando para trazer a descoberta de grupos em breve!
       </p>
       <Button 
-        variant="outline"
+        variant="default"
         onClick={onExploreEvents}
         className="mr-2"
       >
         Ver eventos
-      </Button>
-      <Button onClick={onCreateGroup}>
-        <PlusCircle size={16} className="mr-1" />
-        Criar grupo
       </Button>
     </div>
   );

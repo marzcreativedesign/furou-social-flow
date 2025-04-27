@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
@@ -10,10 +11,10 @@ interface Event {
   date: string;
   image_url?: string;
   location?: string;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-  creator_id: string;
-  participants_count: number;
-  is_public: boolean;
+  status?: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  creator_id?: string;
+  participants_count?: number;
+  is_public?: boolean;
 }
 
 interface EventsListProps {
@@ -70,7 +71,7 @@ const EventsList = ({
               date={event.date}
               location={event.location || ''}
               imageUrl={event.image_url || ''}
-              attendees={event.participants_count}
+              attendees={event.participants_count || 0}
               type={event.is_public ? "public" : "private"}
               confirmed={event.status === 'upcoming' || event.status === 'ongoing'}
             />

@@ -68,17 +68,11 @@ export const useProfile = () => {
           .select('status')
           .eq('user_id', user.id);
 
-        // Fetch groups
-        const { data: groups } = await supabase
-          .from('group_members')
-          .select('group_id')
-          .eq('user_id', user.id);
-
         setUserStats({
           eventsCreated: eventsCreated?.length || 0,
           eventsAttended: confirmations?.filter(c => c.status === 'confirmed').length || 0,
           eventsMissed: confirmations?.filter(c => c.status === 'declined').length || 0,
-          groups: groups?.length || 0
+          groups: 0 // Groups feature is removed, so we set this to 0
         });
 
       } catch (error) {
