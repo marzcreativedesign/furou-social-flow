@@ -7,6 +7,7 @@ import { useGroupMembers } from "./hooks/useGroupMembers";
 import MembersList from "./MembersList";
 import { InviteDialog } from "./InviteDialog";
 import type { MemberManagementProps } from "./types";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const GroupMembersManagement = ({ groupId, isOwner, isAdmin }: MemberManagementProps) => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -40,13 +41,15 @@ const GroupMembersManagement = ({ groupId, isOwner, isAdmin }: MemberManagementP
       </CardHeader>
 
       <CardContent>
-        <MembersList
-          members={members}
-          isOwner={isOwner}
-          isAdmin={isAdmin}
-          onUpdateRole={updateRole}
-          onRemove={removeMember}
-        />
+        <ErrorBoundary>
+          <MembersList
+            members={members}
+            isOwner={isOwner}
+            isAdmin={isAdmin}
+            onUpdateRole={updateRole}
+            onRemove={removeMember}
+          />
+        </ErrorBoundary>
       </CardContent>
 
       {(isOwner || isAdmin) && (
