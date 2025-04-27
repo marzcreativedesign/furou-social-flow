@@ -4,7 +4,7 @@ import { UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGroupMembers } from "./hooks/useGroupMembers";
-import { MemberCard } from "./MemberCard";
+import MembersList from "./MembersList";
 import { InviteDialog } from "./InviteDialog";
 import type { MemberManagementProps } from "./types";
 
@@ -40,18 +40,13 @@ const GroupMembersManagement = ({ groupId, isOwner, isAdmin }: MemberManagementP
       </CardHeader>
 
       <CardContent>
-        <div className="space-y-4">
-          {members.map(member => (
-            <MemberCard
-              key={member.id}
-              member={member}
-              isOwner={isOwner}
-              isAdmin={isAdmin}
-              onUpdateRole={updateRole}
-              onRemove={removeMember}
-            />
-          ))}
-        </div>
+        <MembersList
+          members={members}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
+          onUpdateRole={updateRole}
+          onRemove={removeMember}
+        />
       </CardContent>
 
       {(isOwner || isAdmin) && (

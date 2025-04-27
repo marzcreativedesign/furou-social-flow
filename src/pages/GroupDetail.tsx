@@ -1,14 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
-import { Calendar, Info, Users, Badge } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import GroupHeader from '@/components/group-detail/GroupHeader';
 import GroupEvents from '@/components/group-detail/GroupEvents';
 import GroupAbout from '@/components/group-detail/GroupAbout';
 import GroupMembersManagement from '@/components/group-detail/GroupMembersManagement';
 import GroupRanking from '@/components/GroupRanking';
+import GroupStats from '@/components/group-detail/GroupStats';
+import GroupTabs from '@/components/group-detail/GroupTabs';
 import { GroupsService } from '@/services/groups/groups.service';
 import { GroupEventsService } from '@/services/groups/events.service';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +33,6 @@ const GroupDetail = () => {
       
       setLoading(true);
       try {
-        // Fetch group details
         const { data: groupData, error: groupError } = await GroupsService.getGroupById(id);
         
         if (groupError) {
@@ -49,18 +48,15 @@ const GroupDetail = () => {
         if (groupData) {
           setGroup(groupData);
           
-          // Check if user is admin
           const { data: user } = await supabase.auth.getUser();
           const isUserAdmin = groupData.group_members?.some(
             (member: any) => member.user_id === user.user?.id && member.is_admin
           );
           setIsAdmin(isUserAdmin);
           
-          // For simplicity, assuming the first admin is the owner
           const firstAdmin = groupData.group_members?.find((member: any) => member.is_admin);
           setIsOwner(firstAdmin?.user_id === user.user?.id);
           
-          // Get group events
           const { data: groupEvents, error: eventsError } = await GroupEventsService.getGroupEvents(id);
           
           if (!eventsError && groupEvents) {
@@ -74,22 +70,20 @@ const GroupDetail = () => {
               }),
               location: item.location,
               image_url: item.image_url,
-              attendees: 0 // Will update with actual count
+              attendees: 0
             }));
             
             setEvents(formattedEvents);
           }
           
-          // Get group members data from group_members relationship
           if (groupData.group_members && Array.isArray(groupData.group_members)) {
-            // Format members data for GroupRanking
             const formattedMembers = groupData.group_members.map((member: any) => ({
               id: member.user_id,
-              name: member.profile?.full_name || member.profile?.username || 'Member', // Updated from profiles to profile
+              name: member.profile?.full_name || member.profile?.username || 'Member',
               image: member.profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
               isAdmin: member.is_admin,
               stats: { 
-                participated: Math.floor(Math.random() * 10), // Mock stats for now
+                participated: Math.floor(Math.random() * 10),
                 missed: Math.floor(Math.random() * 5),
                 pending: Math.floor(Math.random() * 3)
               }
@@ -158,30 +152,18 @@ const GroupDetail = () => {
           activeEventsCount={events.filter((e: any) => new Date(e.date) > new Date()).length}
         />
 
+        <GroupStats
+          membersCount={members.length}
+          eventsCount={events.length}
+          activeEventsCount={events.filter((e: any) => new Date(e.date) > new Date()).length}
+        />
+
         <Tabs 
           defaultValue="eventos" 
           value={activeTab} 
-          onValueChange={setActiveTab} 
           className="w-full"
         >
-          <TabsList className="w-full grid grid-cols-4 mb-4">
-            <TabsTrigger value="eventos">
-              <Calendar className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Eventos</span>
-            </TabsTrigger>
-            <TabsTrigger value="membros">
-              <Users className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Membros</span>
-            </TabsTrigger>
-            <TabsTrigger value="ranking">
-              <Badge className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Ranking</span>
-            </TabsTrigger>
-            <TabsTrigger value="sobre">
-              <Info className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Sobre</span>
-            </TabsTrigger>
-          </TabsList>
+          <GroupTabs activeTab={activeTab} onTabChange={setActiveTab} />
           
           <TabsContent value="eventos">
             <GroupEvents events={events} isAdmin={isAdmin} />
