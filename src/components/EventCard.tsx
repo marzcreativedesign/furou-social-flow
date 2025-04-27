@@ -13,12 +13,10 @@ interface EventCardProps {
   imageUrl: string;
   attendees: number;
   confirmed?: boolean;
-  type?: "public" | "private" | "group";
-  groupName?: string | null;
+  type?: "public" | "private";
   size?: "default" | "large";
 }
 
-// Usando memo para evitar re-renderizações desnecessárias do EventCard
 const EventCard = memo(({
   id,
   title,
@@ -28,12 +26,10 @@ const EventCard = memo(({
   attendees,
   confirmed,
   type = "public",
-  groupName = null,
   size = "default",
 }: EventCardProps) => {
   const isPastEvent = new Date(date) < new Date();
 
-  // Define background color based on event type
   const getCardBorder = () => {
     if (isPastEvent) return "border-l-4 border-l-gray-500";
     
@@ -42,17 +38,12 @@ const EventCard = memo(({
         return "border-l-4 border-l-green-500";
       case "private":
         return "border-l-4 border-l-blue-500";
-      case "group":
-        return "border-l-4 border-l-amber-500";
       default:
         return "";
     }
   };
 
-  // Determine if the card should be larger
   const isLarge = size === "large";
-  
-  // Default fallback image if imageUrl is empty
   const fallbackImage = "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3";
 
   return (
@@ -65,18 +56,14 @@ const EventCard = memo(({
           aspectRatio={isLarge ? "16/9" : "4/3"}
           lazyLoad={true}
         />
-        {/* Add a dark gradient overlay for better text contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
         
         <div className="absolute top-3 left-3 flex flex-wrap gap-1">
           {type && !isPastEvent && (
             <EventTag 
               type={type} 
-              label={type === "public" ? "Público" : type === "private" ? "Privado" : "Grupo"} 
+              label={type === "public" ? "Público" : "Privado"} 
             />
-          )}
-          {groupName && !isPastEvent && (
-            <EventTag type="group" label={groupName} />
           )}
           {isPastEvent && (
             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-800/80 text-gray-200 border border-gray-700">
@@ -96,7 +83,6 @@ const EventCard = memo(({
           </div>
         )}
         
-        {/* Event information overlay on image */}
         <div className={`absolute bottom-0 left-0 right-0 p-4 text-white`}>
           <h3 className={`font-bold ${isLarge ? 'text-xl' : 'text-lg'} line-clamp-2 text-shadow-sm`}>{title}</h3>
           <div className={`mt-1 space-y-1`}>
@@ -119,7 +105,6 @@ const EventCard = memo(({
   );
 });
 
-// Display name para facilitar depuração
 EventCard.displayName = 'EventCard';
 
 export default EventCard;
