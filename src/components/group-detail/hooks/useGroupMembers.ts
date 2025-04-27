@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GroupMembersService } from "@/services/groups/members.service";
@@ -19,10 +18,9 @@ export const useGroupMembers = (groupId: string) => {
       
       if (data) {
         const formattedMembers: GroupMember[] = data.map(member => {
-          // Determine role
           let role: MemberRole = "member";
           if (member.is_admin) {
-            role = "admin"; // Default admins to "admin" role
+            role = "admin";
           }
           
           return {
