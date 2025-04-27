@@ -78,12 +78,14 @@ export const useHomeEvents = (
         // Fetch eventos relacionados ao usuário
         const { data: userEvents, error: eventsError } = await EventsService.getEvents();
         
+        let processedEvents: ExtendedEvent[] = []; // Declare processedEvents here
+
         if (eventsError) {
           console.error("Error fetching events:", eventsError);
           toast.error("Erro ao carregar eventos");
         } else if (userEvents) {
           // Processar eventos principais
-          const processedEvents = userEvents
+          processedEvents = userEvents
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
@@ -109,10 +111,12 @@ export const useHomeEvents = (
         // Fetch eventos públicos (otimizado)
         const { data: publicEventsData, error: publicEventsError } = await EventsService.getPublicEvents();
         
+        let formattedPublicEvents: ExtendedEvent[] = []; // Add this declaration
+
         if (publicEventsError) {
           console.error("Error fetching public events:", publicEventsError);
         } else if (publicEventsData) {
-          const formattedPublicEvents = publicEventsData
+          formattedPublicEvents = publicEventsData
             .filter(event => !user || event.creator_id !== user.id)
             .map(event => ({
               ...event,
@@ -127,7 +131,7 @@ export const useHomeEvents = (
           
           // Armazena os dados em cache para uso futuro
           const cacheData: CachedHomeEvents = {
-            events: processedEvents || [], // Fixed: using processedEvents instead of formattedEvents
+            events: processedEvents || [], // Fixed: using processedEvents 
             publicEvents: formattedPublicEvents || [],
             timestamp: Date.now()
           };
@@ -176,3 +180,4 @@ export const useHomeEvents = (
 
   return { loading, filteredEvents, publicEvents };
 };
+
