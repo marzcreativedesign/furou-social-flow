@@ -7,6 +7,7 @@ import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
 import CreateEvent from '@/pages/CreateEvent';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import Notifications from '@/pages/Notifications';
 
 const AppRoutes = () => {
   return (
@@ -16,6 +17,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
         <Route path="/eventos" element={<EventsPage />} />
+        <Route path="/notificacoes" element={<Notifications />} />
         <Route path="/criar" element={<CreateEvent />} />
         <Route path="/evento/:id" element={<EventDetail />} />
         <Route path="/perfil" element={<Profile />} />

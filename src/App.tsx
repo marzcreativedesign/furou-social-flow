@@ -13,8 +13,6 @@ import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import EventDetail from "./pages/EventDetail";
 import CreateEvent from "./pages/CreateEvent";
-import Groups from "./pages/Groups";
-import GroupDetail from "./pages/GroupDetail";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
@@ -44,8 +42,6 @@ const App = () => {
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/criar" element={<CreateEvent />} />
-                <Route path="/grupos" element={<Groups />} />
-                <Route path="/grupo/:id" element={<GroupDetail />} />
                 <Route path="/notificacoes" element={<Notifications />} />
                 <Route path="/perfil" element={<Profile />} />
                 <Route path="/usuario/:id" element={<UserProfile />} />
