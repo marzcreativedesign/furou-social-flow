@@ -18,10 +18,9 @@ export const getCachedEvents = (cacheKey: string): ExploreEventsData | null => {
 
 /**
  * Verifica se o cache de eventos está expirado (stale)
+ * Exportando corretamente a função
  */
-export const isEventsCacheStale = (cacheKey: string): boolean => {
-  return isCacheStale<ExploreEventsData>(cacheKey);
-};
+export { isCacheStale };
 
 /**
  * Armazena eventos em cache com tempo de expiração configurável

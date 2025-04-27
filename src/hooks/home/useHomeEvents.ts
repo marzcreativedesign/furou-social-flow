@@ -83,7 +83,7 @@ export const useHomeEvents = (
           toast.error("Erro ao carregar eventos");
         } else if (userEvents) {
           // Processar eventos principais
-          const formattedEvents = userEvents
+          const processedEvents = userEvents
             .filter(event => event.event_participants?.some(
               p => p.user_id === user.id && p.status !== 'invited' && p.status !== 'pending'
             ) || event.creator_id === user.id)
@@ -103,7 +103,7 @@ export const useHomeEvents = (
               } as ExtendedEvent;
             });
           
-          setEvents(formattedEvents);
+          setEvents(processedEvents);
         }
 
         // Fetch eventos públicos (otimizado)
@@ -127,7 +127,7 @@ export const useHomeEvents = (
           
           // Armazena os dados em cache para uso futuro
           const cacheData: CachedHomeEvents = {
-            events: formattedEvents || [],
+            events: processedEvents || [], // Fixed: using processedEvents instead of formattedEvents
             publicEvents: formattedPublicEvents || [],
             timestamp: Date.now()
           };
