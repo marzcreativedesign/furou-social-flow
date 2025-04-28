@@ -11,7 +11,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getCache, setCache, generateCacheKey, isCacheStale } from "@/utils/clientCache";
 import { useDebounce } from "@/utils/debounce";
 
-// Interface para resposta em cache
 interface EventsResponse {
   events: Event[];
   metadata: {
@@ -28,11 +27,9 @@ const EventsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
   
-  // Aplica debounce na busca para evitar chamadas API excessivas
   const debouncedSearch = useDebounce(searchQuery, 500);
   const debouncedLocation = useDebounce(locationQuery, 500);
 
-  // Gera uma chave de cache única para esta consulta
   const cacheKey = generateCacheKey('events', { 
     page: currentPage, 
     pageSize, 
@@ -41,7 +38,6 @@ const EventsPage = () => {
     location: debouncedLocation
   });
   
-  // Verifica se o cache está "stale" (expirado mas ainda utilizável)
   const isStale = isCacheStale(cacheKey);
 
   const { 
@@ -53,7 +49,6 @@ const EventsPage = () => {
     queryFn: async () => {
       console.time('fetchEvents');
       
-      // Verifica cache primeiro
       const cachedData = getCache<EventsResponse>(cacheKey);
       if (cachedData) {
         console.log('Usando dados em cache para eventos');
@@ -73,7 +68,6 @@ const EventsPage = () => {
         }
       };
       
-      // Armazena os resultados em cache
       setCache(cacheKey, result, { 
         expireTimeInMinutes: 5,
         staleWhileRevalidate: true
@@ -82,22 +76,20 @@ const EventsPage = () => {
       console.timeEnd('fetchEvents');
       return result;
     },
-    staleTime: 5 * 60 * 1000, // Dados permanecem "frescos" por 5 minutos
-    gcTime: 10 * 60 * 1000    // Dados são mantidos no cache por 10 minutos
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000
   });
 
-  // Atualiza se os dados estão stale
   useEffect(() => {
     if (isStale && !isLoading) {
       console.log('Dados em cache expirados, atualizando em segundo plano');
-      refetch(); // Recarrega em segundo plano
+      refetch();
     }
   }, [isStale, isLoading, refetch]);
 
   const events = eventsData?.events || [];
   const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
 
-  // Implementação aprimorada de pre-fetching para a próxima página
   useEffect(() => {
     if (metadata.currentPage < metadata.totalPages) {
       const nextPage = currentPage + 1;
@@ -109,14 +101,12 @@ const EventsPage = () => {
         location: debouncedLocation
       });
       
-      // Se não existe cache para a próxima página, pré-carrega com atraso
       if (!getCache<EventsResponse>(nextPageCacheKey)) {
         const prefetchTimer = setTimeout(() => {
           console.log(`Pré-carregando página ${nextPage}`);
           EventsService.getEvents(nextPage, pageSize)
             .then((response) => {
               if (response && !response.error && response.data) {
-                // Verifica explicitamente se a resposta tem o formato correto
                 const responseMetadata = 'metadata' in response ? response.metadata : undefined;
                 
                 setCache(nextPageCacheKey, { 
@@ -134,16 +124,14 @@ const EventsPage = () => {
             .catch(err => {
               console.error("Erro durante prefetch:", err);
             });
-        }, 2000); // Atraso para priorizar a renderização atual
+        }, 2000);
         
         return () => clearTimeout(prefetchTimer);
       }
     }
   }, [currentPage, metadata.totalPages, pageSize, activeFilter, debouncedSearch, debouncedLocation]);
 
-  // Filtra os eventos com base nos critérios selecionados
   const filteredEvents = events.filter((event: Event) => {
-    // Filtra por tipo de evento
     if (
       (activeFilter === 'public' && !event.is_public) || 
       (activeFilter === 'private' && event.is_public) || 
@@ -154,7 +142,6 @@ const EventsPage = () => {
       return false;
     }
 
-    // Filtra por termos de busca (já com debounce aplicado)
     if (debouncedSearch) {
       const query = debouncedSearch.toLowerCase();
       const matchesTitle = event.title.toLowerCase().includes(query);
@@ -165,7 +152,6 @@ const EventsPage = () => {
       }
     }
 
-    // Filtra por localização (já com debounce aplicado)
     if (debouncedLocation && !event.location?.toLowerCase().includes(debouncedLocation.toLowerCase())) {
       return false;
     }
@@ -178,7 +164,6 @@ const EventsPage = () => {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll para o topo ao mudar de página
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

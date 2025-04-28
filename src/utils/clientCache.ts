@@ -128,3 +128,6 @@ export const clearAppCache = (): void => {
  */
 export const saveToCache = setCache;
 export const getFromCache = getCache;
+
+// Ensure all necessary functions are explicitly exported
+export { DEFAULT_CACHE_TTL };
