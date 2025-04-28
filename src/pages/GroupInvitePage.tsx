@@ -38,21 +38,24 @@ const GroupInvitePage = () => {
           throw error;
         }
         
+        // Cast the data to the expected type
+        const typedData = data as unknown as GroupInvite;
+        
         // Verificar se o convite já expirou
-        if (data.status === "expired" || new Date(data.expires_at) < new Date()) {
+        if (typedData.status === "expired" || new Date(typedData.expires_at) < new Date()) {
           setExpired(true);
           throw new Error("Este convite expirou");
         }
         
-        if (data.status === "accepted") {
+        if (typedData.status === "accepted") {
           throw new Error("Este convite já foi aceito");
         }
         
-        setInvite(data as unknown as GroupInvite);
-        setGroup(data.group as unknown as Group);
+        setInvite(typedData);
+        setGroup(typedData.group as Group);
 
         // Marcar convite como visualizado
-        await SupabaseService.group_invites.update(data.id, { viewed: true });
+        await SupabaseService.group_invites.update(typedData.id, { viewed: true });
 
       } catch (error: any) {
         console.error("Erro ao buscar convite:", error);
