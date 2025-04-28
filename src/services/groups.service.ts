@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember, GroupInvite, CreateGroupRequest, CreateInviteRequest, RankingUser } from "@/types/group";
 import { toast } from "sonner";
@@ -105,8 +106,8 @@ export const GroupsService = {
       }
 
       // Verificar se já existe um convite pendente para este e-mail
-      const { data: existingInvites } = await (supabase
-        .from('group_invites') as any)
+      const { data: existingInvites } = await supabase
+        .from('group_invites')
         .select('*')
         .eq('group_id', inviteData.group_id)
         .eq('invitee_email', inviteData.invitee_email)
@@ -195,8 +196,8 @@ export const GroupsService = {
       }
 
       // Buscar o convite pelo código
-      const { data: invite, error: inviteError } = await (supabase
-        .from('group_invites') as any)
+      const { data: invite, error: inviteError } = await supabase
+        .from('group_invites')
         .select('*')
         .eq('invite_code', inviteCode)
         .eq('status', 'pending')
@@ -208,8 +209,8 @@ export const GroupsService = {
       // Verificar se o convite não expirou
       if (new Date(invite.expires_at) < new Date()) {
         // Atualizar o status do convite para expirado
-        await (supabase
-          .from('group_invites') as any)
+        await supabase
+          .from('group_invites')
           .update({ status: 'expired' })
           .eq('id', invite.id);
 
@@ -220,16 +221,16 @@ export const GroupsService = {
       // Como não podemos usar transações diretamente, vamos fazer as operações em sequência
       
       // 1. Adicionar usuário ao grupo se ainda não for membro
-      const { data: existingMember } = await (supabase
-        .from('group_members') as any)
+      const { data: existingMember } = await supabase
+        .from('group_members')
         .select('*')
         .eq('group_id', invite.group_id)
         .eq('user_id', user.user.id)
         .single();
 
       if (!existingMember) {
-        const { error: memberError } = await (supabase
-          .from('group_members') as any)
+        const { error: memberError } = await supabase
+          .from('group_members')
           .insert({
             group_id: invite.group_id,
             user_id: user.user.id,
@@ -240,8 +241,8 @@ export const GroupsService = {
       }
 
       // 2. Atualizar o status do convite
-      const { error: updateError } = await (supabase
-        .from('group_invites') as any)
+      const { error: updateError } = await supabase
+        .from('group_invites')
         .update({
           status: 'accepted',
           viewed: true
@@ -251,8 +252,8 @@ export const GroupsService = {
       if (updateError) throw updateError;
 
       // Buscar dados do grupo para a resposta
-      const { data: group } = await (supabase
-        .from('groups') as any)
+      const { data: group } = await supabase
+        .from('groups')
         .select('*')
         .eq('id', invite.group_id)
         .single();
@@ -284,8 +285,8 @@ export const GroupsService = {
 
   rejectInvite: async (inviteId: string) => {
     try {
-      const { error } = await (supabase
-        .from('group_invites') as any)
+      const { error } = await supabase
+        .from('group_invites')
         .update({
           status: 'expired',
           viewed: true

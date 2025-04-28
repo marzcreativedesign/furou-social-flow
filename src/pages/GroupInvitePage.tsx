@@ -48,8 +48,8 @@ const GroupInvitePage = () => {
           throw new Error("Este convite já foi aceito");
         }
         
-        setInvite(data as GroupInvite);
-        setGroup(data.group as Group);
+        setInvite(data as unknown as GroupInvite);
+        setGroup(data.group as unknown as Group);
 
         // Marcar convite como visualizado
         await SupabaseService.group_invites.update(data.id, { viewed: true });

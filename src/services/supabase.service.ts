@@ -7,19 +7,19 @@ import { Group, GroupMember, GroupInvite } from "@/types/group";
 export const SupabaseService = {
   groups: {
     insert: async (data: Partial<Omit<Group, "id">>) => {
-      return await (supabase
-        .from('groups') as any)
+      return await supabase
+        .from('groups')
         .insert(data)
         .select();
     },
     select: async () => {
-      return await (supabase
-        .from('groups') as any)
+      return await supabase
+        .from('groups')
         .select('*');
     },
     selectById: async (id: string) => {
-      return await (supabase
-        .from('groups') as any)
+      return await supabase
+        .from('groups')
         .select('*')
         .eq('id', id)
         .single();
@@ -28,13 +28,13 @@ export const SupabaseService = {
   
   group_members: {
     select: async () => {
-      return await (supabase
-        .from('group_members') as any)
+      return await supabase
+        .from('group_members')
         .select('*');
     },
     selectWithProfiles: async (groupId: string) => {
-      return await (supabase
-        .from('group_members') as any)
+      return await supabase
+        .from('group_members')
         .select(`
           id,
           group_id,
@@ -47,8 +47,8 @@ export const SupabaseService = {
         .eq('group_id', groupId);
     },
     selectByUser: async (userId: string) => {
-      return await (supabase
-        .from('group_members') as any)
+      return await supabase
+        .from('group_members')
         .select(`
           group_id,
           is_admin,
@@ -65,14 +65,14 @@ export const SupabaseService = {
         .eq('user_id', userId);
     },
     insert: async (data: Partial<Omit<GroupMember, "id">>) => {
-      return await (supabase
-        .from('group_members') as any)
+      return await supabase
+        .from('group_members')
         .insert(data)
         .select();
     },
     delete: async (groupId: string, userId: string) => {
-      return await (supabase
-        .from('group_members') as any)
+      return await supabase
+        .from('group_members')
         .delete()
         .eq('group_id', groupId)
         .eq('user_id', userId);
@@ -81,13 +81,13 @@ export const SupabaseService = {
   
   group_invites: {
     select: async () => {
-      return await (supabase
-        .from('group_invites') as any)
+      return await supabase
+        .from('group_invites')
         .select('*');
     },
     selectPending: async (email: string) => {
-      return await (supabase
-        .from('group_invites') as any)
+      return await supabase
+        .from('group_invites')
         .select(`
           id,
           group_id,
@@ -105,8 +105,8 @@ export const SupabaseService = {
         .eq('status', 'pending');
     },
     selectByCode: async (code: string) => {
-      return await (supabase
-        .from('group_invites') as any)
+      return await supabase
+        .from('group_invites')
         .select(`
           *,
           group:group_id(*)
@@ -115,15 +115,15 @@ export const SupabaseService = {
         .single();
     },
     insert: async (data: Partial<Omit<GroupInvite, "id">>) => {
-      return await (supabase
-        .from('group_invites') as any)
+      return await supabase
+        .from('group_invites')
         .insert(data)
         .select()
         .single();
     },
     update: async (id: string, data: Partial<GroupInvite>) => {
-      return await (supabase
-        .from('group_invites') as any)
+      return await supabase
+        .from('group_invites')
         .update(data)
         .eq('id', id);
     }
