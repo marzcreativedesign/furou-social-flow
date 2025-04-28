@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,32 +9,95 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
-const loginSchema = z.object({
-  email: z.string().email({ message: "Email inválido" }),
-  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AuthFooter from "@/components/auth/AuthFooter";
+import EmailAuthForm from "@/components/auth/EmailAuthForm";
+import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 const Login = () => {
-  const { user, signIn } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+  const location = useLocation();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const onSubmit = async (data: LoginFormValues) => {
+  // Handle social logins (placeholder functions)
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const { error } = await signIn(data.email, data.password);
+      // Implement Google login logic
+      toast.info("Login com Google não está disponível no momento");
+    } catch (error) {
+      console.error("Google login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Implement Apple login logic
+      toast.info("Login com Apple não está disponível no momento");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailFormShow = () => {
+    setShowEmailForm(true);
+  };
+
+  // Handle login form submission
+  const handleLogin = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await signIn(email, password);
+      
       if (error) {
         toast.error(error.message);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Ocorreu um erro ao fazer login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle signup form submission
+  const handleSignUp = async (email: string, password: string, fullName?: string) => {
+    if (!fullName) {
+      toast.error("Nome completo é obrigatório");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { error } = await signUp(email, password, fullName);
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Cadastro realizado com sucesso! Verifique seu email.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle password reset
+  const handleResetPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await resetPassword(email);
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Instruções de recuperação enviadas para seu email");
+        setShowResetForm(false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -42,68 +105,79 @@ const Login = () => {
 
   // If the user is already logged in, redirect to home
   if (user) {
-    return <Navigate to="/home" />;
+    const returnPath = location.state?.from || '/';
+    return <Navigate to={returnPath} />;
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">
+            {showResetForm 
+              ? "Recuperar Senha"
+              : showEmailForm 
+                ? (activeTab === "login" ? "Entrar" : "Cadastrar")
+                : "Entrar ou Cadastrar"}
+          </CardTitle>
           <CardDescription>
-            Entre com seu email e senha para acessar sua conta
+            {showResetForm 
+              ? "Digite seu email para receber as instruções de recuperação"
+              : showEmailForm 
+                ? (activeTab === "login" 
+                    ? "Acesse sua conta para continuar" 
+                    : "Crie uma nova conta para continuar")
+                : "Escolha como deseja continuar"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="seuemail@exemplo.com"
-                type="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-                disabled={isLoading}
-                {...register("email")}
+          {showResetForm ? (
+            <ResetPasswordForm 
+              onSubmit={handleResetPassword}
+              onBackToLogin={() => setShowResetForm(false)}
+              isLoading={isLoading}
+            />
+          ) : showEmailForm ? (
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login">Entrar</TabsTrigger>
+                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <EmailAuthForm 
+                  isSignUp={false}
+                  setIsSignUp={() => setActiveTab("signup")}
+                  onBackClick={() => setShowEmailForm(false)}
+                  onSubmit={handleLogin}
+                  isLoading={isLoading}
+                  onForgotPassword={() => setShowResetForm(true)}
+                />
+              </TabsContent>
+              
+              <TabsContent value="signup">
+                <EmailAuthForm 
+                  isSignUp={true}
+                  setIsSignUp={() => setActiveTab("login")}
+                  onBackClick={() => setShowEmailForm(false)}
+                  onSubmit={handleSignUp}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <>
+              <SocialAuthButtons 
+                onGoogleClick={handleGoogleLogin}
+                onAppleClick={handleAppleLogin}
+                onEmailClick={handleEmailFormShow}
+                isLoading={isLoading}
               />
-              {errors.email && (
-                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                placeholder="••••••••"
-                type="password"
-                autoComplete="current-password"
-                disabled={isLoading}
-                {...register("password")}
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
+            </>
+          )}
+          
+          {!showEmailForm && !showResetForm && <AuthFooter />}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm">
-            Não tem uma conta?{" "}
-            <Link
-              to="/onboarding"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Criar conta
-            </Link>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
