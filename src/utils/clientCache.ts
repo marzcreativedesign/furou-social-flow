@@ -24,10 +24,10 @@ export interface CacheItem<T> {
 
 /**
  * Verifica se o cache está expirado
- * @param timestamp Timestamp do último armazenamento
+ * @param key Chave do item em cache
  * @param ttl Tempo de vida em milissegundos
  */
-export const isCacheStale = <T>(key: string, ttl = DEFAULT_CACHE_TTL): boolean => {
+export const isCacheStale = (key: string, ttl = DEFAULT_CACHE_TTL): boolean => {
   try {
     const cachedItem = localStorage.getItem(key);
     if (!cachedItem) return true;
