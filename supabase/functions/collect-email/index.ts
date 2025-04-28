@@ -1,83 +1,59 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.9";
+// Import Supabase client using a supported version
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const receivingEmail = "suportefurou@gmail.com";
-
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+// Handle OPTIONS request (CORS preflight)
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { email } = await req.json();
+    const { email } = await req.json()
 
-    if (!email || !email.includes("@")) {
+    if (!email) {
       return new Response(
-        JSON.stringify({ error: "Email inválido" }),
+        JSON.stringify({ error: 'Email is required' }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
-      );
+      )
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+    // Create a Supabase client with the project auth service
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    )
 
-    // Store email in Supabase
-    const { error: dbError } = await supabase
-      .from("email_subscriptions")
-      .insert([{ email, created_at: new Date().toISOString() }]);
+    // Store email in a 'subscriptions' table
+    const { data, error } = await supabaseClient
+      .from('email_subscriptions')
+      .insert([{ email }])
+      .select()
 
-    if (dbError) {
-      console.error("Error storing email:", dbError);
-      
-      // If the error is about duplicate emails, we'll handle it gracefully
-      if (dbError.message.includes("duplicate") || dbError.code === "23505") {
-        return new Response(
-          JSON.stringify({ success: true, message: "Email já registrado" }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-      
-      throw dbError;
-    }
-
-    console.log(`New subscription from: ${email}`);
+    if (error) throw error
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Email registrado com sucesso" 
-      }),
+      JSON.stringify({ message: 'Email successfully collected', data }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    );
+    )
   } catch (error) {
-    console.error("Error in collect-email function:", error);
-    
     return new Response(
-      JSON.stringify({ error: "Erro ao processar a solicitação" }),
+      JSON.stringify({ error: error.message }),
       {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    );
+    )
   }
-};
-
-serve(handler);
+})

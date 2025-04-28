@@ -32,8 +32,8 @@ const GroupInvitePage = () => {
         }
 
         // Verificar se o convite existe e é válido
-        const { data, error } = await supabase
-          .from("group_invites")
+        const { data, error } = await (supabase
+          .from('group_invites') as any)
           .select(`
             *,
             group:group_id(*)
@@ -59,8 +59,8 @@ const GroupInvitePage = () => {
         setGroup(data.group as unknown as Group);
 
         // Marcar convite como visualizado
-        await supabase
-          .from("group_invites")
+        await (supabase
+          .from('group_invites') as any)
           .update({ viewed: true })
           .eq("invite_code", code);
 
@@ -97,7 +97,11 @@ const GroupInvitePage = () => {
       
       // Redirecionar para a página do grupo
       setTimeout(() => {
-        navigate(`/grupos/${data.group.id}`);
+        if (data && data.group) {
+          navigate(`/grupos/${data.group.id}`);
+        } else {
+          navigate('/grupos');
+        }
       }, 1000);
       
     } catch (error: any) {
@@ -179,7 +183,7 @@ const GroupInvitePage = () => {
           )}
           
           {!user && (
-            <Alert variant="default" className="mb-6">
+            <Alert className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Atenção</AlertTitle>
               <AlertDescription>

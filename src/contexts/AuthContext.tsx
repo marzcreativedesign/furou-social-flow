@@ -1,38 +1,41 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
-import { AuthService } from '@/services/auth.service';
-import { toast } from "sonner";
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
-  session: Session | null;
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  isLoading: true,
+  signOut: async () => {}
+});
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = AuthService.onAuthStateChange((event, currentSession) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
+    // Set up listener for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setIsLoading(false);
+      }
+    );
 
-    // THEN check for existing session
-    AuthService.getSession().then(({ data: { session: currentSession } }) => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
@@ -43,79 +46,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await AuthService.signInWithEmail(email, password);
-      if (!error) {
-        toast.success("Login realizado com sucesso!");
-        navigate('/home');
-      }
-      return { error };
-    } catch (error: any) {
-      console.error("Sign in error:", error);
-      return { error };
-    }
-  };
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    try {
-      const { error, data } = await AuthService.signUpWithEmail(email, password);
-      
-      if (!error && data.user) {
-        await AuthService.updateProfile(data.user.id, { full_name: fullName });
-        toast.success("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar sua conta.");
-      }
-      
-      return { error };
-    } catch (error: any) {
-      console.error("Sign up error:", error);
-      return { error };
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await AuthService.resetPassword(email);
-      if (!error) {
-        toast.success("Enviamos as instruções de recuperação para seu e-mail.");
-      }
-      return { error };
-    } catch (error: any) {
-      console.error("Password reset error:", error);
-      return { error };
-    }
-  };
-
   const signOut = async () => {
-    try {
-      await AuthService.signOut();
-      setSession(null);
-      setUser(null);
-      navigate('/', { replace: true });
-      toast.success("Logout realizado com sucesso!");
-    } catch (error) {
-      console.error("Sign out error:", error);
-      toast.error("Erro ao realizar logout");
-    }
+    await supabase.auth.signOut();
   };
 
   const value = {
-    session,
     user,
+    session,
     isLoading,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
+    signOut
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
