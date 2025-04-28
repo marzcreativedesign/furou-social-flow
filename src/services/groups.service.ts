@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Group, GroupMember, GroupInvite, CreateGroupRequest, CreateInviteRequest } from "@/types/group";
+import { Group, GroupMember, GroupInvite, CreateGroupRequest, CreateInviteRequest, RankingUser } from "@/types/group";
 import { toast } from "sonner";
 import { NotificationsService } from "./notifications.service";
 
@@ -25,7 +25,7 @@ export const GroupsService = {
         .single();
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as unknown as Group, error: null };
     } catch (error: any) {
       console.error("Erro ao criar grupo:", error);
       toast.error("Erro ao criar grupo: " + error.message);
@@ -65,7 +65,7 @@ export const GroupsService = {
         is_admin: item.is_admin
       }));
       
-      return { data: groups, error: null };
+      return { data: groups as unknown as Group[], error: null };
     } catch (error: any) {
       console.error("Erro ao buscar grupos:", error);
       return { data: [], error };
@@ -81,7 +81,7 @@ export const GroupsService = {
         .single();
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as unknown as Group, error: null };
     } catch (error: any) {
       console.error(`Erro ao buscar grupo ${groupId}:`, error);
       return { data: null, error };
@@ -105,7 +105,7 @@ export const GroupsService = {
         .eq('group_id', groupId);
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as unknown as GroupMember[], error: null };
     } catch (error: any) {
       console.error(`Erro ao buscar membros do grupo ${groupId}:`, error);
       return { data: [], error };
@@ -152,7 +152,7 @@ export const GroupsService = {
 
       if (existingInvites && existingInvites.length > 0) {
         // Se já existir um convite pendente, retorna ele
-        return { data: existingInvites[0], error: null };
+        return { data: existingInvites[0] as unknown as GroupInvite, error: null };
       }
 
       // Criar novo convite
@@ -193,7 +193,7 @@ export const GroupsService = {
         });
       }
       
-      return { data, error: null };
+      return { data: data as unknown as GroupInvite, error: null };
     } catch (error: any) {
       console.error("Erro ao criar convite:", error);
       toast.error("Erro ao criar convite: " + error.message);
@@ -238,7 +238,7 @@ export const GroupsService = {
         .eq('status', 'pending');
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as unknown as GroupInvite[], error: null };
     } catch (error: any) {
       console.error("Erro ao buscar convites pendentes:", error);
       return { data: [], error };
@@ -326,7 +326,13 @@ export const GroupsService = {
         });
       }
 
-      return { data: { invite, group }, error: null };
+      return { 
+        data: { 
+          invite: invite as unknown as GroupInvite, 
+          group: group as unknown as Group 
+        }, 
+        error: null 
+      };
     } catch (error: any) {
       console.error("Erro ao aceitar convite:", error);
       toast.error("Erro ao aceitar convite: " + error.message);
@@ -356,12 +362,12 @@ export const GroupsService = {
   // Rankings
   getConfirmedEventRanking: async (limit: number = 10) => {
     try {
-      const { data, error } = await supabase.rpc('get_confirmed_events_ranking', { 
-        limit_count: limit 
+      const { data, error } = await supabase.functions.invoke('get-confirmed-events-ranking', {
+        body: { limit_count: limit }
       });
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as RankingUser[], error: null };
     } catch (error: any) {
       console.error("Erro ao buscar ranking de confirmados:", error);
       return { data: [], error };
@@ -370,12 +376,12 @@ export const GroupsService = {
 
   getMissedEventRanking: async (limit: number = 10) => {
     try {
-      const { data, error } = await supabase.rpc('get_missed_events_ranking', { 
-        limit_count: limit 
+      const { data, error } = await supabase.functions.invoke('get-missed-events-ranking', {
+        body: { limit_count: limit }
       });
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: data as RankingUser[], error: null };
     } catch (error: any) {
       console.error("Erro ao buscar ranking de furões:", error);
       return { data: [], error };

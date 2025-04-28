@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const GroupInvitePage = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [invite, setInvite] = useState<GroupInvite | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,8 +55,8 @@ const GroupInvitePage = () => {
           throw new Error("Este convite já foi aceito");
         }
         
-        setInvite(data);
-        setGroup(data.group);
+        setInvite(data as unknown as GroupInvite);
+        setGroup(data.group as unknown as Group);
 
         // Marcar convite como visualizado
         await supabase
@@ -179,7 +179,7 @@ const GroupInvitePage = () => {
           )}
           
           {!user && (
-            <Alert variant="warning" className="mb-6">
+            <Alert variant="default" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Atenção</AlertTitle>
               <AlertDescription>
