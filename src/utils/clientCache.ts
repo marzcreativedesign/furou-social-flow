@@ -1,143 +1,82 @@
 
 /**
- * Utilitários aprimorados para cache no lado do cliente
- * Reduz tráfego de rede armazenando dados localmente com controle de expiração
+ * Funções utilitárias para gerenciar o cache do cliente
  */
 
-// Tipo para configuração de cache
-type CacheConfig = {
-  expireTimeInMinutes?: number;
-  staleWhileRevalidate?: boolean; // Permite usar dados expirados enquanto recarrega
-};
+// Tempo padrão de expiração do cache (30 minutos)
+const DEFAULT_CACHE_TTL = 30 * 60 * 1000;
 
-// Tipo para dados em cache com timestamp
-type CachedData<T> = {
-  data: T;
-  timestamp: number;
-};
-
-// Configuração padrão: 5 minutos
-const defaultConfig: CacheConfig = {
-  expireTimeInMinutes: 5,
-  staleWhileRevalidate: false,
+/**
+ * Verifica se o cache está expirado
+ * @param timestamp Timestamp do último armazenamento
+ * @param ttl Tempo de vida em milissegundos
+ */
+export const isCacheStale = (timestamp: number, ttl = DEFAULT_CACHE_TTL): boolean => {
+  return Date.now() - timestamp > ttl;
 };
 
 /**
- * Armazena dados no cache local
- * @param key Chave para armazenar os dados
+ * Salva dados no cache local
+ * @param key Chave para identificar os dados
  * @param data Dados a serem armazenados
- * @param config Configuração do cache (opcional)
  */
-export const setCache = <T>(key: string, data: T, config: CacheConfig = defaultConfig): void => {
+export const saveToCache = <T>(key: string, data: T): void => {
   try {
-    const cacheData: CachedData<T> = {
+    const cacheItem = {
       data,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     };
-    localStorage.setItem(key, JSON.stringify(cacheData));
-    console.log(`[Cache] Dados armazenados: ${key}`);
+    localStorage.setItem(key, JSON.stringify(cacheItem));
   } catch (error) {
-    console.error("[Cache] Erro ao armazenar dados:", error);
+    console.error('Erro ao salvar no cache:', error);
   }
 };
 
 /**
- * Obtém dados do cache local
- * @param key Chave para recuperar os dados
- * @param config Configuração do cache (opcional)
- * @returns Dados do cache ou null se não existirem ou estiverem expirados
+ * Recupera dados do cache local
+ * @param key Chave para identificar os dados
+ * @param ttl Tempo de vida em milissegundos
  */
-export const getCache = <T>(key: string, config: CacheConfig = defaultConfig): T | null => {
+export const getFromCache = <T>(key: string, ttl = DEFAULT_CACHE_TTL): T | null => {
   try {
     const cachedItem = localStorage.getItem(key);
-    if (!cachedItem) {
-      return null;
-    }
-
-    const { data, timestamp } = JSON.parse(cachedItem) as CachedData<T>;
-    const expireTime = (config.expireTimeInMinutes || defaultConfig.expireTimeInMinutes!) * 60 * 1000;
+    if (!cachedItem) return null;
     
-    // Verifica se o cache expirou
-    if (Date.now() - timestamp > expireTime) {
-      // Se configurado para usar dados expirados enquanto recarrega, retorna os dados
-      if (config.staleWhileRevalidate) {
-        console.log(`[Cache] Usando dados expirados (stale): ${key}`);
-        return data;
-      }
-      
-      console.log(`[Cache] Dados expirados: ${key}`);
+    const { data, timestamp } = JSON.parse(cachedItem);
+    
+    if (isCacheStale(timestamp, ttl)) {
+      // Cache expirado, remover e retornar null
       localStorage.removeItem(key);
       return null;
     }
     
-    console.log(`[Cache] Dados recuperados: ${key}`);
-    return data;
+    return data as T;
   } catch (error) {
-    console.error("[Cache] Erro ao recuperar dados:", error);
+    console.error('Erro ao recuperar do cache:', error);
     return null;
   }
 };
 
 /**
- * Verifica se o cache está expirado mas ainda utilizável (stale)
+ * Limpa todo o cache relacionado à aplicação
  */
-export const isCacheStale = <T>(key: string, config: CacheConfig = defaultConfig): boolean => {
+export const clearAppCache = (): void => {
   try {
-    const cachedItem = localStorage.getItem(key);
-    if (!cachedItem) {
-      return false;
-    }
-
-    const { timestamp } = JSON.parse(cachedItem) as CachedData<T>;
-    const expireTime = (config.expireTimeInMinutes || defaultConfig.expireTimeInMinutes!) * 60 * 1000;
+    const keysToRemove: string[] = [];
     
-    // Verifica se o cache expirou
-    return Date.now() - timestamp > expireTime;
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Remove dados do cache local
- * @param key Chave para remover os dados
- */
-export const removeCache = (key: string): void => {
-  try {
-    localStorage.removeItem(key);
-    console.log(`[Cache] Dados removidos: ${key}`);
+    // Encontra todas as chaves que começam com 'app:'
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('app:')) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove cada item
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    console.log('Cache da aplicação limpo com sucesso');
   } catch (error) {
-    console.error("[Cache] Erro ao remover dados:", error);
+    console.error('Erro ao limpar cache da aplicação:', error);
   }
-};
-
-/**
- * Limpa todos os itens do cache que começam com um determinado prefixo
- * @param prefix Prefixo das chaves a serem removidas
- */
-export const clearCacheByPrefix = (prefix: string): void => {
-  try {
-    Object.keys(localStorage)
-      .filter(key => key.startsWith(prefix))
-      .forEach(key => localStorage.removeItem(key));
-    console.log(`[Cache] Dados com prefixo "${prefix}" removidos`);
-  } catch (error) {
-    console.error("[Cache] Erro ao limpar cache por prefixo:", error);
-  }
-};
-
-/**
- * Gera uma chave de cache com base nos parâmetros
- * @param baseKey Chave base
- * @param params Parâmetros adicionais
- * @returns Chave de cache formatada
- */
-export const generateCacheKey = (baseKey: string, params?: Record<string, any>): string => {
-  if (!params) return baseKey;
-  
-  const paramsStr = Object.entries(params)
-    .map(([key, value]) => `${key}:${value}`)
-    .join('_');
-  
-  return `${baseKey}_${paramsStr}`;
 };

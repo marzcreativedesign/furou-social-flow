@@ -56,7 +56,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminRoute />
+    element: <AdminRoute><AdminPage /></AdminRoute>
   },
   {
     path: "/perfil/:userId",
