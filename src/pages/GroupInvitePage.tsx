@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, LogIn, UserPlus, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { GroupInvite, Group } from "@/types/group";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { GroupsService } from "@/services/groups.service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SupabaseService } from "@/services/supabase.service";
 
 const GroupInvitePage = () => {
   const { code } = useParams<{ code: string }>();
@@ -32,14 +32,7 @@ const GroupInvitePage = () => {
         }
 
         // Verificar se o convite existe e é válido
-        const { data, error } = await (supabase
-          .from('group_invites') as any)
-          .select(`
-            *,
-            group:group_id(*)
-          `)
-          .eq("invite_code", code)
-          .single();
+        const { data, error } = await SupabaseService.group_invites.selectByCode(code);
 
         if (error) {
           throw error;
@@ -55,14 +48,11 @@ const GroupInvitePage = () => {
           throw new Error("Este convite já foi aceito");
         }
         
-        setInvite(data as unknown as GroupInvite);
-        setGroup(data.group as unknown as Group);
+        setInvite(data as GroupInvite);
+        setGroup(data.group as Group);
 
         // Marcar convite como visualizado
-        await (supabase
-          .from('group_invites') as any)
-          .update({ viewed: true })
-          .eq("invite_code", code);
+        await SupabaseService.group_invites.update(data.id, { viewed: true });
 
       } catch (error: any) {
         console.error("Erro ao buscar convite:", error);
@@ -183,7 +173,7 @@ const GroupInvitePage = () => {
           )}
           
           {!user && (
-            <Alert className="mb-6">
+            <Alert variant="default" className="mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Atenção</AlertTitle>
               <AlertDescription>
