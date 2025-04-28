@@ -4,7 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/hooks/useRole';
 import { useEffect, useState } from 'react';
 
-const AdminRoute = () => {
+interface AdminRouteProps {
+  children?: React.ReactNode;
+}
+
+const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading: authLoading } = useAuth();
   const { role, isLoading: roleLoading } = useRole();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -35,8 +39,8 @@ const AdminRoute = () => {
     return <Navigate to="/home" replace />;
   }
 
-  // Render admin content directly without MainLayout
-  return <Outlet />;
+  // Render admin content
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default AdminRoute;
