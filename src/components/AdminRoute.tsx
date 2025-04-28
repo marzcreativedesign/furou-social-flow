@@ -1,8 +1,8 @@
 
+import * as React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/use-auth';
 import { useRole } from '@/hooks/useRole';
-import { useEffect, useState } from 'react';
 
 interface AdminRouteProps {
   children?: React.ReactNode;
@@ -11,9 +11,9 @@ interface AdminRouteProps {
 const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading: authLoading } = useAuth();
   const { role, isLoading: roleLoading } = useRole();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAuthorized, setIsAuthorized] = React.useState<boolean | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!authLoading && !roleLoading) {
       setIsAuthorized(user !== null && role === 'admin');
     }
