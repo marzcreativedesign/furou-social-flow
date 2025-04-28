@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
@@ -43,7 +42,7 @@ const EventsPage = () => {
   });
   
   // Verifica se o cache está "stale" (expirado mas ainda utilizável)
-  const isStale = isCacheStale<EventsResponse>(cacheKey);
+  const isStale = isCacheStale(cacheKey);
 
   const { 
     data: eventsData, 
