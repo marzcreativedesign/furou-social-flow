@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember, GroupInvite } from "@/types/group";
 
 // This service provides typed wrappers around Supabase operations
-// to handle missing database tables in the Supabase types
 export const SupabaseService = {
   groups: {
-    insert: async (data: Partial<Omit<Group, "id">>) => {
+    insert: async (data: { name: string, description?: string | null, type?: string | null, creator_id: string }) => {
       return await supabase
         .from('groups')
         .insert(data)
@@ -64,7 +63,7 @@ export const SupabaseService = {
         `)
         .eq('user_id', userId);
     },
-    insert: async (data: Partial<Omit<GroupMember, "id">>) => {
+    insert: async (data: { group_id: string, user_id: string, is_admin?: boolean }) => {
       return await supabase
         .from('group_members')
         .insert(data)
@@ -114,7 +113,15 @@ export const SupabaseService = {
         .eq('invite_code', code)
         .single();
     },
-    insert: async (data: Partial<Omit<GroupInvite, "id">>) => {
+    insert: async (data: {
+      group_id: string,
+      inviter_id: string,
+      invitee_email: string,
+      status: 'pending',
+      viewed: boolean,
+      invite_code: string,
+      expires_at: string
+    }) => {
       return await supabase
         .from('group_invites')
         .insert(data)
