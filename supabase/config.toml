@@ -1,1 +1,20 @@
+
 project_id = "vktfksgurakdwajvnulk"
+[api]
+enabled = true
+url = "https://vktfksgurakdwajvnulk.supabase.co"
+service_role_key = "this-is-a-placeholder-value"
+[auth]
+enabled = true
+[db]
+enabled = true
+[realtime]
+enabled = true
+[storage]
+enabled = true
+[edge_functions]
+enabled = true
+[functions.get-confirmed-events-ranking]
+verify_jwt = true
+[functions.get-missed-events-ranking]
+verify_jwt = true
