@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { processImages } from '@/utils/image/compress';
@@ -111,4 +110,11 @@ export const StorageService = {
       return [];
     }
   }
+};
+
+/**
+ * Envia uma imagem de evento para o storage
+ */
+export const uploadEventImage = async (file: File) => {
+  return await uploadImage(file, 'events');
 };

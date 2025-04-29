@@ -1,84 +1,68 @@
 
-import { Database } from "@/integrations/supabase/types";
-
-export type Event = Database["public"]["Tables"]["events"]["Row"] & {
-  event_participants?: Array<{
-    id: string;
-    user_id: string;
-    event_id: string;
-    status: string;
-    created_at?: string;
-  }>;
-};
-
-export type EventWithDetails = Event & {
-  creator?: {
-    id: string;
-    full_name?: string | null;
-    avatar_url?: string | null;
-  };
-};
-
-// Adicionando tipo EventData para ser compatível com os componentes existentes
-export type EventData = Event & {
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  address?: string;
+  is_public: boolean;
+  image_url: string;
+  estimated_budget?: number | null;
+  creator_id: string;
+  created_at: string;
+  updated_at: string;
+  event_date?: string;
+  visibility?: "public" | "private";
   profiles?: {
     id: string;
-    full_name?: string | null;
-    avatar_url?: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    username: string | null;
   };
-  comments?: any[];
   event_participants?: EventParticipant[];
-};
-
-export interface EventServiceResponse {
-  data?: Event[];
-  error: any;
-  metadata?: PaginationMetadata;
+  comments?: any[];
 }
 
-// Adicionando tipo PaginationMetadata
-export interface PaginationMetadata {
-  totalPages: number;
-  currentPage: number;
-  count?: number;
-}
-
-export interface EventDetailResponse {
-  data?: EventWithDetails;
-  error: any;
-}
-
-export interface EventFilters {
-  search?: string;
-  location?: string;
-  startDate?: Date;
-  endDate?: Date;
-  isPublic?: boolean;
-}
-
-export type EventVisibility = 'public' | 'private' | 'restricted';
-
-export interface CreateEventRequest {
-  title: string;
-  description?: string;
-  location?: string;
-  event_date: string;
-  is_public: boolean;
-  image_url?: string;
+export interface EventData extends Event {
+  address?: string;
 }
 
 export interface EventParticipant {
   id: string;
   user_id: string;
   event_id: string;
-  status: 'confirmed' | 'pending' | 'declined';
+  status: string;
   created_at?: string;
-  profile?: {
-    full_name?: string;
-    avatar_url?: string;
-  };
   profiles?: {
-    full_name?: string | null;
-    avatar_url?: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
   };
+}
+
+export interface EventComment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  event_id: string;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+export interface EventGalleryImage {
+  id: string;
+  url: string;
+  created_at: string;
+  user_id: string;
+  event_id: string;
+}
+
+export interface PaginationMetadata {
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
 }

@@ -1,7 +1,8 @@
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, User } from "lucide-react";
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Attendee {
   id: string;
@@ -11,17 +12,17 @@ interface Attendee {
 
 interface EventParticipantsProps {
   confirmedAttendees: Attendee[];
-  pendingAttendees?: Attendee[];
-  cancelledAttendees?: Attendee[];
+  pendingAttendees: Attendee[];
+  cancelledAttendees: Attendee[];
   showAllAttendees: boolean;
   onToggleShowAll: () => void;
-  eventType: string;
+  eventType: "public" | "private";
 }
 
 const EventParticipants = ({
   confirmedAttendees,
-  pendingAttendees = [],
-  cancelledAttendees = [],
+  pendingAttendees,
+  cancelledAttendees,
   showAllAttendees,
   onToggleShowAll,
   eventType
@@ -29,107 +30,117 @@ const EventParticipants = ({
   const hasConfirmed = confirmedAttendees.length > 0;
   const hasPending = pendingAttendees.length > 0;
   const hasCancelled = cancelledAttendees.length > 0;
-  const hasAttendees = hasConfirmed || hasPending || hasCancelled;
 
-  if (!hasAttendees) return null;
-
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const displayedConfirmedAttendees = showAllAttendees ? confirmedAttendees : confirmedAttendees.slice(0, 5);
-  const displayedPendingAttendees = showAllAttendees ? pendingAttendees : pendingAttendees.slice(0, 3);
-  const displayedCancelledAttendees = showAllAttendees ? cancelledAttendees : cancelledAttendees.slice(0, 3);
-  const totalHidden = confirmedAttendees.length + pendingAttendees.length + cancelledAttendees.length - 
-    displayedConfirmedAttendees.length - displayedPendingAttendees.length - displayedCancelledAttendees.length;
+  if (!hasConfirmed && !hasPending && !hasCancelled) {
+    return (
+      <div className="mt-6 mb-4">
+        <h2 className="font-bold mb-2 dark:text-[#EDEDED]">Participantes</h2>
+        <p className="text-muted-foreground text-sm dark:text-[#B3B3B3]">
+          Nenhum participante confirmado ainda.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="my-6">
-      <h2 className="font-bold mb-3 dark:text-[#EDEDED]">Participantes</h2>
+    <div className="mt-6 mb-4">
+      <h2 className="font-bold mb-2 dark:text-[#EDEDED]">Participantes</h2>
       
-      <div className="space-y-4">
-        {/* Confirmed attendees */}
-        {hasConfirmed && (
-          <div className="space-y-2">
-            <h3 className="text-sm text-muted-foreground dark:text-[#B3B3B3]">
-              Confirmados ({confirmedAttendees.length})
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {displayedConfirmedAttendees.map((attendee) => (
-                <Avatar key={attendee.id} className="h-10 w-10 border-2 border-primary/20">
+      {hasConfirmed && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2 dark:text-[#EDEDED]">
+            Confirmados ({confirmedAttendees.length})
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {confirmedAttendees
+              .slice(0, showAllAttendees ? confirmedAttendees.length : 8)
+              .map(attendee => (
+                <div key={attendee.id} className="flex flex-col items-center">
+                  <Avatar className="mb-1">
+                    <AvatarImage src={attendee.imageUrl} alt={attendee.name} />
+                    <AvatarFallback>
+                      {attendee.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-center w-16 truncate dark:text-[#EDEDED]">
+                    {attendee.name}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+      
+      {hasPending && eventType === "private" && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2 text-amber-600 dark:text-amber-400">
+            Aguardando ({pendingAttendees.length})
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {pendingAttendees
+              .slice(0, showAllAttendees ? pendingAttendees.length : 4)
+              .map(attendee => (
+                <div key={attendee.id} className="flex flex-col items-center">
+                  <Avatar className="mb-1 border-2 border-amber-200 dark:border-amber-900">
+                    <AvatarImage src={attendee.imageUrl} alt={attendee.name} />
+                    <AvatarFallback>
+                      {attendee.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-center w-16 truncate dark:text-[#EDEDED]">
+                    {attendee.name}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+      
+      {hasCancelled && showAllAttendees && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2 text-rose-600 dark:text-rose-400">
+            Declinaram ({cancelledAttendees.length})
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {cancelledAttendees.map(attendee => (
+              <div key={attendee.id} className="flex flex-col items-center">
+                <Avatar className="mb-1 border-2 border-rose-200 dark:border-rose-900">
                   <AvatarImage src={attendee.imageUrl} alt={attendee.name} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(attendee.name)}
+                  <AvatarFallback>
+                    {attendee.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-              ))}
-            </div>
+                <span className="text-xs text-center w-16 truncate dark:text-[#EDEDED]">
+                  {attendee.name}
+                </span>
+              </div>
+            ))}
           </div>
-        )}
-        
-        {/* Pending attendees */}
-        {hasPending && eventType !== 'public' && (
-          <div className="space-y-2">
-            <h3 className="text-sm text-muted-foreground dark:text-[#B3B3B3]">
-              Aguardando confirmação ({pendingAttendees.length})
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {displayedPendingAttendees.map((attendee) => (
-                <Avatar key={attendee.id} className="h-10 w-10 border-2 border-muted/40">
-                  <AvatarImage src={attendee.imageUrl} alt={attendee.name} />
-                  <AvatarFallback className="bg-muted text-muted-foreground">
-                    {getInitials(attendee.name)}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Cancelled attendees */}
-        {hasCancelled && (
-          <div className="space-y-2">
-            <h3 className="text-sm text-muted-foreground dark:text-[#B3B3B3]">
-              Declinaram ({cancelledAttendees.length})
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {displayedCancelledAttendees.map((attendee) => (
-                <Avatar key={attendee.id} className="h-10 w-10 border-2 border-destructive/20">
-                  <AvatarImage src={attendee.imageUrl} alt={attendee.name} />
-                  <AvatarFallback className="bg-destructive/10 text-destructive">
-                    {getInitials(attendee.name)}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show/Hide toggle button */}
-        {totalHidden > 0 && (
-          <button
-            className="flex items-center gap-1 text-sm text-primary hover:underline"
-            onClick={onToggleShowAll}
-          >
-            {showAllAttendees ? (
-              <>
-                <ChevronUp size={16} />
-                <span>Mostrar menos</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown size={16} />
-                <span>Ver mais {totalHidden} participantes</span>
-              </>
-            )}
-          </button>
-        )}
-      </div>
+        </div>
+      )}
+      
+      {((confirmedAttendees.length > 8) || 
+        (hasPending && pendingAttendees.length > 4) || 
+        hasCancelled) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggleShowAll}
+          className="flex items-center mt-2"
+        >
+          {showAllAttendees ? (
+            <>
+              <ChevronUp className="h-4 w-4 mr-1" />
+              Mostrar menos
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4 mr-1" />
+              Mostrar todos
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

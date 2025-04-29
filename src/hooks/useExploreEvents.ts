@@ -1,149 +1,184 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { EventQueriesService } from '@/services/event/queries';
-import { Event } from "@/types/event";
-import { ExploreEventsData, ExploreEventsResponse } from "@/types/explore";
-import { getEventsCacheKey, getCachedEvents, cacheEvents, isCacheStale } from "@/utils/eventCache";
-import { createEventResponse } from "@/utils/eventTransforms";
-import { useDebounce } from '@/utils/debounce';
+import { supabase } from '@/integrations/supabase/client';
+import { Event } from '@/types/event';
+import { toast } from '@/components/ui/use-toast';
+import { getEventsCacheKey, getCachedEvents, cacheEvents, isCacheStale } from '@/utils/eventCache';
+import { ExploreEventsData, ExploreEventsResponse } from '@/types/explore';
 
-/**
- * Hook otimizado para explorar eventos com:
- * - Paginação eficiente
- * - Cache local
- * - Debounce para busca
- * - Prefetching da próxima página
- */
-export const useExploreEvents = (pageSize: number = 9) => {
-  const [searchQuery, setSearchQuery] = useState("");
+export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
+  const [activeTab, setActiveTab] = useState<'all' | 'nearby'>(initialTab);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // Implementa debounce para evitar consultas excessivas durante digitação
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  
-  const cacheKey = getEventsCacheKey('exploreEvents', { 
-    page: currentPage, 
-    pageSize,
-    search: debouncedSearchQuery // Inclui o termo de busca na chave de cache
-  });
-  
-  // Verifica se o cache existe e está "stale" (expirado, mas ainda utilizável)
-  const isStale = isCacheStale(cacheKey);
-  
-  const { 
-    data: eventsData, 
-    isLoading, 
-    error,
-    refetch 
-  } = useQuery({
-    queryKey: ['publicEvents', currentPage, pageSize, debouncedSearchQuery],
-    queryFn: async () => {
-      // Estratégia de cache - tenta usar cache primeiro
-      const cachedData = getCachedEvents(cacheKey);
-      if (cachedData) {
-        console.log('[Cache] Usando dados em cache para eventos de exploração');
-        return cachedData;
-      }
+  const [totalPages, setTotalPages] = useState(1);
 
-      console.log('[API] Buscando eventos de exploração do servidor');
-      const response = await EventQueriesService.getPublicEvents(currentPage, pageSize);
-      
-      if (response.error) {
-        throw new Error(response.error.message || 'Erro ao buscar eventos públicos');
-      }
-      
-      const result = createEventResponse(
-        response.data || [],
-        response.metadata?.currentPage || 1,
-        response.metadata?.totalPages || 1
-      );
-      
-      // Armazena resultado em cache com expiração de 5 minutos
-      cacheEvents(cacheKey, result, 5);
-      
-      return result;
-    },
-    staleTime: 5 * 60 * 1000, // Dados permanecem "frescos" por 5 minutos
-    gcTime: 10 * 60 * 1000,   // Dados são mantidos no cache por 10 minutos
-  });
+  // Filtros
+  const [searchQuery, setSearchQuery] = useState('');
+  const [location, setLocation] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const [date, setDate] = useState<Date | null>(null);
 
-  // Atualiza se os dados estão stale (expirados mas ainda utilizáveis)
-  useEffect(() => {
-    if (isStale && !isLoading) {
-      console.log('[Cache] Dados em cache expirados, atualizando em segundo plano');
-      refetch(); // Recarrega em segundo plano se os dados estiverem stale
-    }
-  }, [isStale, isLoading, refetch]);
+  const fetchEvents = async (page: number = 1) => {
+    setLoading(true);
+    setError(null);
 
-  // Implementação de prefetch da próxima página
-  useEffect(() => {
-    const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
-    
-    if (metadata.currentPage < metadata.totalPages) {
-      const nextPage = currentPage + 1;
-      const nextPageCacheKey = getEventsCacheKey('exploreEvents', { 
-        page: nextPage, 
-        pageSize,
-        search: debouncedSearchQuery 
+    try {
+      const cacheKey = getEventsCacheKey('explore', { 
+        tab: activeTab, 
+        page, 
+        search: searchQuery,
+        location,
+        category,
+        date: date?.toISOString()
       });
-      
-      // Prefetch apenas se não estiver em cache
-      if (!getCachedEvents(nextPageCacheKey)) {
-        console.log(`[Prefetch] Pré-carregando página ${nextPage}`);
-        
-        // Pequeno atraso para prefetch, priorizando renderização atual
-        const timer = setTimeout(() => {
-          EventQueriesService.getPublicEvents(nextPage, pageSize)
-            .then((apiResponse: ExploreEventsResponse) => {
-              if (apiResponse && !apiResponse.error && apiResponse.data) {
-                const responseData = apiResponse.data as Event[];
-                const responseMetadata = apiResponse.metadata || { totalPages: 1, currentPage: nextPage };
-                
-                const result = createEventResponse(
-                  responseData,
-                  nextPage,
-                  responseMetadata.totalPages || 1
-                );
-                
-                cacheEvents(nextPageCacheKey, result, 5);
-              }
-            })
-            .catch(err => {
-              console.error("Erro durante prefetch:", err);
-            });
-        }, 2000);
-        
-        return () => clearTimeout(timer);
+
+      // Verifica se há dados em cache e se não estão expirados
+      const cachedData = getCachedEvents<ExploreEventsData>(cacheKey);
+      if (cachedData && !isCacheStale(cacheKey)) {
+        setEvents(cachedData.events);
+        setTotalPages(cachedData.metadata.totalPages);
+        setCurrentPage(cachedData.metadata.currentPage);
+        setLoading(false);
+        return;
       }
-    }
-  }, [currentPage, eventsData, pageSize, debouncedSearchQuery]);
 
-  const events = eventsData?.events || [];
-  const metadata = eventsData?.metadata || { totalPages: 1, currentPage: 1 };
+      // Construir a query
+      let query = supabase
+        .from('events')
+        .select(`
+          *,
+          event_participants(*),
+          profiles:creator_id(*)
+        `, { count: 'exact' });
 
-  // Filtra eventos baseado na busca (já aplicado debounce)
-  const filteredEvents = events.filter(event => {
-    if (debouncedSearchQuery) {
-      const query = debouncedSearchQuery.toLowerCase();
-      return (
-        event.title.toLowerCase().includes(query) || 
-        (event.location && event.location.toLowerCase().includes(query)) ||
-        (event.profiles && event.profiles.full_name && event.profiles.full_name.toLowerCase().includes(query))
-      );
+      // Adicionar filtros
+      if (searchQuery) {
+        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      }
+
+      if (location) {
+        query = query.ilike('location', `%${location}%`);
+      }
+
+      if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        query = query.gte('date', startOfDay.toISOString())
+                    .lte('date', endOfDay.toISOString());
+      }
+
+      // Paginação
+      const pageSize = 10;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      query = query.range(from, to).order('date', { ascending: true });
+
+      // Executar a query
+      const response = await query;
+      
+      if (response.error) throw response.error;
+      
+      // Processar resultados
+      const totalCount = response.count || 0;
+      const calculatedTotalPages = Math.ceil(totalCount / pageSize);
+      
+      // Formatar os eventos
+      const formattedEvents = (response.data || []).map((event: any) => ({
+        ...event,
+        creator: {
+          id: event.profiles?.id,
+          name: event.profiles?.full_name || 'Usuário',
+          avatar: event.profiles?.avatar_url
+        }
+      }));
+
+      // Atualizar o estado
+      setEvents(formattedEvents);
+      setTotalPages(calculatedTotalPages);
+      setCurrentPage(page);
+      
+      // Armazenar em cache
+      const cacheData: ExploreEventsData = {
+        events: formattedEvents,
+        metadata: {
+          totalPages: calculatedTotalPages,
+          currentPage: page
+        }
+      };
+      
+      cacheEvents(cacheKey, cacheData, 5); // Cache por 5 minutos
+      
+    } catch (err) {
+      console.error('Erro ao buscar eventos:', err);
+      setError(err);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os eventos.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-    return true;
-  });
+  };
+
+  useEffect(() => {
+    fetchEvents(1);
+  }, [activeTab, searchQuery, location, category, date]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchEvents(page);
+  };
+
+  const handleTabChange = (tab: 'all' | 'nearby') => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  const handleLocationChange = (loc: string | null) => {
+    setLocation(loc);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (cat: string | null) => {
+    setCategory(cat);
+    setCurrentPage(1);
+  };
+
+  const handleDateChange = (newDate: Date | null) => {
+    setDate(newDate);
+    setCurrentPage(1);
+  };
 
   return {
-    events: filteredEvents,
-    isLoading,
+    events,
+    loading,
     error,
-    metadata,
-    searchQuery,
-    setSearchQuery,
     currentPage,
-    setCurrentPage,
-    refetch
+    totalPages,
+    activeTab,
+    searchQuery,
+    location,
+    category,
+    date,
+    handlePageChange,
+    handleTabChange,
+    handleSearch,
+    handleLocationChange,
+    handleCategoryChange,
+    handleDateChange,
+    refreshEvents: () => fetchEvents(currentPage)
   };
 };

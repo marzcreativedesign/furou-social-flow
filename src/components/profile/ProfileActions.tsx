@@ -1,39 +1,54 @@
 
+import React from 'react';
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, ChevronRight, LogOut } from "lucide-react";
+import { Settings, LogOut, Edit } from "lucide-react";
 
-interface ProfileActionsProps {
+export interface ProfileActionsProps {
   onSignOut?: () => void;
+  groupsCount?: number;
 }
 
-export const ProfileActions = ({ onSignOut }: ProfileActionsProps) => {
+export const ProfileActions: React.FC<ProfileActionsProps> = ({ onSignOut }) => {
   const navigate = useNavigate();
 
-  return (
-    <div className="space-y-3">
-      <button 
-        className="flex items-center justify-between w-full bg-white dark:bg-card p-4 rounded-xl shadow-sm hover:shadow-md transition-all dark:hover:bg-[#262626]"
-        onClick={() => navigate("/eventos")}
-      >
-        <div className="flex items-center">
-          <CalendarDays className="text-accent dark:text-[#FF9E3D] mr-3" size={20} />
-          <span>Meus Eventos</span>
-        </div>
-        <ChevronRight size={20} className="text-muted-foreground dark:text-[#B3B3B3]" />
-      </button>
+  const handleEditProfile = () => {
+    navigate('/profile/edit');
+  };
 
-      {onSignOut && (
-        <button 
-          className="flex items-center justify-between w-full bg-white dark:bg-card p-4 rounded-xl shadow-sm hover:shadow-md transition-all dark:hover:bg-[#262626]"
-          onClick={onSignOut}
-        >
-          <div className="flex items-center">
-            <LogOut className="text-red-500 mr-3" size={20} />
-            <span className="text-red-500">Sair</span>
-          </div>
-          <ChevronRight size={20} className="text-muted-foreground dark:text-[#B3B3B3]" />
-        </button>
-      )}
+  const handleSettings = () => {
+    navigate('/settings');
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-2 mb-6">
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={handleEditProfile}
+        className="flex items-center justify-center"
+      >
+        <Edit className="h-4 w-4 mr-2" />
+        Editar
+      </Button>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={handleSettings}
+        className="flex items-center justify-center"
+      >
+        <Settings className="h-4 w-4 mr-2" />
+        Config.
+      </Button>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={onSignOut}
+        className="flex items-center justify-center text-rose-500 border-rose-500/20 hover:bg-rose-500/10"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Sair
+      </Button>
     </div>
   );
 };

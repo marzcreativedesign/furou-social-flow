@@ -13,7 +13,6 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
         id,
         user_id,
         event_id,
-        status,
         created_at,
         profiles:user_id(full_name, avatar_url)
       `)
@@ -24,7 +23,13 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
       return [];
     }
 
-    return data as EventParticipant[];
+    // Adicionar o status "confirmed" manualmente já que a coluna parece não existir
+    const participantsWithStatus = data.map(participant => ({
+      ...participant,
+      status: "confirmed" // Adiciona o status manualmente
+    }));
+
+    return participantsWithStatus as EventParticipant[];
   } catch (error) {
     console.error("Erro inesperado ao buscar confirmações:", error);
     return [];

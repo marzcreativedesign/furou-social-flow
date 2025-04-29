@@ -1,288 +1,192 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Event, EventServiceResponse } from "@/types/event";
-import { EventQueriesService } from "./event/queries";
+import { Event } from "@/types/event";
 
-export const EventsService = {
-  getEvents: async (
-    page: number = 1,
-    pageSize: number = 6
-  ): Promise<EventServiceResponse> => {
+export class EventsService {
+  /**
+   * Busca eventos com paginação opcional
+   */
+  static async getEvents(page?: number, pageSize?: number): Promise<{ data: any; error: any }> {
     try {
-      const { data, error, count } = await supabase
-        .from('events')
-        .select('*, event_participants(*)', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
+      let query = supabase
+        .from("events")
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants:event_participants(*)
+        `)
+        .order("date", { ascending: true });
 
-      if (error) {
-        return { error };
+      if (page !== undefined && pageSize !== undefined) {
+        const start = (page - 1) * pageSize;
+        const end = page * pageSize - 1;
+        query = query.range(start, end);
       }
 
-      const totalPages = count ? Math.ceil(count / pageSize) : 0;
+      const { data, error } = await query;
 
-      return {
-        data: data as Event[],
-        error: null,
-        metadata: {
-          totalPages,
-          currentPage: page,
-          count
-        }
-      };
-    } catch (error: any) {
-      console.error('Error fetching events:', error);
-      return { error };
+      return { data: data as Event[], error };
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      return { data: null, error };
     }
-  },
+  }
 
-  searchEvents: async (
-    query: string,
-    location?: string,
-    page: number = 1,
-    pageSize: number = 6
-  ): Promise<EventServiceResponse> => {
+  /**
+   * Busca eventos públicos
+   */
+  static async getPublicEvents(page?: number, pageSize?: number): Promise<{ data: any; error: any }> {
     try {
-      let queryBuilder = supabase
-        .from('events')
-        .select('*, event_participants(*)', { count: 'exact' });
+      let query = supabase
+        .from("events")
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants:event_participants(*)
+        `)
+        .eq("is_public", true)
+        .order("date", { ascending: true });
 
-      // Adicionar condição para busca por título ou descrição
-      if (query) {
-        queryBuilder = queryBuilder.or(
-          `title.ilike.%${query}%,description.ilike.%${query}%`
-        );
+      if (page !== undefined && pageSize !== undefined) {
+        const start = (page - 1) * pageSize;
+        const end = page * pageSize - 1;
+        query = query.range(start, end);
       }
 
-      // Adicionar condição para localização
-      if (location) {
-        queryBuilder = queryBuilder.ilike('location', `%${location}%`);
-      }
+      const { data, error } = await query;
 
-      const { data, error, count } = await queryBuilder
-        .order('created_at', { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
-
-      if (error) {
-        return { error };
-      }
-
-      const totalPages = count ? Math.ceil(count / pageSize) : 0;
-
-      return {
-        data: data as Event[],
-        error: null,
-        metadata: {
-          totalPages,
-          currentPage: page,
-          count
-        }
-      };
-    } catch (error: any) {
-      console.error('Error searching events:', error);
-      return { error };
+      return { data: data as Event[], error };
+    } catch (error) {
+      console.error("Error fetching public events:", error);
+      return { data: null, error };
     }
-  },
+  }
 
-  getEventById: async (eventId: string): Promise<{ data?: Event; error: any }> => {
+  /**
+   * Busca um evento pelo ID
+   */
+  static async getEventById(id: string): Promise<{ data: any; error: any }> {
     try {
       const { data, error } = await supabase
-        .from('events')
-        .select('*, event_participants(*)')
-        .eq('id', eventId)
+        .from("events")
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants:event_participants(*)
+        `)
+        .eq("id", id)
         .single();
 
-      if (error) return { error };
-
-      return { data: data as Event, error: null };
-    } catch (error: any) {
-      console.error(`Error fetching event ${eventId}:`, error);
-      return { error };
+      return { data: data as Event, error };
+    } catch (error) {
+      console.error("Error fetching event by ID:", error);
+      return { data: null, error };
     }
-  },
+  }
 
-  createEvent: async (eventData: Partial<Event>): Promise<{ data?: Event; error: any }> => {
+  /**
+   * Cria um novo evento
+   */
+  static async createEvent(eventData: any): Promise<{ data: any; error: any }> {
     try {
       const { data, error } = await supabase
-        .from('events')
+        .from("events")
         .insert([eventData])
         .select();
 
-      if (error) return { error };
-
-      return { data: data[0] as Event, error: null };
-    } catch (error: any) {
-      console.error('Error creating event:', error);
-      return { error };
+      return { data: data?.[0], error };
+    } catch (error) {
+      console.error("Error creating event:", error);
+      return { data: null, error };
     }
-  },
+  }
 
-  updateEvent: async (
-    eventId: string,
-    eventData: Partial<Event>
-  ): Promise<{ data?: Event; error: any }> => {
+  /**
+   * Atualiza um evento existente
+   */
+  static async updateEvent(id: string, eventData: any): Promise<{ data: any; error: any }> {
     try {
       const { data, error } = await supabase
-        .from('events')
+        .from("events")
         .update(eventData)
-        .eq('id', eventId)
+        .eq("id", id)
         .select();
 
-      if (error) return { error };
-
-      return { data: data[0] as Event, error: null };
-    } catch (error: any) {
-      console.error(`Error updating event ${eventId}:`, error);
-      return { error };
+      return { data: data?.[0], error };
+    } catch (error) {
+      console.error("Error updating event:", error);
+      return { data: null, error };
     }
-  },
+  }
 
-  deleteEvent: async (eventId: string): Promise<{ success?: boolean; error: any }> => {
+  /**
+   * Exclui um evento
+   */
+  static async deleteEvent(id: string): Promise<{ error: any }> {
     try {
       const { error } = await supabase
-        .from('events')
+        .from("events")
         .delete()
-        .eq('id', eventId);
+        .eq("id", id);
 
-      if (error) return { error };
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error(`Error deleting event ${eventId}:`, error);
+      return { error };
+    } catch (error) {
+      console.error("Error deleting event:", error);
       return { error };
     }
-  },
-
-  confirmAttendance: async (
-    eventId: string,
-    userId: string
-  ): Promise<{ success?: boolean; error: any }> => {
+  }
+  
+  /**
+   * Função para confirmar participação em um evento
+   */
+  static async joinEvent(eventId: string, userId: string): Promise<{ data: any; error: any }> {
     try {
-      const { error } = await supabase
-        .from('event_confirmations')
-        .upsert(
-          {
-            event_id: eventId,
-            user_id: userId,
-            status: 'confirmed'
-          },
-          { onConflict: 'event_id, user_id' }
-        );
-
-      if (error) return { error };
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error(`Error confirming attendance for event ${eventId}:`, error);
-      return { error };
-    }
-  },
-
-  declineAttendance: async (
-    eventId: string,
-    userId: string
-  ): Promise<{ success?: boolean; error: any }> => {
-    try {
-      const { error } = await supabase
-        .from('event_confirmations')
-        .upsert(
-          {
-            event_id: eventId,
-            user_id: userId,
-            status: 'declined'
-          },
-          { onConflict: 'event_id, user_id' }
-        );
-
-      if (error) return { error };
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error(`Error declining attendance for event ${eventId}:`, error);
-      return { error };
-    }
-  },
-
-  // Adicionando métodos joinEvent e declineEvent para corrigir erros
-  joinEvent: async (eventId: string): Promise<{ success?: boolean; error: any }> => {
-    try {
-      const { user } = await supabase.auth.getUser();
-      if (!user) return { error: new Error("User not authenticated") };
-      
-      const { error } = await supabase
-        .from('event_participants')
-        .upsert(
-          {
-            user_id: user.id,
-            event_id: eventId,
-            status: 'confirmed'
-          },
-          { onConflict: 'user_id, event_id' }
-        );
-
-      if (error) return { error };
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error(`Error joining event ${eventId}:`, error);
-      return { error };
-    }
-  },
-
-  declineEvent: async (eventId: string): Promise<{ success?: boolean; error: any }> => {
-    try {
-      const { user } = await supabase.auth.getUser();
-      if (!user) return { error: new Error("User not authenticated") };
-      
-      const { error } = await supabase
-        .from('event_participants')
-        .upsert(
-          {
-            user_id: user.id,
-            event_id: eventId,
-            status: 'declined'
-          },
-          { onConflict: 'user_id, event_id' }
-        );
-
-      if (error) return { error };
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error(`Error declining event ${eventId}:`, error);
-      return { error };
-    }
-  },
-
-  getPendingInvites: async (): Promise<{ data?: any[]; error: any }> => {
-    try {
-      const { user } = await supabase.auth.getUser();
-      if (!user) return { data: [], error: null };
-      
       const { data, error } = await supabase
         .from('event_participants')
-        .select(`
-          *,
-          events:event_id(*)
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'invited');
+        .upsert(
+          {
+            event_id: eventId,
+            user_id: userId,
+            status: 'confirmed'
+          },
+          {
+            onConflict: 'event_id,user_id',
+            ignoreDuplicates: false,
+          }
+        )
+        .select();
 
-      if (error) return { error };
-      
-      // Transformar os dados para o formato esperado
-      const pendingEvents = data?.map(item => ({
-        ...item.events,
-        status: item.status
-      })) || [];
-
-      return { data: pendingEvents, error: null };
-    } catch (error: any) {
-      console.error('Error fetching pending invites:', error);
-      return { error };
+      return { data, error };
+    } catch (error) {
+      console.error('Error joining event:', error);
+      return { data: null, error };
     }
-  },
+  }
+  
+  /**
+   * Função para declinar participação em um evento
+   */
+  static async declineEvent(eventId: string, userId: string): Promise<{ data: any; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('event_participants')
+        .upsert(
+          {
+            event_id: eventId,
+            user_id: userId,
+            status: 'declined'
+          },
+          {
+            onConflict: 'event_id,user_id',
+            ignoreDuplicates: false,
+          }
+        )
+        .select();
 
-  // Re-exportando serviços específicos para consultas de eventos
-  ...EventQueriesService
-};
+      return { data, error };
+    } catch (error) {
+      console.error('Error declining event:', error);
+      return { data: null, error };
+    }
+  }
+}
