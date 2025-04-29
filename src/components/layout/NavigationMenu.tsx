@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
-  Home, Calendar, Users, Bell, Settings,
+  Home, Calendar, Bell, Settings,
   Calculator, ScrollText, Globe, User
 } from "lucide-react";
 
@@ -18,7 +18,6 @@ const NavigationMenu = ({ isActive }: NavigationMenuProps) => {
     { title: 'Início', icon: <Home size={20} />, href: '/' },
     { title: 'Meus Eventos', icon: <Calendar size={20} />, href: '/eventos' },
     { title: 'Agenda', icon: <ScrollText size={20} />, href: '/agenda' },
-    { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' },
     { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' },
     { title: 'Explorar', icon: <Globe size={20} />, href: '/explorar' },
     { title: 'Meu Perfil', icon: <User size={20} />, href: '/perfil' },

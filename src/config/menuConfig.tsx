@@ -1,7 +1,7 @@
 
 import {
   Home, Calendar, Bell, Settings,
-  Calculator, ScrollText, Globe, User, Users
+  Calculator, ScrollText, Globe, User
 } from "lucide-react";
 
 export const menuCategories = [
@@ -20,12 +20,6 @@ export const menuCategories = [
     ]
   },
   {
-    title: 'Grupos',
-    items: [
-      { title: 'Meus Grupos', icon: <Users size={20} />, href: '/grupos' }
-    ]
-  },
-  {
     title: 'Notificações',
     items: [
       { title: 'Notificações', icon: <Bell size={20} />, href: '/notificacoes' }
@@ -40,4 +34,3 @@ export const menuCategories = [
     ]
   }
 ];
-

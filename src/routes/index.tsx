@@ -16,10 +16,6 @@ import NotFound from "@/pages/NotFound";
 import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import ExplorePage from "@/pages/ExplorePage";
-import GroupsPage from "@/pages/GroupsPage";
-import GroupDetailPage from "@/pages/GroupDetailPage";
-import RankingsPage from "@/pages/RankingsPage";
-import GroupInvitePage from "@/pages/GroupInvitePage";
 
 export const router = createBrowserRouter([
   {
@@ -77,26 +73,6 @@ export const router = createBrowserRouter([
   {
     path: "/explorar",
     element: <ProtectedRoute><ExplorePage /></ProtectedRoute>
-  },
-  {
-    path: "/grupos",
-    element: <ProtectedRoute><GroupsPage /></ProtectedRoute>
-  },
-  {
-    path: "/grupos/:id",
-    element: <ProtectedRoute><GroupDetailPage /></ProtectedRoute>
-  },
-  {
-    path: "/rankings/:type",
-    element: <ProtectedRoute><RankingsPage /></ProtectedRoute>
-  },
-  {
-    path: "/rankings",
-    element: <ProtectedRoute><RankingsPage /></ProtectedRoute>
-  },
-  {
-    path: "/convite/:code",
-    element: <GroupInvitePage />
   },
   {
     path: "*",

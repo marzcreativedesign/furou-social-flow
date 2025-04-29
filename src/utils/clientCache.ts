@@ -1,133 +1,130 @@
 
-/**
- * Funções utilitárias para gerenciar o cache do cliente
- */
-
-// Tempo padrão de expiração do cache (30 minutos)
-const DEFAULT_CACHE_TTL = 30 * 60 * 1000;
-
-/**
- * Opções de configuração de cache
- */
-export interface CacheOptions {
-  expireTimeInMinutes?: number;
+type CacheOptions = {
+  expireTimeInMinutes: number;
   staleWhileRevalidate?: boolean;
-}
+};
 
-/**
- * Interface para itens em cache
- */
-export interface CacheItem<T> {
+type CacheMetadata = {
+  createdAt: number;
+  expiresAt: number;
+  staleWhileRevalidate?: boolean;
+};
+
+type CacheItem<T> = {
   data: T;
-  timestamp: number;
-}
-
-/**
- * Verifica se o cache está expirado
- * @param key Chave do item em cache
- * @param ttl Tempo de vida em milissegundos
- */
-export const isCacheStale = (key: string, ttl = DEFAULT_CACHE_TTL): boolean => {
-  try {
-    const cachedItem = localStorage.getItem(key);
-    if (!cachedItem) return true;
-    
-    const { timestamp } = JSON.parse(cachedItem);
-    return Date.now() - timestamp > ttl;
-  } catch (error) {
-    console.error('Erro ao verificar status do cache:', error);
-    return true;
-  }
+  metadata: CacheMetadata;
 };
 
-/**
- * Gera uma chave de cache única com base em parâmetros
- * @param prefix Prefixo para a chave (ex: 'events', 'users')
- * @param params Objeto com parâmetros para diferenciar itens em cache
- */
-export const generateCacheKey = (prefix: string, params?: Record<string, any>): string => {
-  if (!params) return `app:${prefix}`;
-  
-  const paramString = Object.entries(params)
-    .filter(([_, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => `${key}:${value}`)
-    .join('|');
-  
-  return `app:${prefix}:${paramString}`;
+export const generateCacheKey = (prefix: string, params: Record<string, any>): string => {
+  const paramsString = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+    .join('&');
+
+  return `${prefix}:${paramsString}`;
 };
 
-/**
- * Salva dados no cache local
- * @param key Chave para identificar os dados
- * @param data Dados a serem armazenados
- * @param options Opções de configuração do cache
- */
-export const setCache = <T>(key: string, data: T, options?: CacheOptions): void => {
+export const setCache = <T>(
+  key: string, 
+  data: T, 
+  options: CacheOptions
+): void => {
+  const now = Date.now();
+  const expiresAt = now + options.expireTimeInMinutes * 60 * 1000;
+  
+  const cacheItem: CacheItem<T> = {
+    data,
+    metadata: {
+      createdAt: now,
+      expiresAt,
+      staleWhileRevalidate: options.staleWhileRevalidate
+    }
+  };
+  
   try {
-    const cacheItem: CacheItem<T> = {
-      data,
-      timestamp: Date.now()
-    };
     localStorage.setItem(key, JSON.stringify(cacheItem));
   } catch (error) {
-    console.error('Erro ao salvar no cache:', error);
+    console.error('Error setting cache:', error);
+    // Se houver um erro (como exceder o limite de armazenamento), limpe o cache
+    cleanCache();
   }
 };
 
-/**
- * Recupera dados do cache local
- * @param key Chave para identificar os dados
- * @param ttl Tempo de vida em milissegundos (opcional)
- */
-export const getCache = <T>(key: string, ttl = DEFAULT_CACHE_TTL): T | null => {
+export const getCache = <T>(key: string): T | null => {
   try {
-    const cachedItem = localStorage.getItem(key);
-    if (!cachedItem) return null;
+    const cachedItemString = localStorage.getItem(key);
     
-    const { data, timestamp } = JSON.parse(cachedItem);
+    if (!cachedItemString) return null;
     
-    if (Date.now() - timestamp > ttl) {
-      // Cache expirado, remover e retornar null
+    const cachedItem = JSON.parse(cachedItemString) as CacheItem<T>;
+    
+    // Se o cache expirou e não estamos usando staleWhileRevalidate, retorne null
+    if (
+      cachedItem.metadata.expiresAt < Date.now() && 
+      !cachedItem.metadata.staleWhileRevalidate
+    ) {
       localStorage.removeItem(key);
       return null;
     }
     
-    return data as T;
+    return cachedItem.data;
   } catch (error) {
-    console.error('Erro ao recuperar do cache:', error);
+    console.error('Error retrieving from cache:', error);
     return null;
   }
 };
 
-/**
- * Limpa todo o cache relacionado à aplicação
- */
-export const clearAppCache = (): void => {
+export const isCacheStale = (key: string): boolean => {
   try {
-    const keysToRemove: string[] = [];
+    const cachedItemString = localStorage.getItem(key);
     
-    // Encontra todas as chaves que começam com 'app:'
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('app:')) {
-        keysToRemove.push(key);
-      }
-    }
+    if (!cachedItemString) return false;
     
-    // Remove cada item
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    const cachedItem = JSON.parse(cachedItemString) as CacheItem<any>;
     
-    console.log('Cache da aplicação limpo com sucesso');
+    return cachedItem.metadata.expiresAt < Date.now();
   } catch (error) {
-    console.error('Erro ao limpar cache da aplicação:', error);
+    console.error('Error checking if cache is stale:', error);
+    return false;
   }
 };
 
-/**
- * Alias para as funções principais para compatibilidade com código existente
- */
-export const saveToCache = setCache;
-export const getFromCache = getCache;
+export const removeCache = (key: string): void => {
+  localStorage.removeItem(key);
+};
 
-// Ensure all necessary functions are explicitly exported
-export { DEFAULT_CACHE_TTL };
+export const cleanCache = (maxAgeInMinutes = 60): void => {
+  const now = Date.now();
+  const maxAge = maxAgeInMinutes * 60 * 1000;
+  
+  // Iterar sobre todas as chaves no localStorage
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    
+    if (key) {
+      try {
+        const value = localStorage.getItem(key);
+        
+        if (value) {
+          const cachedItem = JSON.parse(value) as CacheItem<any>;
+          
+          // Verificar se o item está mais velho que maxAge
+          if (now - cachedItem.metadata.createdAt > maxAge) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (error) {
+        // Ignorar itens que não são JSON válido ou não seguem o formato esperado
+        continue;
+      }
+    }
+  }
+};
+
+// Limpar cache expirado a cada 5 minutos
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    cleanCache(30); // Remover items mais velhos que 30 minutos
+  }, 5 * 60 * 1000);
+}

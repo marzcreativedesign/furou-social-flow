@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { EventsService } from "@/services/events.service";
 import type { Event, EventServiceResponse } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
-import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
-import { isCacheStale } from "@/utils/eventCache";
+import { getCache, setCache, generateCacheKey, isCacheStale } from "@/utils/clientCache";
 import { useDebounce } from "@/utils/debounce";
 
 interface EventsResponse {
@@ -18,7 +18,7 @@ export const useEventsData = (initialPage = 1, pageSize = 6) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'group' | 'confirmed' | 'missed'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'public' | 'private' | 'confirmed' | 'missed'>('all');
   
   const debouncedSearch = useDebounce(searchQuery, 500);
   const debouncedLocation = useDebounce(locationQuery, 500);
@@ -32,7 +32,7 @@ export const useEventsData = (initialPage = 1, pageSize = 6) => {
     location: debouncedLocation
   });
   
-  const isStale = isCacheStale(cacheKey);
+  const isDataStale = isCacheStale(cacheKey);
 
   // Fetch events with react-query
   const { 
@@ -121,11 +121,11 @@ export const useEventsData = (initialPage = 1, pageSize = 6) => {
 
   // Check for stale cache and refetch if needed
   useEffect(() => {
-    if (isStale && !isLoading) {
+    if (isDataStale && !isLoading) {
       console.log('Dados em cache expirados, atualizando em segundo plano');
       refetch();
     }
-  }, [isStale, isLoading, refetch]);
+  }, [isDataStale, isLoading, refetch]);
 
   // Apply filters to events
   const events = eventsData?.events || [];
@@ -135,7 +135,6 @@ export const useEventsData = (initialPage = 1, pageSize = 6) => {
     if (
       (activeFilter === 'public' && !event.is_public) || 
       (activeFilter === 'private' && event.is_public) || 
-      (activeFilter === 'group' && !event.group_events?.length) || 
       (activeFilter === 'confirmed' && !event.event_participants?.some(p => p.status === 'confirmed')) || 
       (activeFilter === 'missed' && event.event_participants?.some(p => p.status === 'confirmed') !== false)
     ) {
@@ -146,8 +145,7 @@ export const useEventsData = (initialPage = 1, pageSize = 6) => {
       const query = debouncedSearch.toLowerCase();
       const matchesTitle = event.title.toLowerCase().includes(query);
       const matchesLocation = event.location?.toLowerCase().includes(query) || false;
-      const matchesGroup = event.group_events?.[0]?.groups?.name?.toLowerCase().includes(query) || false;
-      if (!matchesTitle && !matchesLocation && !matchesGroup) {
+      if (!matchesTitle && !matchesLocation) {
         return false;
       }
     }
