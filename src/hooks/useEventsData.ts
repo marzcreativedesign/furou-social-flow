@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { EventsService } from "@/services/events.service";
 import type { Event, EventServiceResponse } from "@/types/event";
