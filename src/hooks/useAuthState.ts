@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { AuthService } from '@/services/auth.service';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook para gerenciar o estado de autenticação
@@ -13,7 +13,7 @@ export const useAuthState = () => {
 
   useEffect(() => {
     // Configurar listener para mudanças no estado de autenticação
-    const { data: { subscription } } = AuthService.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -22,7 +22,7 @@ export const useAuthState = () => {
     );
 
     // Verificar sessão existente
-    AuthService.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);

@@ -34,7 +34,7 @@ export const useGroupsAdmin = () => {
         id: group.id,
         name: group.name,
         description: group.description,
-        image_url: group.image_url || null,
+        image_url: null, // Since image_url doesn't exist in the database, set it to null
         created_at: group.created_at,
         updated_at: group.updated_at,
         member_count: group.group_members?.length || 0
