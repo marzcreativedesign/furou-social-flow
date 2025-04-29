@@ -25,7 +25,7 @@ const Home = () => {
       <div className="px-4 py-4">
         <EventTypeFilters
           activeFilter={activeFilter}
-          onFilterChange={(filter) => setActiveFilter(filter)}
+          onFilterChange={(filter) => setActiveFilter(filter as FilterType)}
         />
         
         <EventsList 

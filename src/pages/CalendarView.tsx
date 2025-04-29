@@ -1,343 +1,114 @@
 
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import MainLayout from "@/components/MainLayout";
-import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
-  List, 
-  ArrowLeft, 
-  ArrowRight
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
+import MainLayout from "@/components/MainLayout";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { format, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
 import { EventsService } from "@/services/events.service";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
-import { Event, EventData } from "@/types/event"; // Import both types
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarDays } from "lucide-react";
+import type { Event } from "@/types/event";
 
 const CalendarView = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
-  const [view, setView] = useState<"calendar" | "list">("calendar");
-  const [events, setEvents] = useState<EventData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const navigate = useNavigate();
 
-  const handleDateSelect = (day: Date | undefined) => {
-    if (day) {
-      setDate(day);
-    }
-  };
+  const { data: eventsData, isLoading } = useQuery({
+    queryKey: ['calendarEvents'],
+    queryFn: async () => {
+      const { data, error } = await EventsService.getEvents();
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (!user) return;
-      
-      setLoading(true);
-      try {
-        const { data, error } = await EventsService.getEvents();
-        
-        if (error) {
-          console.error("Error fetching events:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar seus eventos",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data) {
-          const formattedEvents: EventData[] = data.map(event => {
-            // Safely access group_events that might be undefined
-            const groupInfo = event.group_events && event.group_events[0]?.groups 
-              ? event.group_events[0].groups 
-              : null;
-            
-            // Create a typed event object with explicit confirmed property
-            const enhancedEvent: EventData & { 
-              confirmed?: boolean,
-              type?: "public" | "private" | "group",
-              groupName?: string | null,
-              attendees?: number
-            } = {
-              ...event,
-              confirmed: event.event_participants && event.event_participants.some(p => p.status === 'confirmed'),
-              type: event.is_public ? "public" : (groupInfo ? "group" : "private"),
-              groupName: groupInfo?.name || null,
-              attendees: event.event_participants?.length || 0
-            };
-            
-            return enhancedEvent;
-          });
-          
-          setEvents(formattedEvents);
-        }
-      } catch (error) {
-        console.error("Error loading events:", error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao carregar seus eventos",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchEvents();
-  }, [user, toast]);
-
-  // Format events for the selected day
-  const selectedDateEvents = useMemo(() => {
-    if (!date) return [];
-    
-    return events.filter(event => {
+  const getEventsForDate = (date: Date): Event[] => {
+    if (!eventsData) return [];
+    return eventsData.filter(event => {
       const eventDate = new Date(event.date);
-      return (
-        eventDate.getDate() === date.getDate() &&
-        eventDate.getMonth() === date.getMonth() &&
-        eventDate.getFullYear() === date.getFullYear()
-      );
-    }).sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
+      return isSameDay(eventDate, date);
     });
-  }, [date, events]);
-
-  // Get dates with events for highlighting on the calendar
-  const datesWithEvents = useMemo(() => {
-    return events.map(event => new Date(event.date));
-  }, [events]);
-
-  // Function to get events for each month day (for list view)
-  const getEventsForMonth = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    
-    const daysWithEvents: {date: Date, events: EventData[]}[] = [];
-    
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const currentDate = new Date(year, month, day);
-      
-      const eventsOnDay = events.filter(event => {
-        const eventDate = new Date(event.date);
-        return (
-          eventDate.getDate() === currentDate.getDate() &&
-          eventDate.getMonth() === currentDate.getMonth() &&
-          eventDate.getFullYear() === currentDate.getFullYear()
-        );
-      });
-      
-      if (eventsOnDay.length > 0) {
-        daysWithEvents.push({
-          date: currentDate,
-          events: eventsOnDay.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        });
-      }
-    }
-    
-    return daysWithEvents;
   };
 
-  const monthDaysWithEvents = useMemo(() => {
-    return getEventsForMonth();
-  }, [currentMonth, events]);
+  const eventsForSelectedDate = getEventsForDate(date);
 
-  const navigateToEvent = (eventId: string) => {
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleEventClick = (eventId: string) => {
     navigate(`/evento/${eventId}`);
   };
 
-  const handlePreviousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-  };
-  
-  const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  const renderEvents = () => {
+    if (isLoading) {
+      return Array(3).fill(0).map((_, i) => (
+        <div key={i} className="mb-3">
+          <Skeleton className="h-16 w-full rounded-md" />
+        </div>
+      ));
+    }
+    
+    if (eventsForSelectedDate.length === 0) {
+      return (
+        <div className="text-center p-8">
+          <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+          <p className="text-muted-foreground">Nenhum evento nesta data</p>
+          <Button 
+            onClick={() => navigate('/criar')} 
+            variant="outline" 
+            className="mt-4"
+          >
+            Criar Evento
+          </Button>
+        </div>
+      );
+    }
+    
+    return eventsForSelectedDate.map(event => (
+      <div 
+        key={event.id} 
+        className="bg-card border rounded-lg p-4 mb-3 cursor-pointer hover:border-primary transition-colors"
+        onClick={() => handleEventClick(event.id)}
+      >
+        <h3 className="font-medium">{event.title}</h3>
+        <p className="text-sm text-muted-foreground">
+          {format(new Date(event.date), "HH:mm", { locale: ptBR })}
+        </p>
+        {event.location && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {event.location}
+          </p>
+        )}
+      </div>
+    ));
   };
 
   return (
-    <MainLayout title="Agenda" showDock>
+    <MainLayout title="Agenda" showBack onBack={handleBack}>
       <div className="p-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 opacity-70" />
-            <h2 className="text-xl font-semibold">
-              {view === "calendar" ? "Calendário" : "Lista de Eventos"}
-            </h2>
-          </div>
+        <div className="mb-6">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(newDate) => newDate && setDate(newDate)}
+            className="rounded-md border"
+            locale={ptBR}
+          />
+        </div>
+        
+        <div className="mt-6">
+          <h2 className="text-lg font-bold mb-4">
+            Eventos em {format(date, "dd 'de' MMMM", { locale: ptBR })}
+          </h2>
           
-          <div className="flex gap-2">
-            <Button
-              variant={view === "calendar" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setView("calendar")}
-            >
-              <CalendarIcon className="h-4 w-4 mr-1" />
-              Calendário
-            </Button>
-            <Button
-              variant={view === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setView("list")}
-            >
-              <List className="h-4 w-4 mr-1" />
-              Lista
-            </Button>
+          <div className="space-y-2">
+            {renderEvents()}
           </div>
         </div>
-
-        {view === "calendar" ? (
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="md:w-1/2">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                className="border rounded-md p-3"
-                modifiers={{ hasEvent: datesWithEvents }}
-                modifiersStyles={{
-                  hasEvent: { 
-                    fontWeight: 'bold',
-                    backgroundColor: 'rgba(255, 138, 30, 0.1)',
-                    color: '#FF8A1E',
-                    borderRadius: '4px'
-                  }
-                }}
-              />
-            </div>
-            
-            <div className="md:w-1/2">
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium text-lg mb-3">
-                  {date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </h3>
-                
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : selectedDateEvents.length > 0 ? (
-                  <div className="space-y-3">
-                    {selectedDateEvents.map(event => {
-                      // Type assertion to access our custom properties
-                      const typedEvent = event as EventData & { 
-                        confirmed?: boolean,
-                        type?: "public" | "private" | "group" 
-                      };
-                      
-                      return (
-                        <div 
-                          key={event.id}
-                          className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => navigateToEvent(event.id)}
-                        >
-                          <div className={`w-2 h-10 rounded-full ${
-                            typedEvent.confirmed ? 'bg-green-500' : 'bg-orange-500'
-                          }`} />
-                          <div className="flex-1">
-                            <p className="font-medium">{event.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                              {event.location && ` • ${event.location}`}
-                            </p>
-                          </div>
-                          <ChevronRight className="h-5 w-5 opacity-50" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum evento nesta data</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => navigate('/criar')}
-                    >
-                      Criar evento
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              
-              <h3 className="text-lg font-medium">
-                {currentMonth.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})}
-              </h3>
-              
-              <Button variant="outline" size="icon" onClick={handleNextMonth}>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : monthDaysWithEvents.length > 0 ? (
-              monthDaysWithEvents.map(day => (
-                <div key={day.date.toString()} className="border rounded-md">
-                  <div className="bg-muted p-3 font-medium">
-                    {day.date.toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})}
-                  </div>
-                  <div className="p-2">
-                    {day.events.map(event => {
-                      // Type assertion to access our custom properties
-                      const typedEvent = event as EventData & { 
-                        confirmed?: boolean
-                      };
-                      
-                      return (
-                        <div 
-                          key={event.id}
-                          className="flex items-center gap-3 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => navigateToEvent(event.id)}
-                        >
-                          <div className={`w-2 h-10 rounded-full ${
-                            typedEvent.confirmed ? 'bg-green-500' : 'bg-orange-500'
-                          }`} />
-                          <div className="flex-1">
-                            <p className="font-medium">{event.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(event.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
-                              {event.location && ` • ${event.location}`}
-                            </p>
-                          </div>
-                          <ChevronRight className="h-5 w-5 opacity-50" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="mb-2">Nenhum evento em {currentMonth.toLocaleDateString('pt-BR', {month: 'long'})}</p>
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/criar')}
-                >
-                  Criar evento
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </MainLayout>
   );

@@ -1,243 +1,187 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "../utils";
-import { getCurrentUser } from "../utils";
 import { fetchEventConfirmations } from "./helpers/fetch-confirmations";
 import { fetchEventComments } from "./helpers/fetch-comments";
-import { fetchGroupEvents } from "./helpers/fetch-group-events";
-import { Event, PaginationMetadata } from "@/types/event";
-import { ExploreEventsResponse } from "@/types/explore";
+import type { Event, PaginationMetadata } from "@/types/event";
 
-/**
- * Serviço otimizado para obter eventos com paginação
- * Implementa estratégias de performance como:
- * - Paginação usando range para limitar dados recuperados
- * - Consultas JOIN eficientes para reduzir subconsultas
- * - Seleção apenas dos campos necessários
- */
 export const GetEventsPaginatedService = {
   /**
-   * Obtém eventos (públicos e do usuário atual) com paginação
+   * Busca eventos com paginação
    */
-  async getEvents(page = 1, pageSize = 6) {
+  async getEventsPaginated(page: number = 1, pageSize: number = 10) {
     try {
-      console.time('getEventsPaginated');
-      const user = await getCurrentUser();
+      // Calcula o início e fim do intervalo para paginação
       const start = (page - 1) * pageSize;
       const end = start + pageSize - 1;
-      
-      // Primeiro, obter a contagem total para calcular as páginas
-      const { count, error: countError } = await supabase
+
+      // Busca os eventos
+      const { data: events, error, count } = await supabase
         .from("events")
-        .select('*', { count: 'exact', head: true })
-        .or(`creator_id.eq.${user.id},is_public.eq.true`);
-      
-      if (countError) {
-        console.timeEnd('getEventsPaginated');
-        return handleError(countError, "Erro ao obter contagem de eventos");
-      }
-      
-      // Em seguida, obter os eventos paginados com JOIN eficiente
-      const { data: eventsData, error } = await supabase
-        .from("events")
-        .select(`
-          id,
-          title,
-          date,
-          location,
-          description,
-          image_url,
-          is_public,
-          creator_id,
-          profiles:creator_id(id, full_name, avatar_url)
-        `)
-        .or(`creator_id.eq.${user.id},is_public.eq.true`)
-        .order("date", { ascending: true })
+        .select("*, profiles:creator_id(*)", { count: "exact" })
+        .order("date", { ascending: false })
         .range(start, end);
-      
+
       if (error) {
-        console.timeEnd('getEventsPaginated');
-        return handleError(error, "Erro ao buscar eventos");
+        return handleError(error, "Erro ao buscar eventos paginados");
       }
-      
-      // Processar dados necessários em paralelo para maior eficiência
-      const data = await Promise.all(eventsData.map(async event => {
-        // Obter apenas dados essenciais de forma eficiente
-        const eventParticipants = await fetchEventConfirmations(event.id);
-        
-        // Lazy-load: buscar dados adicionais apenas quando necessário
-        // Estes dados geralmente não são necessários na listagem, apenas no detalhe
-        // const comments = await fetchEventComments(event.id);
-        const groupEvents = await fetchGroupEvents(event.id);
-        
-        return {
-          ...event,
-          event_participants: eventParticipants,
-          comments: [], // Otimização: não carrega comentários na listagem
-          group_events: groupEvents || []
-        } as Event;
-      }));
-      
+
+      // Calcula metadados de paginação
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
       const metadata: PaginationMetadata = {
-        totalCount: count || 0,
-        totalPages: Math.ceil((count || 0) / pageSize),
+        totalPages,
         currentPage: page,
-        pageSize: pageSize
+        count: totalCount
       };
-      
-      console.timeEnd('getEventsPaginated');
-      return { 
-        data, 
-        metadata, 
-        error: null 
+
+      // Para cada evento, busca os participantes e comentários
+      const eventsWithExtras = await Promise.all(
+        events.map(async (event) => {
+          const eventId = event.id;
+          const [eventParticipants, comments] = await Promise.all([
+            fetchEventConfirmations(eventId),
+            fetchEventComments(eventId)
+          ]);
+
+          return {
+            ...event,
+            event_participants: eventParticipants,
+            comments: comments
+          } as unknown as Event;
+        })
+      );
+
+      return {
+        data: eventsWithExtras,
+        metadata,
+        error: null
       };
     } catch (error) {
-      console.timeEnd('getEventsPaginated');
-      return handleError(error, "Erro inesperado ao buscar eventos");
+      return handleError(error, "Erro inesperado ao buscar eventos paginados");
     }
   },
 
   /**
-   * Obtém eventos públicos com paginação
+   * Busca eventos públicos com paginação
    */
-  async getPublicEvents(page = 1, pageSize = 6): Promise<ExploreEventsResponse> {
+  async getPublicEventsPaginated(page: number = 1, pageSize: number = 10) {
     try {
-      console.time('getPublicEventsPaginated');
+      // Calcula o início e fim do intervalo para paginação
       const start = (page - 1) * pageSize;
       const end = start + pageSize - 1;
-      
-      // Obter contagem total otimizada
-      const { count, error: countError } = await supabase
+
+      // Busca os eventos públicos
+      const { data: events, error, count } = await supabase
         .from("events")
-        .select('id', { count: 'exact', head: true })
-        .eq("is_public", true);
-      
-      if (countError) {
-        console.timeEnd('getPublicEventsPaginated');
-        return handleError(countError, "Erro ao obter contagem de eventos públicos");
-      }
-      
-      // Obter eventos paginados com seleção otimizada de campos
-      const { data: eventsData, error } = await supabase
-        .from("events")
-        .select(`
-          id,
-          title,
-          date,
-          location,
-          image_url,
-          is_public,
-          creator_id,
-          profiles:creator_id(id, full_name, avatar_url)
-        `)
+        .select("*, profiles:creator_id(*)", { count: "exact" })
         .eq("is_public", true)
-        .order("date", { ascending: true })
+        .order("date", { ascending: false })
         .range(start, end);
-      
+
       if (error) {
-        console.timeEnd('getPublicEventsPaginated');
-        return handleError(error, "Erro ao buscar eventos públicos");
+        return handleError(error, "Erro ao buscar eventos públicos paginados");
       }
-      
-      // Processar dados em paralelo para melhor performance
-      const data = await Promise.all(eventsData.map(async event => {
-        const eventParticipants = await fetchEventConfirmations(event.id);
-        
-        // Otimização: não carregamos dados desnecessários na listagem
-        return {
-          ...event,
-          event_participants: eventParticipants,
-          comments: [],
-          group_events: []
-        } as Event;
-      }));
-      
-      console.timeEnd('getPublicEventsPaginated');
-      return { 
-        data, 
-        metadata: {
-          totalCount: count || 0,
-          totalPages: Math.ceil((count || 0) / pageSize),
-          currentPage: page,
-          pageSize: pageSize
-        },
-        error: null 
+
+      // Calcula metadados de paginação
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      const metadata: PaginationMetadata = {
+        totalPages,
+        currentPage: page,
+        count: totalCount
+      };
+
+      // Para cada evento, busca os participantes e comentários
+      const eventsWithExtras = await Promise.all(
+        events.map(async (event) => {
+          const eventId = event.id;
+          const [eventParticipants, comments] = await Promise.all([
+            fetchEventConfirmations(eventId),
+            fetchEventComments(eventId)
+          ]);
+
+          return {
+            ...event,
+            event_participants: eventParticipants,
+            comments: comments
+          } as unknown as Event;
+        })
+      );
+
+      return {
+        data: eventsWithExtras,
+        metadata,
+        error: null
       };
     } catch (error) {
-      console.timeEnd('getPublicEventsPaginated');
-      return handleError(error, "Erro inesperado ao buscar eventos públicos");
+      return handleError(error, "Erro inesperado ao buscar eventos públicos paginados");
     }
   },
 
   /**
-   * Obtém eventos criados pelo usuário logado com paginação
+   * Busca eventos por usuário com paginação
    */
-  async getUserCreatedEvents(page = 1, pageSize = 6) {
+  async getUserEventsPaginated(userId: string, page: number = 1, pageSize: number = 10) {
     try {
-      console.time('getUserCreatedEventsPaginated');
-      const user = await getCurrentUser();
+      // Calcula o início e fim do intervalo para paginação
       const start = (page - 1) * pageSize;
       const end = start + pageSize - 1;
-      
-      // Obter contagem total
-      const { count, error: countError } = await supabase
+
+      // Busca os eventos do usuário (criados ou participando)
+      const { data: events, error, count } = await supabase
         .from("events")
-        .select('id', { count: 'exact', head: true })
-        .eq("creator_id", user.id);
-      
-      if (countError) {
-        console.timeEnd('getUserCreatedEventsPaginated');
-        return handleError(countError, "Erro ao obter contagem de eventos do usuário");
-      }
-      
-      // Obter eventos paginados com campos selecionados especificamente
-      const { data: eventsData, error } = await supabase
-        .from("events")
-        .select(`
-          id,
-          title,
-          date,
-          location,
-          image_url,
-          is_public,
-          creator_id,
-          profiles:creator_id(id, full_name, avatar_url)
-        `)
-        .eq("creator_id", user.id)
-        .order("date", { ascending: true })
+        .select("*, profiles:creator_id(*)", { count: "exact" })
+        .or(`creator_id.eq.${userId},event_participants.user_id.eq.${userId}`)
+        .order("date", { ascending: false })
         .range(start, end);
-      
+
       if (error) {
-        console.timeEnd('getUserCreatedEventsPaginated');
-        return handleError(error, "Erro ao buscar eventos do usuário");
+        return handleError(
+          error,
+          "Erro ao buscar eventos do usuário paginados"
+        );
       }
-      
-      const data = await Promise.all(eventsData.map(async event => {
-        const eventParticipants = await fetchEventConfirmations(event.id);
-        
-        // Lazy-loading de dados adicionais
-        return {
-          ...event,
-          event_participants: eventParticipants,
-          comments: [],
-          group_events: []
-        } as Event;
-      }));
-      
-      console.timeEnd('getUserCreatedEventsPaginated');
-      return { 
-        data, 
-        metadata: {
-          totalCount: count || 0,
-          totalPages: Math.ceil((count || 0) / pageSize),
-          currentPage: page,
-          pageSize: pageSize
-        },
-        error: null 
+
+      // Calcula metadados de paginação
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      const metadata: PaginationMetadata = {
+        totalPages,
+        currentPage: page,
+        count: totalCount
+      };
+
+      // Para cada evento, busca os participantes e comentários
+      const eventsWithExtras = await Promise.all(
+        events.map(async (event) => {
+          const eventId = event.id;
+          const [eventParticipants, comments] = await Promise.all([
+            fetchEventConfirmations(eventId),
+            fetchEventComments(eventId)
+          ]);
+
+          return {
+            ...event,
+            event_participants: eventParticipants,
+            comments: comments
+          } as unknown as Event;
+        })
+      );
+
+      return {
+        data: eventsWithExtras,
+        metadata,
+        error: null
       };
     } catch (error) {
-      console.timeEnd('getUserCreatedEventsPaginated');
-      return handleError(error, "Erro inesperado ao buscar eventos do usuário");
+      return handleError(
+        error,
+        "Erro inesperado ao buscar eventos do usuário paginados"
+      );
     }
   }
 };

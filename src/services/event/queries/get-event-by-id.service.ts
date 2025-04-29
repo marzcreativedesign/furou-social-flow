@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { handleError } from "../utils";
 import { fetchEventConfirmations } from "./helpers/fetch-confirmations";
 import { fetchEventComments } from "./helpers/fetch-comments";
-import { fetchGroupEvents } from "./helpers/fetch-group-events";
 import type { Event } from "@/types/event";
 
 export const GetEventByIdService = {
@@ -25,14 +24,12 @@ export const GetEventByIdService = {
       if (eventData) {
         const eventParticipants = await fetchEventConfirmations(id);
         const comments = await fetchEventComments(id);
-        const groupEvents = await fetchGroupEvents(id);
         
         const eventWithExtras = {
           ...eventData,
           event_participants: eventParticipants,
-          comments: comments || [],
-          group_events: groupEvents || []
-        } as Event;
+          comments: comments || []
+        } as unknown as Event;
         
         return { data: eventWithExtras, error: null };
       }

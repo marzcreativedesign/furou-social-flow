@@ -1,5 +1,5 @@
 
-import { Event } from "./event";
+import { Event } from "@/types/event";
 
 export interface ExploreEventsData {
   events: Event[];
@@ -10,12 +10,10 @@ export interface ExploreEventsData {
 }
 
 export interface ExploreEventsResponse {
-  data: Event[];
+  data?: Event[];
+  error: any;
   metadata?: {
     totalPages: number;
     currentPage: number;
-    totalCount?: number;
-    pageSize?: number;
   };
-  error?: any;
 }

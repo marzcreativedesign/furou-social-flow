@@ -19,14 +19,28 @@ export type EventWithDetails = Event & {
   };
 };
 
+// Adicionando tipo EventData para ser compatível com os componentes existentes
+export type EventData = Event & {
+  profiles?: {
+    id: string;
+    full_name?: string | null;
+    avatar_url?: string | null;
+  };
+  comments?: any[];
+  event_participants?: EventParticipant[];
+};
+
 export interface EventServiceResponse {
   data?: Event[];
   error: any;
-  metadata?: {
-    totalPages: number;
-    currentPage: number;
-    count?: number;
-  };
+  metadata?: PaginationMetadata;
+}
+
+// Adicionando tipo PaginationMetadata
+export interface PaginationMetadata {
+  totalPages: number;
+  currentPage: number;
+  count?: number;
 }
 
 export interface EventDetailResponse {
@@ -62,5 +76,9 @@ export interface EventParticipant {
   profile?: {
     full_name?: string;
     avatar_url?: string;
+  };
+  profiles?: {
+    full_name?: string | null;
+    avatar_url?: string | null;
   };
 }

@@ -203,6 +203,86 @@ export const EventsService = {
     }
   },
 
+  // Adicionando métodos joinEvent e declineEvent para corrigir erros
+  joinEvent: async (eventId: string): Promise<{ success?: boolean; error: any }> => {
+    try {
+      const { user } = await supabase.auth.getUser();
+      if (!user) return { error: new Error("User not authenticated") };
+      
+      const { error } = await supabase
+        .from('event_participants')
+        .upsert(
+          {
+            user_id: user.id,
+            event_id: eventId,
+            status: 'confirmed'
+          },
+          { onConflict: 'user_id, event_id' }
+        );
+
+      if (error) return { error };
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error(`Error joining event ${eventId}:`, error);
+      return { error };
+    }
+  },
+
+  declineEvent: async (eventId: string): Promise<{ success?: boolean; error: any }> => {
+    try {
+      const { user } = await supabase.auth.getUser();
+      if (!user) return { error: new Error("User not authenticated") };
+      
+      const { error } = await supabase
+        .from('event_participants')
+        .upsert(
+          {
+            user_id: user.id,
+            event_id: eventId,
+            status: 'declined'
+          },
+          { onConflict: 'user_id, event_id' }
+        );
+
+      if (error) return { error };
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error(`Error declining event ${eventId}:`, error);
+      return { error };
+    }
+  },
+
+  getPendingInvites: async (): Promise<{ data?: any[]; error: any }> => {
+    try {
+      const { user } = await supabase.auth.getUser();
+      if (!user) return { data: [], error: null };
+      
+      const { data, error } = await supabase
+        .from('event_participants')
+        .select(`
+          *,
+          events:event_id(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'invited');
+
+      if (error) return { error };
+      
+      // Transformar os dados para o formato esperado
+      const pendingEvents = data?.map(item => ({
+        ...item.events,
+        status: item.status
+      })) || [];
+
+      return { data: pendingEvents, error: null };
+    } catch (error: any) {
+      console.error('Error fetching pending invites:', error);
+      return { error };
+    }
+  },
+
   // Re-exportando serviços específicos para consultas de eventos
   ...EventQueriesService
 };

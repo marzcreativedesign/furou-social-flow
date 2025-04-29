@@ -1,350 +1,296 @@
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  CalendarIcon, 
-  Clock, 
-  MapPin, 
-  Image as ImageIcon, 
-  Users,
-  Info,
-  Link as LinkIcon,
-  DollarSign
-} from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
-import { useToast } from "../hooks/use-toast";
+import MainLayout from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import MainLayout from "../components/MainLayout";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { EventsService } from "@/services/events.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { StorageService } from "@/services/storage.service";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
-  const { toast: toastUI } = useToast();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [eventId] = useState(uuidv4().substring(0, 6).toUpperCase());
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventData, setEventData] = useState({
     title: "",
-    date: "",
-    time: "",
-    location: "",
     description: "",
-    image: null as File | null,
-    imagePreview: "",
-    isPublic: false,
+    location: "",
+    address: "",
+    date: format(new Date(), "yyyy-MM-dd"),
+    startTime: "19:00",
+    endTime: "22:00",
+    type: "public" as "public" | "private",
     includeEstimatedBudget: false,
     estimatedBudget: ""
   });
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEventData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleToggle = () => {
-    setEventData(prev => ({ ...prev, isPublic: !prev.isPublic }));
-  };
+  const [imageFile, setImageFile] = useState<File | null>(null);
   
   const handleBack = () => {
     navigate(-1);
   };
   
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setEventData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
   
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEventData(prev => ({
-          ...prev,
-          image: file,
-          imagePreview: reader.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImageFile(e.target.files[0]);
     }
+  };
+  
+  const handleTypeChange = (value: "public" | "private") => {
+    setEventData((prev) => ({
+      ...prev,
+      type: value
+    }));
+  };
+  
+  const handleCheckboxChange = () => {
+    setEventData((prev) => ({
+      ...prev,
+      includeEstimatedBudget: !prev.includeEstimatedBudget,
+      estimatedBudget: !prev.includeEstimatedBudget ? prev.estimatedBudget : ""
+    }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!eventData.title || !eventData.date || !eventData.time || !eventData.location) {
-      toastUI({
-        title: "Informações incompletas",
-        description: "Por favor preencha todos os campos obrigatórios.",
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para criar um evento",
         variant: "destructive"
       });
       return;
     }
     
-    // Validar orçamento se incluído
-    if (eventData.includeEstimatedBudget && !eventData.estimatedBudget) {
-      toastUI({
-        title: "Orçamento inválido",
-        description: "Por favor insira um valor para o orçamento estimado ou desmarque a opção.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setLoading(true);
     try {
-      // Combine date and time into an ISO date string
-      const dateTimeStr = `${eventData.date}T${eventData.time}`;
-      const dateTime = new Date(dateTimeStr);
-      const isoDateTime = dateTime.toISOString();
+      setIsSubmitting(true);
       
-      // In a real app, we'd upload the image first to storage and then get the URL
-      // For simplicity, we'll use a placeholder if no image is selected
-      const imageUrl = eventData.imagePreview || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3";
+      // Format date and time
+      const eventDateTime = new Date(`${eventData.date}T${eventData.startTime}`);
       
-      // Parse estimated budget if included
-      let estimatedBudget = null;
-      if (eventData.includeEstimatedBudget && eventData.estimatedBudget) {
-        // Remove non-numeric characters except decimal point
-        const numericValue = eventData.estimatedBudget.replace(/[^\d.,]/g, '').replace(',', '.');
-        estimatedBudget = parseFloat(numericValue);
+      // Upload image if selected
+      let imageUrl = null;
+      if (imageFile) {
+        const uploadResult = await StorageService.uploadEventImage(imageFile);
+        if (uploadResult.error) throw new Error("Falha ao enviar imagem");
+        imageUrl = uploadResult.publicUrl;
       }
       
-      // Create the event
-      const { data, error } = await EventsService.createEvent({
+      // Create event
+      const eventDataToSend = {
         title: eventData.title,
         description: eventData.description,
-        date: isoDateTime,
         location: eventData.location,
-        is_public: eventData.isPublic,
+        address: eventData.address,
+        date: eventDateTime.toISOString(),
+        is_public: eventData.type === "public",
+        creator_id: user.id,
         image_url: imageUrl,
-        estimated_budget: estimatedBudget
+        estimated_budget: eventData.includeEstimatedBudget ? parseFloat(eventData.estimatedBudget) : null
+      };
+      
+      const { data: createdEvent, error } = await EventsService.createEvent(eventDataToSend);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso!",
+        description: "Seu evento foi criado com sucesso",
       });
       
-      if (error) {
-        throw error;
-      }
-      
-      toast.success("Evento criado com sucesso!");
-      
-      // Redirect to the event page
-      if (data && data.length > 0) {
-        navigate(`/evento/${data[0].id}`);
+      // Navigate to event page
+      if (createdEvent && createdEvent.id) {
+        navigate(`/evento/${createdEvent.id}`);
       } else {
-        // Fallback to events list if we don't have the event ID
         navigate("/eventos");
       }
+      
     } catch (error: any) {
       console.error("Error creating event:", error);
-      toastUI({
-        title: "Erro ao criar evento",
-        description: error.message || "Ocorreu um erro ao criar o evento. Tente novamente.",
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar evento",
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
   
   return (
-    <MainLayout showBack onBack={handleBack} title="Criar Evento">
-      <form onSubmit={handleSubmit} className="p-4 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <div className="flex justify-center mb-4">
-            <div 
-              className="w-full h-48 bg-muted rounded-xl flex items-center justify-center cursor-pointer overflow-hidden"
-              onClick={handleImageClick}
-            >
-              {eventData.imagePreview ? (
-                <img 
-                  src={eventData.imagePreview} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="text-center">
-                  <ImageIcon size={32} className="mx-auto mb-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Adicionar imagem de capa</span>
-                </div>
-              )}
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
-              className="hidden"
-            />
-          </div>
-          
-          <Input
-            type="text"
-            name="title"
-            value={eventData.title}
-            onChange={handleChange}
-            placeholder="Nome do evento"
-            className="w-full text-2xl font-bold mb-4 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-            required
-          />
-        </div>
-        
-        <div className="space-y-4 mb-6">
-          <div className="flex items-center border border-border rounded-xl p-3">
-            <CalendarIcon size={18} className="text-primary mr-3" />
+    <MainLayout title="Criar Evento" showBack onBack={handleBack}>
+      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="title">Título do Evento</Label>
             <Input
-              type="date"
-              name="date"
-              value={eventData.date}
+              id="title"
+              name="title"
+              placeholder="Insira um título para seu evento"
+              value={eventData.title}
               onChange={handleChange}
-              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
               required
             />
           </div>
           
-          <div className="flex items-center border border-border rounded-xl p-3">
-            <Clock size={18} className="text-primary mr-3" />
-            <Input
-              type="time"
-              name="time"
-              value={eventData.time}
+          <div>
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Descreva seu evento"
+              value={eventData.description}
               onChange={handleChange}
-              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
+              className="min-h-[100px]"
               required
             />
           </div>
           
-          <div className="flex items-center border border-border rounded-xl p-3">
-            <MapPin size={18} className="text-primary mr-3" />
+          <div>
+            <Label htmlFor="location">Local</Label>
             <Input
-              type="text"
+              id="location"
               name="location"
+              placeholder="Nome do local"
               value={eventData.location}
               onChange={handleChange}
-              placeholder="Localização"
-              className="bg-transparent flex-1 border-none focus:outline-none focus:ring-0 p-0"
               required
             />
           </div>
-        </div>
-        
-        <div className="mb-6">
-          <label className="block font-medium mb-2">Descrição</label>
-          <textarea
-            name="description"
-            value={eventData.description}
-            onChange={handleChange}
-            placeholder="Sobre o evento..."
-            className="w-full min-h-[120px] rounded-xl border border-border p-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-          />
-        </div>
-        
-        <div className="mb-6">
-          <label className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Users size={18} className="text-primary mr-2" />
-              <span>Evento público</span>
-            </div>
-            <div 
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                eventData.isPublic ? "bg-primary" : "bg-muted"
-              }`}
-              onClick={handleToggle}
-            >
-              <div 
-                className={`absolute w-5 h-5 rounded-full bg-white top-0.5 transition-transform ${
-                  eventData.isPublic ? "translate-x-6" : "translate-x-0.5"
-                }`} 
+          
+          <div>
+            <Label htmlFor="address">Endereço</Label>
+            <Input
+              id="address"
+              name="address"
+              placeholder="Endereço completo"
+              value={eventData.address}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-1">
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                value={eventData.date}
+                onChange={handleChange}
+                required
               />
             </div>
-          </label>
-          <p className="text-sm text-muted-foreground mt-1 flex items-start">
-            <Info size={14} className="mr-1 mt-0.5" />
-            Eventos públicos podem ser descobertos por qualquer pessoa no Furou?!
-          </p>
-        </div>
-        
-        {/* Seção de orçamento estimado */}
-        <div className="mb-6">
-          <div className="flex items-start space-x-2">
-            <Checkbox 
-              id="includeEstimatedBudget"
-              checked={eventData.includeEstimatedBudget}
-              onCheckedChange={(checked) => {
-                setEventData(prev => ({
-                  ...prev,
-                  includeEstimatedBudget: checked === true
-                }));
-              }}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label
-                htmlFor="includeEstimatedBudget"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Incluir orçamento estimado para o evento
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Defina um valor aproximado para os custos do evento
-              </p>
+            <div>
+              <Label htmlFor="startTime">Início</Label>
+              <Input
+                id="startTime"
+                name="startTime"
+                type="time"
+                value={eventData.startTime}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="endTime">Término</Label>
+              <Input
+                id="endTime"
+                name="endTime"
+                type="time"
+                value={eventData.endTime}
+                onChange={handleChange}
+                required
+              />
             </div>
           </div>
           
-          {eventData.includeEstimatedBudget && (
-            <div className="mt-4">
-              <div className="relative">
-                <DollarSign size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          <div>
+            <Label htmlFor="image">Imagem do evento</Label>
+            <Input
+              id="image"
+              name="image"
+              type="file"
+              onChange={handleImageChange}
+              accept="image/*"
+              className="cursor-pointer"
+            />
+          </div>
+          
+          <div className="space-y-3">
+            <Label>Tipo de Evento</Label>
+            <RadioGroup value={eventData.type} onValueChange={handleTypeChange}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="public" id="public" />
+                <Label htmlFor="public">Público - Qualquer pessoa pode ver e participar</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="private" id="private" />
+                <Label htmlFor="private">Privado - Apenas convidados podem participar</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="estimatedBudget" 
+                checked={eventData.includeEstimatedBudget} 
+                onCheckedChange={handleCheckboxChange}
+              />
+              <label
+                htmlFor="estimatedBudget"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Incluir orçamento estimado
+              </label>
+            </div>
+            
+            {eventData.includeEstimatedBudget && (
+              <div>
+                <Label htmlFor="budgetAmount">Valor estimado (R$)</Label>
                 <Input
-                  type="text"
+                  id="budgetAmount"
                   name="estimatedBudget"
+                  type="number"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
                   value={eventData.estimatedBudget}
-                  onChange={(e) => {
-                    // Permitir apenas números e pontos/vírgulas
-                    const value = e.target.value.replace(/[^\d.,]/g, '');
-                    setEventData(prev => ({
-                      ...prev,
-                      estimatedBudget: value
-                    }));
-                  }}
-                  placeholder="R$ 500,00"
-                  className="pl-10"
+                  onChange={handleChange}
+                  required={eventData.includeEstimatedBudget}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
-                <Info size={12} className="flex-shrink-0 mt-0.5" />
-                Este valor é apenas uma estimativa e será exibido para os participantes.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="mb-6 bg-muted/30 p-3 rounded-lg">
-          <div className="flex items-center">
-            <LinkIcon size={16} className="text-primary mr-2" />
-            <span className="text-sm">ID do evento: <strong>{eventId}</strong></span>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Este ID pode ser usado para convidar pessoas para o seu evento
-          </p>
         </div>
         
         <Button 
           type="submit" 
-          className="w-full md:w-auto md:min-w-[200px] md:mx-auto md:block"
-          disabled={loading}
+          className="w-full" 
+          disabled={isSubmitting}
         >
-          {loading ? (
-            <span className="flex items-center">
-              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-              Criando...
-            </span>
-          ) : (
-            "Criar Evento"
-          )}
+          {isSubmitting ? "Criando..." : "Criar Evento"}
         </Button>
       </form>
     </MainLayout>
