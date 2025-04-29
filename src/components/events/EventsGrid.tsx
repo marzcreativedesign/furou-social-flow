@@ -1,3 +1,4 @@
+
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EventCard from "@/components/EventCard";
@@ -51,7 +52,7 @@ const EventsGrid = ({
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {events.map(event => (
-          <div key={event.id} onClick={() => navigate(`/evento/${event.id}`)} className="cursor-pointer">
+          <div key={event.id} onClick={() => navigate(`/eventos/${event.id}`)} className="cursor-pointer">
             <EventCard 
               id={event.id} 
               title={event.title} 

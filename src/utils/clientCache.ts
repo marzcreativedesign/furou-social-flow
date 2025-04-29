@@ -1,3 +1,4 @@
+
 /**
  * Funções utilitárias para gerenciar o cache do cliente
  */
@@ -130,6 +131,3 @@ export const getFromCache = getCache;
 
 // Ensure all necessary functions are explicitly exported
 export { DEFAULT_CACHE_TTL };
-
-// Make sure isCacheStale is explicitly exported
-// Note: isCacheStale is already exported above with the "export const" syntax
