@@ -131,3 +131,6 @@ export const getFromCache = getCache;
 
 // Ensure all necessary functions are explicitly exported
 export { DEFAULT_CACHE_TTL };
+
+// Make sure isCacheStale is explicitly exported
+// (Already exported above, but ensuring it's properly visible)

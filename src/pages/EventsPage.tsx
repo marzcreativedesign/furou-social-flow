@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
@@ -8,7 +9,8 @@ import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import type { Event, EventServiceResponse } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
-import { getCache, setCache, generateCacheKey, isCacheStale } from "@/utils/clientCache";
+import { getCache, setCache, generateCacheKey } from "@/utils/clientCache";
+import { isCacheStale } from "@/utils/eventCache";
 import { useDebounce } from "@/utils/debounce";
 
 interface EventsResponse {
