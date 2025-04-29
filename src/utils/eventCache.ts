@@ -4,7 +4,7 @@ import {
   generateCacheKey, 
   getCache, 
   setCache, 
-  isCacheStale 
+  isCacheStale as clientCacheStale
 } from "./clientCache";
 
 /**
@@ -23,9 +23,9 @@ export const getCachedEvents = (cacheKey: string): ExploreEventsData | null => {
 
 /**
  * Verifica se o cache de eventos está expirado (stale)
- * Exportando a função diretamente do clientCache
+ * Re-exportando a função do clientCache com mesmo nome
  */
-export { isCacheStale };
+export const isCacheStale = clientCacheStale;
 
 /**
  * Armazena eventos em cache com tempo de expiração configurável
