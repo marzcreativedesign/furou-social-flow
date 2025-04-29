@@ -9,10 +9,10 @@ export const useGroups = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Estado para armazenar o ID do grupo selecionado
+  // State to store the ID of the selected group
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  // Buscar todos os grupos do usuário
+  // Fetch all groups of the user
   const {
     data: groups,
     isLoading: loadingGroups,
@@ -26,7 +26,7 @@ export const useGroups = () => {
     }
   });
 
-  // Buscar membros de um grupo específico
+  // Fetch members of a specific group
   const {
     data: groupMembers,
     isLoading: loadingMembers,
@@ -42,7 +42,7 @@ export const useGroups = () => {
     enabled: !!selectedGroupId
   });
 
-  // Buscar convites pendentes para o usuário
+  // Fetch pending invites for the user
   const {
     data: pendingInvites,
     isLoading: loadingInvites,
@@ -56,7 +56,7 @@ export const useGroups = () => {
     }
   });
 
-  // Mutation para criar grupo
+  // Mutation for creating a group
   const createGroupMutation = useMutation({
     mutationFn: (groupData: CreateGroupRequest) => GroupsService.createGroup(groupData),
     onSuccess: () => {
@@ -75,7 +75,7 @@ export const useGroups = () => {
     }
   });
 
-  // Mutation para sair do grupo
+  // Mutation for leaving a group
   const leaveGroupMutation = useMutation({
     mutationFn: (groupId: string) => GroupsService.leaveGroup(groupId),
     onSuccess: () => {
@@ -92,7 +92,7 @@ export const useGroups = () => {
     }
   });
 
-  // Mutation para criar convite
+  // Mutation for creating an invite
   const createInviteMutation = useMutation({
     mutationFn: (inviteData: CreateInviteRequest) => GroupsService.createInvite(inviteData),
     onSuccess: () => {
@@ -107,7 +107,7 @@ export const useGroups = () => {
     }
   });
 
-  // Mutation para aceitar convite
+  // Mutation for accepting an invite
   const acceptInviteMutation = useMutation({
     mutationFn: (inviteCode: string) => GroupsService.acceptInvite(inviteCode),
     onSuccess: () => {
@@ -124,7 +124,7 @@ export const useGroups = () => {
     }
   });
 
-  // Mutation para rejeitar convite
+  // Mutation for rejecting an invite
   const rejectInviteMutation = useMutation({
     mutationFn: (inviteId: string) => GroupsService.rejectInvite(inviteId),
     onSuccess: () => {
@@ -140,7 +140,7 @@ export const useGroups = () => {
     }
   });
   
-  // Funções auxiliares encapsuladas
+  // Helper functions
   const createGroup = useCallback((groupData: CreateGroupRequest) => {
     return createGroupMutation.mutateAsync(groupData);
   }, [createGroupMutation]);

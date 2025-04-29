@@ -3,15 +3,17 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Users, RefreshCw } from "lucide-react";
+import { Users, RefreshCw, PencilIcon, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupsAdmin } from "@/hooks/useGroupsAdmin";
+import { Input } from "@/components/ui/input";
 
 const GroupManagement = () => {
   const { groups, loading, fetchGroups } = useGroupsAdmin();
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
+  // Filter groups based on search query
   const filteredGroups = groups.filter(group => 
     group.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     group.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -27,12 +29,13 @@ const GroupManagement = () => {
         </Button>
       </div>
 
-      <div className="text-center py-10">
-        <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-        <h3 className="text-lg font-medium mb-1">Funcionalidade de grupos desativada</h3>
-        <p className="text-muted-foreground mb-4">
-          O módulo de grupos está temporariamente indisponível.
-        </p>
+      <div className="flex items-center space-x-2">
+        <Input
+          placeholder="Buscar grupos..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
       </div>
 
       <div className="border rounded-md overflow-hidden">
@@ -57,10 +60,31 @@ const GroupManagement = () => {
                   <TableCell><Skeleton className="h-6 w-[100px]" /></TableCell>
                 </TableRow>
               ))
+            ) : filteredGroups.length > 0 ? (
+              filteredGroups.map((group) => (
+                <TableRow key={group.id}>
+                  <TableCell className="font-medium">{group.name}</TableCell>
+                  <TableCell>{group.description || "—"}</TableCell>
+                  <TableCell>{group.member_count}</TableCell>
+                  <TableCell>
+                    {group.created_at
+                      ? new Date(group.created_at).toLocaleDateString('pt-BR')
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" className="mr-1">
+                      <PencilIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                  Nenhum grupo encontrado
+                  {searchQuery ? "Nenhum grupo encontrado para esta busca" : "Nenhum grupo cadastrado"}
                 </TableCell>
               </TableRow>
             )}

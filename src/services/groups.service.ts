@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember, GroupInvite, CreateGroupRequest, CreateInviteRequest, RankingUser } from "@/types/group";
 import { toast } from "sonner";
 import { NotificationsService } from "./notifications.service";
-import { SupabaseService } from "./supabase.service";
 
 export const GroupsService = {
-  // Grupos
+  // Group operations
   createGroup: async (groupData: CreateGroupRequest) => {
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -14,14 +13,20 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      const { data, error } = await SupabaseService.groups.insert({
-        name: groupData.name,
-        description: groupData.description || null,
-        type: groupData.type || null,
-        creator_id: user.user.id
-      });
+      // Insert the new group
+      const { data, error } = await supabase
+        .from('groups')
+        .insert({
+          name: groupData.name,
+          description: groupData.description || null,
+          type: groupData.type || null,
+          creator_id: user.user.id
+        })
+        .select();
 
       if (error) throw error;
+      
+      // The trigger will automatically add the creator as an admin member
       return { data: data[0] as unknown as Group, error: null };
     } catch (error: any) {
       console.error("Erro ao criar grupo:", error);
@@ -37,11 +42,27 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      const { data, error } = await SupabaseService.group_members.selectByUser(user.user.id);
+      // Get all groups where the user is a member
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          group_id,
+          is_admin,
+          groups:group_id(
+            id,
+            name,
+            description,
+            type,
+            creator_id,
+            created_at,
+            updated_at
+          )
+        `)
+        .eq('user_id', user.user.id);
 
       if (error) throw error;
       
-      // Transformando para o formato desejado
+      // Transform the data structure
       const groups = data.map((item: any) => ({
         ...item.groups,
         is_admin: item.is_admin
@@ -56,7 +77,11 @@ export const GroupsService = {
 
   getGroupById: async (groupId: string) => {
     try {
-      const { data, error } = await SupabaseService.groups.selectById(groupId);
+      const { data, error } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
+        .single();
 
       if (error) throw error;
       return { data: data as unknown as Group, error: null };
@@ -66,10 +91,21 @@ export const GroupsService = {
     }
   },
 
-  // Membros
+  // Member operations
   getGroupMembers: async (groupId: string) => {
     try {
-      const { data, error } = await SupabaseService.group_members.selectWithProfiles(groupId);
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          id,
+          group_id,
+          user_id,
+          is_admin,
+          created_at,
+          updated_at,
+          profiles:user_id(id, full_name, avatar_url, email)
+        `)
+        .eq('group_id', groupId);
 
       if (error) throw error;
       return { data: data as unknown as GroupMember[], error: null };
@@ -86,10 +122,14 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      const { data, error } = await SupabaseService.group_members.delete(groupId, user.user.id);
+      const { error } = await supabase
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', user.user.id);
 
       if (error) throw error;
-      return { data, error: null };
+      return { data: true, error: null };
     } catch (error: any) {
       console.error(`Erro ao sair do grupo ${groupId}:`, error);
       toast.error("Erro ao sair do grupo: " + error.message);
@@ -97,7 +137,7 @@ export const GroupsService = {
     }
   },
 
-  // Convites
+  // Invite operations
   createInvite: async (inviteData: CreateInviteRequest) => {
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -105,7 +145,7 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      // Verificar se já existe um convite pendente para este e-mail
+      // Check if there's already a pending invite for this email
       const { data: existingInvites } = await supabase
         .from('group_invites')
         .select('*')
@@ -114,34 +154,45 @@ export const GroupsService = {
         .eq('status', 'pending');
 
       if (existingInvites && existingInvites.length > 0) {
-        // Se já existir um convite pendente, retorna ele
+        // If there's already a pending invite, return it
         return { data: existingInvites[0] as unknown as GroupInvite, error: null };
       }
 
-      // Criar novo convite
-      const { data, error } = await SupabaseService.group_invites.insert({
-        group_id: inviteData.group_id,
-        inviter_id: user.user.id,
-        invitee_email: inviteData.invitee_email,
-        status: 'pending' as 'pending',
-        viewed: false,
-        invite_code: crypto.randomUUID(),
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
-      });
+      // Create a new invite
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+      const { data, error } = await supabase
+        .from('group_invites')
+        .insert({
+          group_id: inviteData.group_id,
+          inviter_id: user.user.id,
+          invitee_email: inviteData.invitee_email,
+          status: 'pending',
+          viewed: false,
+          invite_code: crypto.randomUUID(),
+          expires_at: expiresAt.toISOString()
+        })
+        .select()
+        .single();
 
       if (error) throw error;
       
-      // Buscar dados do grupo para a notificação
-      const { data: group } = await SupabaseService.groups.selectById(inviteData.group_id);
+      // Get group information for notification
+      const { data: group } = await supabase
+        .from('groups')
+        .select('name')
+        .eq('id', inviteData.group_id)
+        .single();
       
-      // Tentativa de encontrar o usuário pelo e-mail
+      // Try to find the user by email
       const { data: targetUser } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', inviteData.invitee_email)
         .single();
       
-      // Se o usuário existe, enviar notificação
+      // If the user exists, send a notification
       if (targetUser) {
         await NotificationsService.createNotification({
           title: "Novo convite de grupo",
@@ -167,7 +218,7 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      // Buscar o e-mail do usuário atual
+      // Get the user's email
       const { data: profile } = await supabase
         .from('profiles')
         .select('email')
@@ -178,7 +229,24 @@ export const GroupsService = {
         throw new Error("E-mail do usuário não encontrado");
       }
 
-      const { data, error } = await SupabaseService.group_invites.selectPending(profile.email);
+      // Get pending invites for the user's email
+      const { data, error } = await supabase
+        .from('group_invites')
+        .select(`
+          id,
+          group_id,
+          inviter_id,
+          invitee_email,
+          invite_code,
+          status,
+          viewed,
+          created_at,
+          expires_at,
+          group:group_id(id, name, description),
+          inviter:inviter_id(id, full_name, avatar_url)
+        `)
+        .eq('invitee_email', profile.email)
+        .eq('status', 'pending');
 
       if (error) throw error;
       return { data: data as unknown as GroupInvite[], error: null };
@@ -195,27 +263,32 @@ export const GroupsService = {
         throw new Error("Usuário não autenticado");
       }
 
-      // Buscar o convite pelo código
-      const { data: invite, error: inviteError } = await SupabaseService.group_invites.selectByCode(inviteCode);
+      // Get the invite
+      const { data: invite, error: inviteError } = await supabase
+        .from('group_invites')
+        .select(`
+          *,
+          group:group_id(*)
+        `)
+        .eq('invite_code', inviteCode)
+        .single();
 
       if (inviteError) throw inviteError;
-      if (!invite) throw new Error("Convite não encontrado ou expirado");
+      if (!invite) throw new Error("Convite não encontrado");
 
-      // Cast the invite to the expected type
+      // Check if the invite has expired
       const typedInvite = invite as unknown as GroupInvite;
-
-      // Verificar se o convite não expirou
       if (new Date(typedInvite.expires_at) < new Date()) {
-        // Atualizar o status do convite para expirado
-        await SupabaseService.group_invites.update(typedInvite.id, { status: 'expired' });
+        // Update the invite status to expired
+        await supabase
+          .from('group_invites')
+          .update({ status: 'expired' })
+          .eq('id', typedInvite.id);
 
         throw new Error("Este convite expirou");
       }
 
-      // Iniciar uma transação
-      // Como não podemos usar transações diretamente, vamos fazer as operações em sequência
-      
-      // 1. Adicionar usuário ao grupo se ainda não for membro
+      // Check if user is already a member
       const { data: existingMember } = await supabase
         .from('group_members')
         .select('*')
@@ -224,35 +297,34 @@ export const GroupsService = {
         .single();
 
       if (!existingMember) {
-        const { error: memberError } = await SupabaseService.group_members.insert({
-          group_id: typedInvite.group_id,
-          user_id: user.user.id,
-          is_admin: false
-        });
+        // Add user to the group
+        const { error: memberError } = await supabase
+          .from('group_members')
+          .insert({
+            group_id: typedInvite.group_id,
+            user_id: user.user.id,
+            is_admin: false
+          });
 
         if (memberError) throw memberError;
       }
 
-      // 2. Atualizar o status do convite
-      const { error: updateError } = await SupabaseService.group_invites.update(
-        typedInvite.id, 
-        {
+      // Update invite status
+      const { error: updateError } = await supabase
+        .from('group_invites')
+        .update({
           status: 'accepted',
           viewed: true
-        }
-      );
+        })
+        .eq('id', typedInvite.id);
 
       if (updateError) throw updateError;
 
-      // Buscar dados do grupo para a resposta
-      const { data: group } = await SupabaseService.groups.selectById(typedInvite.group_id);
-      const typedGroup = group as unknown as Group;
-
-      // Enviar notificação ao criador do convite
+      // Send notification to inviter
       if (typedInvite.inviter_id) {
         await NotificationsService.createNotification({
           title: "Convite aceito",
-          content: `Seu convite para o grupo ${typedGroup.name || 'Desconhecido'} foi aceito`,
+          content: `Seu convite para o grupo ${typedInvite.group?.name || 'Desconhecido'} foi aceito`,
           type: "group",
           related_id: typedInvite.group_id,
           user_id: typedInvite.inviter_id
@@ -262,7 +334,7 @@ export const GroupsService = {
       return { 
         data: { 
           invite: typedInvite, 
-          group: typedGroup
+          group: typedInvite.group as unknown as Group
         }, 
         error: null 
       };
@@ -275,13 +347,13 @@ export const GroupsService = {
 
   rejectInvite: async (inviteId: string) => {
     try {
-      const { error } = await SupabaseService.group_invites.update(
-        inviteId, 
-        {
+      const { error } = await supabase
+        .from('group_invites')
+        .update({
           status: 'expired',
           viewed: true
-        }
-      );
+        })
+        .eq('id', inviteId);
 
       if (error) throw error;
       return { data: true, error: null };
@@ -292,7 +364,7 @@ export const GroupsService = {
     }
   },
 
-  // Rankings
+  // Ranking operations
   getConfirmedEventRanking: async (limit: number = 10) => {
     try {
       const { data, error } = await supabase.functions.invoke('get-confirmed-events-ranking', {
