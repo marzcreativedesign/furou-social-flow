@@ -9,7 +9,7 @@ export const GetGroupByIdService = {
   async getGroupById(id: string) {
     try {
       const { data, error } = await supabase
-        .from("groups")
+        .from("groups" as any)
         .select("*")
         .eq("id", id)
         .single();

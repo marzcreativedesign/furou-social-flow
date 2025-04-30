@@ -6,10 +6,10 @@ export const GroupMembersService = {
   /**
    * Retrieves all members of a group
    */
-  async getGroupMembers(groupId) {
+  async getGroupMembers(groupId: string) {
     try {
       const { data, error } = await supabase
-        .from("group_members")
+        .from("group_members" as any)
         .select("*, profiles:user_id(*)")
         .eq("group_id", groupId);
 
@@ -22,12 +22,12 @@ export const GroupMembersService = {
   /**
    * Checks if the current user is a member of a group
    */
-  async isGroupMember(groupId) {
+  async isGroupMember(groupId: string) {
     try {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members")
+        .from("group_members" as any)
         .select("id")
         .eq("group_id", groupId)
         .eq("user_id", user.id)
@@ -42,12 +42,12 @@ export const GroupMembersService = {
   /**
    * Checks if the current user is an admin of a group
    */
-  async isGroupAdmin(groupId) {
+  async isGroupAdmin(groupId: string) {
     try {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members")
+        .from("group_members" as any)
         .select("is_admin")
         .eq("group_id", groupId)
         .eq("user_id", user.id)

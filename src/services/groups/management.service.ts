@@ -6,13 +6,13 @@ export const GroupManagementService = {
   /**
    * Creates a new group
    */
-  async createGroup(groupData) {
+  async createGroup(groupData: any) {
     try {
       const user = await getCurrentUser();
       
       // Insert the group
       const { data, error } = await supabase
-        .from("groups")
+        .from("groups" as any)
         .insert([{
           ...groupData,
           creator_id: user.id
@@ -25,7 +25,7 @@ export const GroupManagementService = {
       
       // Add the creator as an admin member
       const { error: memberError } = await supabase
-        .from("group_members")
+        .from("group_members" as any)
         .insert([{
           group_id: data[0].id,
           user_id: user.id,
@@ -41,10 +41,10 @@ export const GroupManagementService = {
   /**
    * Updates an existing group
    */
-  async updateGroup(groupId, groupData) {
+  async updateGroup(groupId: string, groupData: any) {
     try {
       const { data, error } = await supabase
-        .from("groups")
+        .from("groups" as any)
         .update(groupData)
         .eq("id", groupId)
         .select();
@@ -58,10 +58,10 @@ export const GroupManagementService = {
   /**
    * Deletes a group
    */
-  async deleteGroup(groupId) {
+  async deleteGroup(groupId: string) {
     try {
       const { error } = await supabase
-        .from("groups")
+        .from("groups" as any)
         .delete()
         .eq("id", groupId);
 

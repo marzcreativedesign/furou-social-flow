@@ -16,6 +16,7 @@ import NotFound from "@/pages/NotFound";
 import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import ExplorePage from "@/pages/ExplorePage";
+// Add GroupsPage import when it's created
 
 export const router = createBrowserRouter([
   {
@@ -74,6 +75,15 @@ export const router = createBrowserRouter([
     path: "/explorar",
     element: <ProtectedRoute><ExplorePage /></ProtectedRoute>
   },
+  // We'll add group routes here in the future when the pages are created
+  // {
+  //   path: "/grupos",
+  //   element: <ProtectedRoute><GroupsPage /></ProtectedRoute>
+  // },
+  // {
+  //   path: "/grupos/:id",
+  //   element: <ProtectedRoute><GroupDetailPage /></ProtectedRoute>
+  // },
   {
     path: "*",
     element: <NotFound />

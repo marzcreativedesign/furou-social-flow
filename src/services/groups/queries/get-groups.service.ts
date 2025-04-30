@@ -11,7 +11,7 @@ export const GetGroupsService = {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members")
+        .from("group_members" as any)
         .select("groups(*)")
         .eq("user_id", user.id);
 
@@ -30,7 +30,7 @@ export const GetGroupsService = {
   async getPublicGroups() {
     try {
       const { data, error } = await supabase
-        .from("groups")
+        .from("groups" as any)
         .select("*")
         .eq("type", "public");
 
