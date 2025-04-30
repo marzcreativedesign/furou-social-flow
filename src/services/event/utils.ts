@@ -1,17 +1,22 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
+/**
+ * Trata e padroniza erros nos serviços
+ */
 export const handleError = (error: any, message: string) => {
-  console.error(`Error: ${message}`, error);
-  toast.error(message);
-  return { data: null, error };
+  console.error(message, error);
+  return { data: null, error: { message, originalError: error } };
 };
 
-export const getCurrentUser = async () => {
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) {
-    throw new Error("User not authenticated");
-  }
+/**
+ * Obtém o usuário autenticado atualmente
+ */
+export async function getCurrentUser() {
+  const { data, error } = await supabase.auth.getUser();
+  
+  if (error) throw new Error("User not authenticated");
+  if (!data.user) throw new Error("User not found");
+  
   return data.user;
-};
+}

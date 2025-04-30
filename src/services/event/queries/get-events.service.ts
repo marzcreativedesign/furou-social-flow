@@ -148,6 +148,8 @@ export const GetEventsService = {
         metadata: {
           totalPages,
           currentPage: page,
+          pageSize,
+          totalCount,
           count: totalCount
         }
       };
