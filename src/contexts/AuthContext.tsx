@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 import { AuthService } from "@/services/auth.service";
@@ -14,7 +14,7 @@ type AuthContextType = {
   resetPassword: (email: string) => Promise<{ error: any | null }>;
 };
 
-const AuthContext = React.createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   isLoading: true,
@@ -24,14 +24,14 @@ const AuthContext = React.createContext<AuthContextType>({
   resetPassword: async () => ({ error: null })
 });
 
-export const useAuth = () => React.useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = React.useState<User | null>(null);
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Set up listener for auth state changes first
     const { data } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
