@@ -9,7 +9,16 @@ export class StorageService {
       let processedFile = file;
       
       if (options.compress) {
-        processedFile = await compressImage(file);
+        // compressImage returns a Blob, convert it to File
+        const compressedBlob = await compressImage(file);
+        processedFile = new File(
+          [compressedBlob], 
+          file.name, 
+          { 
+            type: compressedBlob.type,
+            lastModified: file.lastModified
+          }
+        );
       }
       
       const fileExt = file.name.split('.').pop();
