@@ -4,6 +4,13 @@ import { compressImage } from "@/utils/image/compress";
 import { v4 as uuidv4 } from 'uuid';
 
 export class StorageService {
+  /**
+   * Faz upload de uma imagem para o storage
+   * @param file Arquivo a ser enviado
+   * @param bucket Nome do bucket
+   * @param folder Pasta opcional
+   * @param options Opções de upload
+   */
   static async uploadImage(file: File, bucket: string, folder?: string, options = { compress: true }) {
     try {
       let processedFile = file;
@@ -46,6 +53,13 @@ export class StorageService {
     }
   }
   
+  /**
+   * Faz upload de múltiplas imagens
+   * @param files Lista de arquivos
+   * @param bucket Nome do bucket
+   * @param folder Pasta opcional
+   * @param options Opções de upload
+   */
   static async uploadImages(files: FileList | File[], bucket: string, folder?: string, options = { compress: true }) {
     try {
       const uploadPromises = Array.from(files).map(file => 
@@ -60,7 +74,8 @@ export class StorageService {
   }
   
   /**
-   * Upload an event image to the appropriate bucket
+   * Upload de imagem de evento para o bucket apropriado
+   * @param file Arquivo de imagem
    */
   static async uploadEventImage(file: File) {
     try {

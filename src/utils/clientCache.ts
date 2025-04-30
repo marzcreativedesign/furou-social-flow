@@ -1,6 +1,4 @@
 
-import { ExploreEventsData } from "@/types/explore";
-
 interface CacheOptions {
   expireTimeInMinutes?: number;
   staleWhileRevalidate?: boolean;

@@ -26,11 +26,11 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
     // Adicionar o status "confirmed" manualmente e converter id para string
     const participantsWithStatus = data.map(participant => ({
       ...participant,
-      id: String(participant.id), // Convert to string
+      id: String(participant.id), // Converter para string
       status: "confirmed" // Adiciona o status manualmente
-    }));
+    })) as unknown as EventParticipant[];
 
-    return participantsWithStatus as EventParticipant[];
+    return participantsWithStatus;
   } catch (error) {
     console.error("Erro inesperado ao buscar confirmações:", error);
     return [];

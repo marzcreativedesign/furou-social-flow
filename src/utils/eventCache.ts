@@ -1,6 +1,6 @@
 
 import { ExploreEventsData } from "@/types/explore";
-import { generateCacheKey, getCache, setCache } from "./clientCache";
+import { generateCacheKey, getCache, setCache, isCacheStale } from "./clientCache";
 
 /**
  * Gera uma chave de cache para eventos
@@ -34,11 +34,5 @@ export const cacheEvents = <T>(
  * Verifica se o cache está expirado
  */
 export const isEventCacheStale = (cacheKey: string): boolean => {
-  const cache = getCache(cacheKey);
-  if (!cache || !cache._metadata || !cache._metadata.expiresAt) return true;
-  
-  const expiryTime = new Date(cache._metadata.expiresAt).getTime();
-  const now = new Date().getTime();
-  
-  return now > expiryTime;
+  return isCacheStale(cacheKey);
 };

@@ -22,7 +22,7 @@ export interface Event {
   };
   event_participants?: EventParticipant[];
   comments?: any[];
-  attendees?: number; // Add this for eventTransforms.ts
+  attendees?: number;
 }
 
 export interface EventData extends Event {
@@ -66,7 +66,7 @@ export interface PaginationMetadata {
   currentPage: number;
   pageSize: number;
   totalCount: number;
-  count?: number; // Add this for compatibility with existing code
+  count?: number;
 }
 
 export interface EventServiceResponse {
