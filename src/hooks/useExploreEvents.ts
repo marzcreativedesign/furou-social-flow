@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event } from '@/types/event';
 import { toast } from '@/components/ui/use-toast';
-import { getEventsCacheKey, getCachedEvents, cacheEvents, isCacheStale } from '@/utils/eventCache';
+import { getEventsCacheKey, getCachedEvents, cacheEvents, isEventCacheStale } from '@/utils/eventCache';
 import { ExploreEventsData, ExploreEventsResponse } from '@/types/explore';
 
 export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
@@ -36,7 +35,7 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
 
       // Verifica se há dados em cache e se não estão expirados
       const cachedData = getCachedEvents<ExploreEventsData>(cacheKey);
-      if (cachedData && !isCacheStale(cacheKey)) {
+      if (cachedData && !isEventCacheStale(cacheKey)) {
         setEvents(cachedData.events);
         setTotalPages(cachedData.metadata.totalPages);
         setCurrentPage(cachedData.metadata.currentPage);

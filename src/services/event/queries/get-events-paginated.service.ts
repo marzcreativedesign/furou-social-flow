@@ -33,6 +33,8 @@ export const GetEventsPaginatedService = {
       const metadata: PaginationMetadata = {
         totalPages,
         currentPage: page,
+        pageSize,
+        totalCount,
         count: totalCount
       };
 
@@ -91,6 +93,8 @@ export const GetEventsPaginatedService = {
       const metadata: PaginationMetadata = {
         totalPages,
         currentPage: page,
+        pageSize,
+        totalCount,
         count: totalCount
       };
 
@@ -152,6 +156,8 @@ export const GetEventsPaginatedService = {
       const metadata: PaginationMetadata = {
         totalPages,
         currentPage: page,
+        pageSize,
+        totalCount,
         count: totalCount
       };
 
