@@ -27,7 +27,7 @@ export const GroupManagementService = {
       const { error: memberError } = await supabase
         .from("group_members" as any)
         .insert([{
-          group_id: data[0].id,
+          group_id: (data[0] as any).id,
           user_id: user.id,
           is_admin: true
         }]);

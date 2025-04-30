@@ -1,13 +1,12 @@
 
-import { GetGroupsService } from "./get-groups.service";
-import { GetGroupByIdService } from "./get-group-by-id.service";
+import { GetGroupByIdService } from './get-group-by-id.service';
+import { GetGroupsService } from './get-groups.service';
 
+// Export a combined service for queries
 export const GroupQueryService = {
-  ...GetGroupsService,
-  ...GetGroupByIdService
+  ...GetGroupByIdService,
+  ...GetGroupsService
 };
 
-export { 
-  GetGroupsService,
-  GetGroupByIdService
-};
+// Export individual services
+export { GetGroupByIdService, GetGroupsService };

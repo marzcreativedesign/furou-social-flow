@@ -16,7 +16,7 @@ export const GetGroupsService = {
         .eq("user_id", user.id);
 
       return { 
-        data: data?.map(item => item.groups) || [], 
+        data: data?.map(item => (item as any).groups) || [], 
         error 
       };
     } catch (error) {

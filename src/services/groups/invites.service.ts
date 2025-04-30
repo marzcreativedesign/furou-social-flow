@@ -68,7 +68,7 @@ export const GroupInvitesService = {
         .eq("invitee_email", user.email)
         .eq("status", "pending")
         .gt("expires_at", new Date().toISOString())
-        .single();
+        .maybeSingle();
         
       if (inviteError || !invite) {
         return { data: null, error: inviteError || new Error("Invalid or expired invite") };
@@ -78,7 +78,7 @@ export const GroupInvitesService = {
       const { error: updateError } = await supabase
         .from("group_invites" as any)
         .update({ status: "accepted" })
-        .eq("id", invite.id);
+        .eq("id", (invite as any).id);
         
       if (updateError) {
         return { data: null, error: updateError };
@@ -88,7 +88,7 @@ export const GroupInvitesService = {
       const { data, error } = await supabase
         .from("group_members" as any)
         .insert([{
-          group_id: invite.group_id, // Type safety is bypassed with 'as any'
+          group_id: (invite as any).group_id,
           user_id: user.id,
           is_admin: false
         }])
