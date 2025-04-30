@@ -16,18 +16,13 @@ const ExplorePage = () => {
 
   const {
     events,
-    isLoading,
-    metadata,
-    searchQuery,
-    setSearchQuery,
+    loading,
     currentPage,
-    setCurrentPage
+    totalPages,
+    searchQuery,
+    handleSearch,
+    handlePageChange
   } = useExploreEvents();
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   return (
     <MainLayout title="Explorar" showDock>
@@ -36,7 +31,7 @@ const ExplorePage = () => {
         
         <ExploreSearchBar 
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearch}
         />
         
         <ExploreTabs 
@@ -50,20 +45,18 @@ const ExplorePage = () => {
             
             <EventsGrid
               events={events}
-              loading={isLoading}
+              loading={loading}
               searchQuery={searchQuery}
               locationQuery=""
               pagination={{
-                currentPage: metadata.currentPage,
-                totalPages: metadata.totalPages,
+                currentPage: currentPage,
+                totalPages: totalPages,
                 onPageChange: handlePageChange
               }}
             />
           </>
         ) : (
-          <GroupsComingSoon 
-            onExploreEvents={() => setActiveTab("events")}
-          />
+          <GroupsComingSoon />
         )}
       </div>
     </MainLayout>

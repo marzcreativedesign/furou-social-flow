@@ -23,9 +23,10 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
       return [];
     }
 
-    // Adicionar o status "confirmed" manualmente já que a coluna parece não existir
+    // Adicionar o status "confirmed" manualmente e converter id para string
     const participantsWithStatus = data.map(participant => ({
       ...participant,
+      id: String(participant.id), // Convert to string
       status: "confirmed" // Adiciona o status manualmente
     }));
 

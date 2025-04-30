@@ -1,6 +1,6 @@
 
 import { ExploreEventsData } from "@/types/explore";
-import { generateCacheKey, getCache, setCache } from "./clientCache";
+import { generateCacheKey, getCache, setCache, isCacheStale } from "./clientCache";
 
 /**
  * Gera uma chave de cache para eventos

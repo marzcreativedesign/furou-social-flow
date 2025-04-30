@@ -39,25 +39,29 @@ export const useHomePending = (): UseHomePendingReturn => {
           setPendingActions(mappedActions);
         }
 
-        // Fetch pending invites using the optimized function
-        const { data: pendingInvitesData, error: pendingInvitesError } = 
-          await EventsService.getPendingInvites();
-        
-        if (pendingInvitesError) {
-          console.error("Error fetching pending invites:", pendingInvitesError);
-        } else if (pendingInvitesData && pendingInvitesData.length > 0) {
-          // Transform data to expected format
-          const formattedInvites = pendingInvitesData.map(event => ({
-            ...event,
-            id: event.id,
-            title: event.title,
-            date: event.date,
-            location: event.location || "",
-            image_url: event.image_url,
-            status: event.status
-          }));
+        // Fetch pending invites
+        try {
+          const { data: pendingInvitesData, error: pendingInvitesError } = 
+            await EventsService.getPendingInvites();
           
-          setPendingInvites(formattedInvites as Event[]);
+          if (pendingInvitesError) {
+            console.error("Error fetching pending invites:", pendingInvitesError);
+          } else if (pendingInvitesData && pendingInvitesData.length > 0) {
+            // Transform data to expected format
+            const formattedInvites = pendingInvitesData.map(event => ({
+              ...event,
+              id: event.id,
+              title: event.title,
+              date: event.date,
+              location: event.location || "",
+              image_url: event.image_url,
+              status: event.status
+            }));
+            
+            setPendingInvites(formattedInvites as Event[]);
+          }
+        } catch (error) {
+          console.error("Error processing pending invites:", error);
         }
       } catch (error) {
         console.error("Error fetching pending data:", error);

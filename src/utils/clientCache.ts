@@ -1,43 +1,99 @@
+
 import { ExploreEventsData } from "@/types/explore";
-import { generateCacheKey, getCache, setCache } from "./clientCache";
+
+interface CacheOptions {
+  expireTimeInMinutes?: number;
+  staleWhileRevalidate?: boolean;
+}
+
+interface CachedData<T> {
+  _metadata?: {
+    expiresAt?: string;
+    cachedAt?: string;
+  };
+  data?: T;
+}
 
 /**
- * Gera uma chave de cache para eventos
+ * Generates a cache key based on prefix and parameters
  */
-export const getEventsCacheKey = (
+export const generateCacheKey = (
   prefix: string, 
   params: Record<string, any>
 ): string => {
-  return generateCacheKey(prefix, params);
+  const sortedParams = Object.keys(params)
+    .sort()
+    .reduce((acc, key) => {
+      if (params[key] !== undefined && params[key] !== null) {
+        acc[key] = params[key];
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
+  return `${prefix}_${JSON.stringify(sortedParams)}`;
 };
 
 /**
- * Recupera eventos em cache
+ * Gets cached data for a given key
  */
-export const getCachedEvents = <T = ExploreEventsData>(cacheKey: string): T | null => {
-  return getCache<T>(cacheKey);
+export const getCache = <T = any>(key: string): T | null => {
+  try {
+    const stored = localStorage.getItem(`cache_${key}`);
+    if (!stored) return null;
+    
+    const parsed = JSON.parse(stored) as CachedData<T>;
+    return parsed.data as T || null;
+  } catch (error) {
+    console.error("Cache retrieval error:", error);
+    return null;
+  }
 };
 
 /**
- * Armazena eventos em cache
+ * Sets cache data with an optional expiration time
  */
-export const cacheEvents = <T>(
-  cacheKey: string, 
+export const setCache = <T>(
+  key: string, 
   data: T, 
-  expireTimeInMinutes: number = 5
+  options: CacheOptions = {}
 ): void => {
-  setCache(cacheKey, data, { expireTimeInMinutes });
+  try {
+    const { expireTimeInMinutes = 5 } = options;
+    
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + expireTimeInMinutes * 60 * 1000);
+    
+    const cacheData: CachedData<T> = {
+      data,
+      _metadata: {
+        cachedAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString()
+      }
+    };
+    
+    localStorage.setItem(`cache_${key}`, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error("Cache storage error:", error);
+  }
 };
 
 /**
- * Verifica se o cache está expirado
+ * Verifies if a cache key is stale
  */
-export const isCacheStale = (cacheKey: string): boolean => {
-  const cache = getCache(cacheKey);
-  if (!cache || !cache._metadata || !cache._metadata.expiresAt) return true;
-  
-  const expiryTime = new Date(cache._metadata.expiresAt).getTime();
-  const now = new Date().getTime();
-  
-  return now > expiryTime;
+export const isCacheStale = (key: string): boolean => {
+  try {
+    const stored = localStorage.getItem(`cache_${key}`);
+    if (!stored) return true;
+    
+    const parsed = JSON.parse(stored) as CachedData<any>;
+    if (!parsed._metadata?.expiresAt) return true;
+    
+    const expiryTime = new Date(parsed._metadata.expiresAt).getTime();
+    const now = new Date().getTime();
+    
+    return now > expiryTime;
+  } catch (error) {
+    console.error("Cache validation error:", error);
+    return true;
+  }
 };

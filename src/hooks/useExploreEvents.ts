@@ -81,16 +81,16 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
       query = query.range(from, to).order('date', { ascending: true });
 
       // Executar a query
-      const response = await query;
+      const { data, error, count } = await query;
       
-      if (response.error) throw response.error;
+      if (error) throw error;
       
       // Processar resultados
-      const totalCount = response.count || 0;
+      const totalCount = count || 0;
       const calculatedTotalPages = Math.ceil(totalCount / pageSize);
       
       // Formatar os eventos
-      const formattedEvents = (response.data || []).map((event: any) => ({
+      const formattedEvents = (data || []).map((event: any) => ({
         ...event,
         creator: {
           id: event.profiles?.id,
