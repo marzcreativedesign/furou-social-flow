@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { EventQueriesService } from "@/services/event/queries";
+import { EventQueryService } from "@/services/event/queries";
 import { ParticipantManagementService } from "@/services/event/participant-management.service";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,7 +30,7 @@ const ConfirmationButton = ({
       if (!user || !eventId) return;
       
       try {
-        const { data: event } = await EventQueriesService.getEventById(eventId);
+        const { data: event } = await EventQueryService.getEventById(eventId);
         
         if (event) {
           const { data: confirmations } = await supabase
