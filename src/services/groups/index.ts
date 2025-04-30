@@ -5,8 +5,8 @@ import { GroupMembersService } from './members.service';
 import { GroupManagementService } from './management.service';
 import { GroupInvitesService } from './invites.service';
 
-// Combine query services
-export const GroupQueryService = {
+// Combine query services - defined here to avoid duplicate exports
+const GroupQueryService = {
   ...GetGroupByIdService,
   ...GetGroupsService
 };
@@ -19,12 +19,14 @@ export const GroupService = {
   ...GroupInvitesService
 };
 
-// Re-export the individual services for use when needed
-export { 
-  GroupQueryService,
+// Export individual services directly
+export {
   GroupMembersService,
   GroupManagementService,
   GroupInvitesService,
   GetGroupByIdService,
   GetGroupsService
 };
+
+// Export combined query service
+export { GroupQueryService };
