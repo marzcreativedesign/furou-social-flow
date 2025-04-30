@@ -10,9 +10,8 @@ export const GroupInvitesService = {
     try {
       const user = await getCurrentUser();
       
-      // Use any type to bypass type checking until Supabase types are updated
       const { data, error } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .select("*, groups(*)")
         .eq("invitee_email", user.email)
         .eq("status", "pending")
@@ -36,7 +35,7 @@ export const GroupInvitesService = {
       expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
       
       const { data, error } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .insert([{
           group_id: groupId,
           inviter_id: user.id,
@@ -62,7 +61,7 @@ export const GroupInvitesService = {
       
       // First, get the invite to verify it's valid and not expired
       const { data: invite, error: inviteError } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .select("*")
         .eq("invite_code", inviteCode)
         .eq("invitee_email", user.email)
@@ -76,9 +75,9 @@ export const GroupInvitesService = {
 
       // Update invite status to accepted
       const { error: updateError } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .update({ status: "accepted" })
-        .eq("id", (invite as any).id);
+        .eq("id", invite.id);
         
       if (updateError) {
         return { data: null, error: updateError };
@@ -86,9 +85,9 @@ export const GroupInvitesService = {
 
       // Add user to group members
       const { data, error } = await supabase
-        .from("group_members" as any)
+        .from("group_members")
         .insert([{
-          group_id: (invite as any).group_id,
+          group_id: invite.group_id,
           user_id: user.id,
           is_admin: false
         }])

@@ -11,12 +11,12 @@ export const GetGroupsService = {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members" as any)
+        .from("group_members")
         .select("groups(*)")
         .eq("user_id", user.id);
 
       return { 
-        data: data?.map(item => (item as any).groups) || [], 
+        data: data?.map(item => item.groups) || [], 
         error 
       };
     } catch (error) {
@@ -30,7 +30,7 @@ export const GetGroupsService = {
   async getPublicGroups() {
     try {
       const { data, error } = await supabase
-        .from("groups" as any)
+        .from("groups")
         .select("*")
         .eq("type", "public");
 

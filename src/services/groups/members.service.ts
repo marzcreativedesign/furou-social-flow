@@ -9,7 +9,7 @@ export const GroupMembersService = {
   async getGroupMembers(groupId: string) {
     try {
       const { data, error } = await supabase
-        .from("group_members" as any)
+        .from("group_members")
         .select("*, profiles:user_id(*)")
         .eq("group_id", groupId);
 
@@ -27,7 +27,7 @@ export const GroupMembersService = {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members" as any)
+        .from("group_members")
         .select("id")
         .eq("group_id", groupId)
         .eq("user_id", user.id)
@@ -47,7 +47,7 @@ export const GroupMembersService = {
       const user = await getCurrentUser();
       
       const { data, error } = await supabase
-        .from("group_members" as any)
+        .from("group_members")
         .select("is_admin")
         .eq("group_id", groupId)
         .eq("user_id", user.id)
