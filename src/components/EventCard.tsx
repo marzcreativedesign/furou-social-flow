@@ -1,5 +1,5 @@
 
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, Flag } from "lucide-react";
 import EventTag from "./EventTag";
 import { Link } from "react-router-dom";
 import OptimizedImage from "./OptimizedImage";
@@ -66,8 +66,9 @@ const EventCard = memo(({
             />
           )}
           {isPastEvent && (
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-800/80 text-gray-200 border border-gray-700">
-              Encerrado
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-800/80 text-gray-200 border border-gray-700 flex items-center gap-1">
+              <Flag size={12} />
+              Finalizado
             </span>
           )}
         </div>
