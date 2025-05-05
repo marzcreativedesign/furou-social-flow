@@ -10,7 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Event } from "@/types/event";
+import { Event, EventParticipant } from "@/types/event";
 
 const AgendaPage = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -37,7 +37,22 @@ const AgendaPage = () => {
           return;
         }
 
-        setAllEvents(data || []);
+        // Mapear os dados para garantir que event_participants tenha o campo status
+        const eventsWithParticipantsStatus = data?.map(event => {
+          // Adicionar o campo status para cada participante
+          const eventParticipants = event.event_participants?.map(participant => ({
+            ...participant,
+            id: String(participant.id), // Converter para string conforme esperado pelo tipo
+            status: "confirmed" // Adicionando status padrão para todos os participantes
+          })) as EventParticipant[];
+          
+          return {
+            ...event,
+            event_participants: eventParticipants
+          } as Event;
+        }) || [];
+
+        setAllEvents(eventsWithParticipantsStatus);
       } catch (err) {
         console.error("Erro ao buscar eventos:", err);
       } finally {

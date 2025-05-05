@@ -19,6 +19,7 @@ const EventAttendeesCount = ({ participants }: EventAttendeesCountProps) => {
     );
   }
 
+  // Contar participantes confirmados e recusados
   const confirmedCount = participants.filter(p => p.status === 'confirmed').length;
   const declinedCount = participants.filter(p => p.status === 'declined').length;
 
