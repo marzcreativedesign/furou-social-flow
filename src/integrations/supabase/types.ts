@@ -169,6 +169,7 @@ export type Database = {
       }
       events: {
         Row: {
+          address: string | null
           created_at: string | null
           creator_id: string
           date: string
@@ -184,6 +185,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["event_visibility"] | null
         }
         Insert: {
+          address?: string | null
           created_at?: string | null
           creator_id: string
           date: string
@@ -199,6 +201,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["event_visibility"] | null
         }
         Update: {
+          address?: string | null
           created_at?: string | null
           creator_id?: string
           date?: string

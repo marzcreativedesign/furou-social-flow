@@ -10,7 +10,11 @@ export const GetGroupByIdService = {
     try {
       const { data, error } = await supabase
         .from("groups")
-        .select("*")
+        .select(`
+          *,
+          group_members(*, profiles:user_id(*)),
+          events(*)
+        `)
         .eq("id", id)
         .single();
 
