@@ -11,12 +11,16 @@ interface AuthContextType {
     error: any | null;
     data: { user: User | null; session: Session | null } | null;
   }>;
-  signUp: (email: string, password: string) => Promise<{
+  signUp: (email: string, password: string, fullName?: string) => Promise<{
     error: any | null;
     data: { user: User | null; session: Session | null } | null;
   }>;
   signOut: () => Promise<void>;
   loading: boolean;
+  resetPassword: (email: string) => Promise<{
+    error: any | null;
+    data?: any;
+  }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -67,11 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: fullName ? {
+          data: {
+            full_name: fullName
+          }
+        } : undefined
       });
 
       if (error) {
@@ -81,6 +90,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data, error: null };
     } catch (error) {
       return { error, data: null };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error };
     }
   };
 
@@ -96,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     loading,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,7 +9,7 @@ interface AdminRouteProps {
 }
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { role, isLoading: roleLoading } = useRole();
   const [isAuthorized, setIsAuthorized] = React.useState<boolean | null>(null);
 
