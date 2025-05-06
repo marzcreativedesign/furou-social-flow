@@ -136,18 +136,21 @@ export type Database = {
           created_at: string | null
           event_id: string
           id: number
+          status: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           event_id: string
           id?: never
+          status?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
           event_id?: string
           id?: never
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -607,6 +610,10 @@ export type Database = {
       }
       is_event_participant: {
         Args: { event_id: string }
+        Returns: boolean
+      }
+      is_participant_in_event: {
+        Args: { event_id: string; user_id: string }
         Returns: boolean
       }
     }

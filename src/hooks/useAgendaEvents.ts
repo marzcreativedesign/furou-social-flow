@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Event, EventParticipant } from "@/types/event";
@@ -25,13 +24,12 @@ export const useAgendaEvents = () => {
           return;
         }
 
-        // Mapear os dados para garantir que event_participants tenha o campo status
-        const eventsWithParticipantsStatus = data?.map(event => {
-          // Adicionar o campo status para cada participante
+        // Ensure data is properly typed with the correct status field
+        const eventsWithParticipants = data?.map(event => {
           const eventParticipants = event.event_participants?.map(participant => ({
             ...participant,
-            id: String(participant.id), // Converter para string conforme esperado pelo tipo
-            status: "confirmed" // Adicionando status padrão para todos os participantes
+            id: String(participant.id), // Convert to string as expected by type
+            status: participant.status || "confirmed" // Use status from DB or default to confirmed
           })) as EventParticipant[];
           
           return {
@@ -40,7 +38,7 @@ export const useAgendaEvents = () => {
           } as Event;
         }) || [];
 
-        setAllEvents(eventsWithParticipantsStatus);
+        setAllEvents(eventsWithParticipants);
       } catch (err) {
         console.error("Erro ao buscar eventos:", err);
       } finally {

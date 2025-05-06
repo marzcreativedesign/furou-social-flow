@@ -13,6 +13,7 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
         id,
         user_id,
         event_id,
+        status,
         created_at,
         profiles:user_id(full_name, avatar_url)
       `)
@@ -23,12 +24,12 @@ export async function fetchEventConfirmations(eventId: string): Promise<EventPar
       return [];
     }
 
-    // Adicionar o status "confirmed" manualmente e converter id para string
+    // Convert id to string for consistency in the application
     const participantsWithStatus = data.map(participant => ({
       ...participant,
-      id: String(participant.id), // Converter para string
-      status: "confirmed" // Adiciona o status manualmente
-    })) as unknown as EventParticipant[];
+      id: String(participant.id), // Convert to string
+      status: participant.status || "confirmed" // Use status from DB or default to confirmed
+    })) as EventParticipant[];
 
     return participantsWithStatus;
   } catch (error) {

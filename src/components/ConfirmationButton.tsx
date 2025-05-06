@@ -4,8 +4,6 @@ import { Check, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { EventQueryService } from "@/services/event/queries";
-import { ParticipantManagementService } from "@/services/event/participant-management.service";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ConfirmationButtonProps {
@@ -30,20 +28,19 @@ const ConfirmationButton = ({
       if (!user || !eventId) return;
       
       try {
-        const { data: event } = await EventQueryService.getEventById(eventId);
+        // Query the event_participants table directly with the new status field
+        const { data: participant, error } = await supabase
+          .from('event_participants')
+          .select('status')
+          .eq('event_id', eventId)
+          .eq('user_id', user.id)
+          .maybeSingle();
         
-        if (event) {
-          const { data: confirmations } = await supabase
-            .from('event_confirmations')
-            .select('*')
-            .eq('event_id', eventId)
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (confirmations) {
-            setConfirmed(confirmations.status === 'confirmed' ? true : 
-                        confirmations.status === 'declined' ? false : null);
-          }
+        if (error) throw error;
+        
+        if (participant) {
+          setConfirmed(participant.status === 'confirmed' ? true : 
+                      participant.status === 'declined' ? false : null);
         }
       } catch (error) {
         console.error("Error checking confirmation status:", error);
@@ -70,17 +67,22 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      // Updated to pass only eventId - the service will handle the status internally
-      const result = await ParticipantManagementService.joinEvent(eventId);
+      // Use the direct table API with the new status field
+      const { error } = await supabase
+        .from('event_participants')
+        .upsert(
+          {
+            event_id: eventId,
+            user_id: user.id,
+            status: 'confirmed'
+          },
+          {
+            onConflict: 'event_id,user_id',
+            ignoreDuplicates: false,
+          }
+        );
       
-      if (result.error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao confirmar presença",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
       
       setConfirmed(true);
       toast({
@@ -88,7 +90,7 @@ const ConfirmationButton = ({
         description: "Presença confirmada!",
       });
       onConfirm();
-      window.location.reload();
+      window.location.reload(); // Refresh to see changes
     } catch (error) {
       console.error("Error confirming event:", error);
       toast({
@@ -109,17 +111,22 @@ const ConfirmationButton = ({
 
     setLoading(true);
     try {
-      // Updated to use declineEvent which takes only eventId
-      const result = await ParticipantManagementService.declineEvent(eventId);
+      // Use the direct table API with the new status field
+      const { error } = await supabase
+        .from('event_participants')
+        .upsert(
+          {
+            event_id: eventId,
+            user_id: user.id,
+            status: 'declined'
+          },
+          {
+            onConflict: 'event_id,user_id',
+            ignoreDuplicates: false,
+          }
+        );
       
-      if (result.error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao cancelar presença",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
       
       setConfirmed(false);
       toast({
@@ -127,7 +134,7 @@ const ConfirmationButton = ({
         description: "Presença cancelada",
       });
       onDecline();
-      window.location.reload();
+      window.location.reload(); // Refresh to see changes
     } catch (error) {
       console.error("Error declining event:", error);
       toast({
