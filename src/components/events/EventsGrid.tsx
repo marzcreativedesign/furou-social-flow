@@ -51,29 +51,25 @@ const EventsGrid = ({
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {events.map(event => {
-          const isPastEvent = new Date(event.date) < new Date();
-          
-          return (
-            <div key={event.id} onClick={() => navigate(`/eventos/${event.id}`)} className="cursor-pointer">
-              <EventCard 
-                id={event.id} 
-                title={event.title} 
-                date={new Date(event.date).toLocaleString('pt-BR', {
-                  weekday: 'long',
-                  hour: 'numeric',
-                  minute: 'numeric'
-                })}
-                location={event.location || ''} 
-                imageUrl={event.image_url || ''} 
-                attendees={event.event_participants?.length || 0}
-                confirmed={event.event_participants?.some(p => p.status === 'confirmed')}
-                type={event.is_public ? "public" : "private"}
-                size="large" 
-              />
-            </div>
-          );
-        })}
+        {events.map(event => (
+          <div key={event.id} onClick={() => navigate(`/eventos/${event.id}`)} className="cursor-pointer">
+            <EventCard 
+              id={event.id} 
+              title={event.title} 
+              date={new Date(event.date).toLocaleString('pt-BR', {
+                weekday: 'long',
+                hour: 'numeric',
+                minute: 'numeric'
+              })}
+              location={event.location || ''} 
+              imageUrl={event.image_url || ''} 
+              attendees={event.event_participants?.length || 0}
+              confirmed={event.event_participants?.some(p => p.status === 'confirmed')}
+              type={event.is_public ? "public" : "private"}
+              size="large" 
+            />
+          </div>
+        ))}
       </div>
       
       {pagination && (

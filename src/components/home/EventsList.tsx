@@ -63,23 +63,19 @@ const EventsList = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {events.map((event) => {
-            const isPastEvent = new Date(event.date) < new Date();
-            
-            return (
-              <EventCard 
-                key={event.id}
-                id={event.id}
-                title={event.title}
-                date={event.date}
-                location={event.location || ''}
-                imageUrl={event.image_url || ''}
-                attendees={event.participants_count || 0}
-                type={event.is_public ? "public" : "private"}
-                confirmed={event.status === 'upcoming' || event.status === 'ongoing'}
-              />
-            );
-          })}
+          {events.map((event) => (
+            <EventCard 
+              key={event.id}
+              id={event.id}
+              title={event.title}
+              date={event.date}
+              location={event.location || ''}
+              imageUrl={event.image_url || ''}
+              attendees={event.participants_count || 0}
+              type={event.is_public ? "public" : "private"}
+              confirmed={event.status === 'upcoming' || event.status === 'ongoing'}
+            />
+          ))}
         </div>
       )}
     </div>
