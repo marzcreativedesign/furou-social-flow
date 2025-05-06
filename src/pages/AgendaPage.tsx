@@ -5,10 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { useAgendaEvents } from "@/hooks/useAgendaEvents";
 import AgendaCalendar from "@/components/agenda/AgendaCalendar";
 import AgendaEventsList from "@/components/agenda/AgendaEventsList";
+import { Event as EventType } from "@/types/event";
 
 const AgendaPage = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedDateEvents, setSelectedDateEvents] = useState<Event[]>([]);
+  const [selectedDateEvents, setSelectedDateEvents] = useState<EventType[]>([]);
   const navigate = useNavigate();
   
   const { 
