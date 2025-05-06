@@ -1,22 +1,32 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Event, EventParticipant } from "@/types/event";
 import { isBefore, isToday, startOfDay } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 export const useAgendaEvents = () => {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchEvents = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
       setLoading(true);
       try {
+        // Buscar todos os eventos que o usuário criou ou participa
         const { data, error } = await supabase
           .from("events")
           .select(`
             *,
             event_participants(*)
           `)
+          .or(`creator_id.eq.${user.id},event_participants.user_id.eq.${user.id}`)
           .order('date', { ascending: true });
 
         if (error) {
@@ -47,7 +57,7 @@ export const useAgendaEvents = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [user]);
 
   // Get events for a specific date
   const getEventsForDate = (date: Date | undefined) => {

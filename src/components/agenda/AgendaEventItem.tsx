@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Clock, Flag } from "lucide-react";
+import { Clock, Flag, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,7 +18,15 @@ const AgendaEventItem = ({
   getEventTypeBadge
 }: AgendaEventItemProps) => {
   const isPastEvent = new Date(event.date) < new Date();
-  const eventDate = parseISO(event.date);
+  let eventDate;
+  
+  try {
+    eventDate = parseISO(event.date);
+  } catch (error) {
+    console.error("Erro ao processar a data:", error);
+    eventDate = new Date(); // Fallback para data atual em caso de erro
+  }
+  
   const confirmedCount = event.event_participants?.filter(p => p.status === 'confirmed').length || 0;
   
   return (
@@ -31,11 +39,17 @@ const AgendaEventItem = ({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-medium">{event.title}</h3>
-          <div className="flex items-center text-sm text-muted-foreground mt-1">
-            <Clock className="h-4 w-4 mr-1" />
-            <span>{format(eventDate, 'HH:mm', { locale: ptBR })}</span>
-            <span className="mx-2">•</span>
-            <span>{event.location || 'Local não definido'}</span>
+          <div className="flex flex-wrap items-center text-sm text-muted-foreground mt-1 gap-2">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-1" />
+              <span>{format(eventDate, 'HH:mm', { locale: ptBR })}</span>
+            </div>
+            {event.location && (
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span>{event.location}</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
