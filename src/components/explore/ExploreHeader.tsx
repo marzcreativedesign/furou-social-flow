@@ -1,5 +1,5 @@
 
-interface ExploreHeaderProps {
+export interface ExploreHeaderProps {
   title: string;
 }
 

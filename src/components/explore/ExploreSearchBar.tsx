@@ -2,12 +2,23 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-interface ExploreSearchBarProps {
+export interface ExploreSearchBarProps {
   searchQuery: string;
-  onSearchChange: (query: string) => void;
+  onSearch?: (query: string) => void;
+  onSearchChange?: (query: string) => void;
 }
 
-const ExploreSearchBar = ({ searchQuery, onSearchChange }: ExploreSearchBarProps) => {
+const ExploreSearchBar = ({ searchQuery, onSearch, onSearchChange }: ExploreSearchBarProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
+    if (onSearch) {
+      onSearch(value);
+    }
+  };
+
   return (
     <div className="relative mb-4">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
@@ -15,7 +26,7 @@ const ExploreSearchBar = ({ searchQuery, onSearchChange }: ExploreSearchBarProps
         placeholder="Buscar eventos, locais, pessoas..." 
         className="pl-10"
         value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={handleChange}
       />
     </div>
   );

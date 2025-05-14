@@ -4,7 +4,7 @@
  * to prevent unnecessary rerenders and improve state management
  */
 import { useContext, useMemo } from 'react';
-import { AuthContext } from '@/contexts/AuthContext';
+import { AuthContext, AuthContextType } from '@/contexts/AuthContext';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -17,6 +17,6 @@ export const useAuth = () => {
   return useMemo(() => context, [
     context.user,
     context.loading,
-    context.error
-  ]);
+    context.error !== undefined ? context.error : null
+  ]) as AuthContextType;
 };

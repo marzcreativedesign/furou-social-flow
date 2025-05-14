@@ -35,10 +35,10 @@ const ExplorarPage = () => {
       showSearch={false}
     >
       <div className="px-4 py-4">
-        <ExploreHeader />
+        <ExploreHeader title="Explorar Eventos" />
         <ExploreSearchBar 
           searchQuery={searchQuery}
-          onSearch={handleSearch}
+          onSearchChange={handleSearch}
         />
         <ExploreTabs 
           activeTab={activeTab}
