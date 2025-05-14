@@ -4,9 +4,9 @@ import { Filter } from "lucide-react";
 
 export interface ExploreFiltersProps {
   location?: string | null;
-  date?: Date | null;
+  date?: string | null;
   onLocationChange?: (location: string | null) => void;
-  onDateChange?: (date: Date | null) => void;
+  onDateChange?: (date: string | null) => void;
 }
 
 const ExploreFilters = ({ location, date, onLocationChange, onDateChange }: ExploreFiltersProps) => {
