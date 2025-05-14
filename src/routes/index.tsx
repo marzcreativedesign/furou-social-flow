@@ -1,91 +1,130 @@
 
 import { createBrowserRouter } from "react-router-dom";
 import HomePage from "@/pages/HomePage";
+import Login from "@/pages/Login";
 import EventsPage from "@/pages/EventsPage";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
-import CostCalculatorPage from "@/pages/CostCalculatorPage";
-import Login from "@/pages/Login";
-import Notifications from "@/pages/Notifications";
-import CalendarView from "@/pages/CalendarView";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
-import AdminPage from "@/pages/AdminPage";
-import UserProfile from "@/pages/UserProfile";
-import NotFound from "@/pages/NotFound";
-import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
+import UserProfile from "@/pages/UserProfile";
+import AdminPage from "@/pages/AdminPage";
+import NotFound from "@/pages/NotFound";
+import CostCalculatorPage from "@/pages/CostCalculatorPage";
 import ExplorePage from "@/pages/ExplorePage";
-// Add GroupsPage import when it's created
+import AgendaPage from "@/pages/AgendaPage";
+import Notifications from "@/pages/Notifications";
+import Settings from "@/pages/Settings";
+import AccessibilityPage from "@/pages/AccessibilityPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <ProtectedRoute><HomePage /></ProtectedRoute>
+    element: <HomePage />,
   },
   {
-    path: "/login",
-    element: <Login />
+    path: "/auth",
+    element: <Login />,
   },
   {
     path: "/eventos",
-    element: <ProtectedRoute><EventsPage /></ProtectedRoute>
+    element: (
+      <ProtectedRoute>
+        <EventsPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/eventos/:id",
-    element: <ProtectedRoute><EventDetail /></ProtectedRoute>
-  },
-  {
-    path: "/evento/:id",
-    element: <ProtectedRoute><EventDetail /></ProtectedRoute>
+    element: (
+      <ProtectedRoute>
+        <EventDetail />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/criar",
-    element: <ProtectedRoute><CreateEvent /></ProtectedRoute>
-  },
-  {
-    path: "/calculadora",
-    element: <ProtectedRoute><CostCalculatorPage /></ProtectedRoute>
-  },
-  {
-    path: "/notificacoes",
-    element: <ProtectedRoute><Notifications /></ProtectedRoute>
-  },
-  {
-    path: "/agenda",
-    element: <ProtectedRoute><CalendarView /></ProtectedRoute>
-  },
-  {
-    path: "/admin",
-    element: <AdminRoute><AdminPage /></AdminRoute>
-  },
-  {
-    path: "/perfil/:userId",
-    element: <ProtectedRoute><UserProfile /></ProtectedRoute>
+    element: (
+      <ProtectedRoute>
+        <CreateEvent />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/perfil",
-    element: <ProtectedRoute><Profile /></ProtectedRoute>
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: "/acessibilidade",
-    element: <ProtectedRoute><Settings /></ProtectedRoute>
+    path: "/usuarios/:id",
+    element: (
+      <ProtectedRoute>
+        <UserProfile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin",
+    element: (
+      <AdminRoute>
+        <AdminPage />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/calculadora",
+    element: (
+      <ProtectedRoute>
+        <CostCalculatorPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/explorar",
-    element: <ProtectedRoute><ExplorePage /></ProtectedRoute>
+    element: (
+      <ProtectedRoute>
+        <ExplorePage />
+      </ProtectedRoute>
+    ),
   },
-  // We'll add group routes here in the future when the pages are created
-  // {
-  //   path: "/grupos",
-  //   element: <ProtectedRoute><GroupsPage /></ProtectedRoute>
-  // },
-  // {
-  //   path: "/grupos/:id",
-  //   element: <ProtectedRoute><GroupDetailPage /></ProtectedRoute>
-  // },
+  {
+    path: "/agenda",
+    element: (
+      <ProtectedRoute>
+        <AgendaPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/notificacoes",
+    element: (
+      <ProtectedRoute>
+        <Notifications />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/configuracoes",
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/acessibilidade",
+    element: (
+      <ProtectedRoute>
+        <AccessibilityPage />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: "*",
-    element: <NotFound />
-  }
+    element: <NotFound />,
+  },
 ]);

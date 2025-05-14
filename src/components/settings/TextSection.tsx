@@ -8,7 +8,7 @@ interface TextSectionProps {
   fontSize: number;
   onFontSizeChange: (value: number[]) => void;
   fontFamily: string;
-  onFontFamilyChange: (value: string) => void;
+  onFontFamilyChange: (value: 'sans' | 'serif' | 'mono' | 'dyslexic') => void;
 }
 
 const TextSection = ({
@@ -61,8 +61,8 @@ const TextSection = ({
         </div>
         <RadioGroup value={fontFamily} onValueChange={onFontFamilyChange}>
           <div className="flex items-center space-x-2 mb-3 p-2 rounded-md hover:bg-muted/50">
-            <RadioGroupItem value="default" id="default" />
-            <Label htmlFor="default" className="font-sans cursor-pointer">Padrão (Poppins)</Label>
+            <RadioGroupItem value="sans" id="sans" />
+            <Label htmlFor="sans" className="font-sans cursor-pointer">Padrão (Poppins)</Label>
           </div>
           <div className="flex items-center space-x-2 mb-3 p-2 rounded-md hover:bg-muted/50">
             <RadioGroupItem value="serif" id="serif" />
