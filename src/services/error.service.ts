@@ -37,7 +37,7 @@ export const ErrorService = {
     toast({
       title: message,
       description: description || undefined,
-      variant: "destructive",
+      variant: "destructive"
     });
     
     // Retornar a mensagem para uso adicional se necessário

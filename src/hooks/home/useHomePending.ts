@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventsService } from "@/services/events.service";
@@ -82,7 +81,7 @@ export const useHomePending = (): UseHomePendingReturn => {
       toast({
         title: "Error",
         description: "Error completing action",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };

@@ -1,5 +1,6 @@
 
-// Re-export the toast hooks from the actual implementation
-import { useToast, toast } from "@/hooks/use-toast";
+// Re-export from our centralized implementation
+import { useToast as useToastHook, toast, type Toast } from "@/hooks/use-toast";
 
-export { useToast, toast };
+// Re-export everything
+export { useToastHook as useToast, toast, type Toast };

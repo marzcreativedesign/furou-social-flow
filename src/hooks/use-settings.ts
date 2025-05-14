@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface Settings {
   darkMode: boolean;
@@ -161,7 +160,7 @@ export const useSettings = () => {
       
       toast({
         title: "Configurações salvas",
-        description: "Suas preferências de acessibilidade foram atualizadas",
+        description: "Suas preferências de acessibilidade foram atualizadas"
       });
     } catch (error) {
       console.error("Error saving settings:", error);

@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event } from '@/types/event';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { getEventsCacheKey, getCachedEvents, cacheEvents, isEventCacheStale } from '@/utils/eventCache';
 import { ExploreEventsData } from '@/types/explore';
 
@@ -123,12 +122,12 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar os eventos.',
-        variant: 'destructive'
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  }, [cacheKey, searchQuery, location, date]);
+  }, [cacheKey, searchQuery, location, date, fetchEvents]);
 
   // Fetch events when dependencies change
   useEffect(() => {

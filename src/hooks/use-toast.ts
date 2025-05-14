@@ -1,12 +1,28 @@
 
-import { toast as sonnerToast, ToastT } from "sonner";
-import * as ToastPrimitives from "@radix-ui/react-toast";
-import { useToast as useRadixToast } from "@/components/ui/use-toast";
+// Import from Sonner directly
+import { toast as sonnerToast, type Toast as SonnerToast } from "sonner";
 
-export type Toast = ToastT;
-
-export function toast(props: ToastT) {
-  return sonnerToast(props);
+// Define our custom toast type that works with both implementations
+export interface Toast extends Partial<SonnerToast> {
+  id?: string;
+  title?: string;
+  description?: string;
+  variant?: "default" | "destructive";
+  action?: React.ReactNode;
 }
 
-export const useToast = useRadixToast;
+// Create a wrapper function that converts our Toast type to Sonner's format
+export function toast(props: Toast) {
+  return sonnerToast(props as SonnerToast);
+}
+
+// Export a useToast hook
+export const useToast = () => {
+  // This is a simple implementation to make it compatible with the Radix UI pattern
+  return {
+    toast,
+    // For compatibility with Radix UI toast
+    toasts: [] as Toast[],
+    dismiss: (id: string) => {},
+  };
+};
