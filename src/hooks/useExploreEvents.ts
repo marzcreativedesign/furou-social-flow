@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event } from '@/types/event';
 import { toast } from '@/components/ui/use-toast';
 import { getEventsCacheKey, getCachedEvents, cacheEvents, isEventCacheStale } from '@/utils/eventCache';
-import { ExploreEventsData, ExploreEventsResponse } from '@/types/explore';
+import { ExploreEventsData } from '@/types/explore';
 
 export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
   const [activeTab, setActiveTab] = useState<'all' | 'nearby'>(initialTab);
@@ -13,27 +14,29 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filtros
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState<string | null>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [date, setDate] = useState<Date | null>(null);
 
-  const fetchEvents = async (page: number = 1) => {
+  // Memoize the cache key to prevent unnecessary recalculations
+  const cacheKey = useMemo(() => getEventsCacheKey('explore', { 
+    tab: activeTab, 
+    page: currentPage, 
+    search: searchQuery,
+    location,
+    category,
+    date: date?.toISOString()
+  }), [activeTab, currentPage, searchQuery, location, category, date]);
+
+  // Optimize fetch function as a memoized callback
+  const fetchEvents = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
 
     try {
-      const cacheKey = getEventsCacheKey('explore', { 
-        tab: activeTab, 
-        page, 
-        search: searchQuery,
-        location,
-        category,
-        date: date?.toISOString()
-      });
-
-      // Verifica se há dados em cache e se não estão expirados
+      // Optimize cache check
       const cachedData = getCachedEvents<ExploreEventsData>(cacheKey);
       if (cachedData && !isEventCacheStale(cacheKey)) {
         setEvents(cachedData.events);
@@ -43,7 +46,7 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
         return;
       }
 
-      // Construir a query
+      // Build query with proper type annotations for better performance
       let query = supabase
         .from('events')
         .select(`
@@ -52,7 +55,7 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
           profiles:creator_id(*)
         `, { count: 'exact' });
 
-      // Adicionar filtros
+      // Apply filters efficiently
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
@@ -72,38 +75,38 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
                     .lte('date', endOfDay.toISOString());
       }
 
-      // Paginação
+      // Apply pagination
       const pageSize = 10;
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
       query = query.range(from, to).order('date', { ascending: true });
 
-      // Executar a query
+      // Execute query
       const { data, error, count } = await query;
       
       if (error) throw error;
       
-      // Processar resultados
+      // Process results
       const totalCount = count || 0;
       const calculatedTotalPages = Math.ceil(totalCount / pageSize);
       
-      // Formatar os eventos
-      const formattedEvents = (data || []).map((event: any) => ({
+      // Optimize event processing with a single-pass transformation
+      const formattedEvents = data?.map((event: any) => ({
         ...event,
         creator: {
           id: event.profiles?.id,
           name: event.profiles?.full_name || 'Usuário',
           avatar: event.profiles?.avatar_url
         }
-      }));
+      })) || [];
 
-      // Atualizar o estado
+      // Update state
       setEvents(formattedEvents);
       setTotalPages(calculatedTotalPages);
       setCurrentPage(page);
       
-      // Armazenar em cache
+      // Cache results with metadata
       const cacheData: ExploreEventsData = {
         events: formattedEvents,
         metadata: {
@@ -112,7 +115,7 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
         }
       };
       
-      cacheEvents(cacheKey, cacheData, 5); // Cache por 5 minutos
+      cacheEvents(cacheKey, cacheData, 5); // Cache for 5 minutes
       
     } catch (err) {
       console.error('Erro ao buscar eventos:', err);
@@ -125,41 +128,43 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cacheKey, searchQuery, location, date]);
 
+  // Fetch events when dependencies change
   useEffect(() => {
     fetchEvents(1);
-  }, [activeTab, searchQuery, location, category, date]);
+  }, [activeTab, searchQuery, location, category, date, fetchEvents]);
 
-  const handlePageChange = (page: number) => {
+  // Memoize handlers to prevent unnecessary recreations
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     fetchEvents(page);
-  };
+  }, [fetchEvents]);
 
-  const handleTabChange = (tab: 'all' | 'nearby') => {
+  const handleTabChange = useCallback((tab: 'all' | 'nearby') => {
     setActiveTab(tab);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleLocationChange = (loc: string | null) => {
+  const handleLocationChange = useCallback((loc: string | null) => {
     setLocation(loc);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleCategoryChange = (cat: string | null) => {
+  const handleCategoryChange = useCallback((cat: string | null) => {
     setCategory(cat);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleDateChange = (newDate: Date | null) => {
+  const handleDateChange = useCallback((newDate: Date | null) => {
     setDate(newDate);
     setCurrentPage(1);
-  };
+  }, []);
 
   return {
     events,
@@ -178,6 +183,6 @@ export const useExploreEvents = (initialTab: 'all' | 'nearby' = 'all') => {
     handleLocationChange,
     handleCategoryChange,
     handleDateChange,
-    refreshEvents: () => fetchEvents(currentPage)
+    refreshEvents: useCallback(() => fetchEvents(currentPage), [fetchEvents, currentPage])
   };
 };

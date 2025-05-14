@@ -1,6 +1,22 @@
 
 /**
- * Re-export the useAuth hook from the AuthContext for better imports
- * without creating circular dependencies
+ * Re-export the useAuth hook from the AuthContext with performance optimizations
+ * to prevent unnecessary rerenders and improve state management
  */
-export { useAuth } from '@/contexts/AuthContext';
+import { useContext, useMemo } from 'react';
+import { AuthContext } from '@/contexts/AuthContext';
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  
+  // Use memoization to prevent unnecessary rerenders
+  return useMemo(() => context, [
+    context.user,
+    context.loading,
+    context.error
+  ]);
+};
