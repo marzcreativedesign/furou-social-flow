@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface Settings {
   darkMode: boolean;
@@ -19,7 +19,6 @@ const defaultSettings: Settings = {
 };
 
 export const useSettings = () => {
-  const { toast } = useToast();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isDirty, setIsDirty] = useState(false);
   
