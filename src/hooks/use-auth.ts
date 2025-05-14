@@ -17,6 +17,6 @@ export const useAuth = () => {
   return useMemo(() => context, [
     context.user,
     context.loading,
-    context.error !== undefined ? context.error : null
+    context.error
   ]) as AuthContextType;
 };

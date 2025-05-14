@@ -602,6 +602,7 @@ export type Database = {
     Functions: {
       has_role: {
         Args:
+          | Record<PropertyKey, never>
           | { role_name: string }
           | { user_id: number; role_name: string }
           | { user_id: string; _role: Database["public"]["Enums"]["app_role"] }

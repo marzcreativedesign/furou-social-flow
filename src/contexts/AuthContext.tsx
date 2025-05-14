@@ -17,6 +17,7 @@ export interface AuthContextType {
   }>;
   signOut: () => Promise<void>;
   loading: boolean;
+  error: any | null; // Added error property
   resetPassword: (email: string) => Promise<{
     error: any | null;
     data?: any;
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any | null>(null); // Added error state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,11 +64,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        setError(error);
         return { error, data: null };
       }
 
+      setError(null);
       return { data, error: null };
     } catch (error) {
+      setError(error);
       return { error, data: null };
     }
   };
@@ -84,11 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        setError(error);
         return { error, data: null };
       }
 
+      setError(null);
       return { data, error: null };
     } catch (error) {
+      setError(error);
       return { error, data: null };
     }
   };
@@ -100,18 +108,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        setError(error);
         return { error };
       }
       
+      setError(null);
       return { error: null };
     } catch (error) {
+      setError(error);
       return { error };
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+    } catch (error) {
+      setError(error);
+    }
   };
 
   const value = {
@@ -121,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     loading,
+    error, // Added error to the context value
     resetPassword,
   };
 
