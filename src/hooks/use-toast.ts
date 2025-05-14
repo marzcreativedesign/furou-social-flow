@@ -2,7 +2,7 @@
 // Import from Sonner directly
 import { toast as sonnerToast } from "sonner";
 
-// Define our custom toast type that works with both implementations
+// Define our custom Toast type that works with both implementations
 export interface Toast {
   id?: string;
   title?: string;
@@ -13,7 +13,11 @@ export interface Toast {
 
 // Create a wrapper function that converts our Toast type to Sonner's format
 export function toast(props: Toast) {
-  return sonnerToast(props);
+  return sonnerToast(props.title || "", {
+    description: props.description,
+    action: props.action,
+    className: props.variant === "destructive" ? "destructive" : undefined,
+  });
 }
 
 // Export a useToast hook

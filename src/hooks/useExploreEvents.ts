@@ -7,17 +7,23 @@ import { getEventsCacheKey, getCachedEvents, cacheEvents, isEventCacheStale } fr
 import { ExploreEventsData } from '@/types/explore';
 
 export const useExploreEvents = (
-  searchQuery = '',
-  location = '',
-  date = ''
+  initialSearchQuery = '',
+  initialLocation = '',
+  initialDate = ''
 ): ExploreEventsData => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
+  const [location, setLocation] = useState<string | null>(initialLocation);
+  const [date, setDate] = useState<string | null>(initialDate);
+  const [activeTab, setActiveTab] = useState<string>("events");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
   // Create a cache key based on filters
   const cacheKey = useMemo(() => {
-    return getEventsCacheKey({ searchQuery, location, date });
+    return getEventsCacheKey("explore", { searchQuery, location, date });
   }, [searchQuery, location, date]);
 
   // Transform date string to range for filtering
@@ -75,7 +81,7 @@ export const useExploreEvents = (
     
     try {
       // Check if we have valid cached data
-      const cachedData = getCachedEvents(cacheKey);
+      const cachedData = getCachedEvents<Event[]>(cacheKey);
       if (cachedData && !isEventCacheStale(cacheKey)) {
         setEvents(cachedData);
         setLoading(false);
@@ -113,6 +119,8 @@ export const useExploreEvents = (
       cacheEvents(cacheKey, data as Event[]);
       
       setEvents(data as Event[]);
+      setTotalPages(Math.ceil((data?.length || 0) / 10)); // Assuming 10 items per page
+      
     } catch (err) {
       setError(err as Error);
       console.error('Error fetching events:', err);
@@ -130,6 +138,54 @@ export const useExploreEvents = (
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  // Handle search
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page on new search
+  }, []);
+
+  // Handle location change
+  const handleLocationChange = useCallback((loc: string | null) => {
+    setLocation(loc);
+    setCurrentPage(1); // Reset to first page on filter change
+  }, []);
+
+  // Handle date change
+  const handleDateChange = useCallback((newDate: string | null) => {
+    setDate(newDate);
+    setCurrentPage(1); // Reset to first page on filter change
+  }, []);
+
+  // Handle tab change
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
+
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
   
-  return { events, loading, error, refetch: fetchEvents };
+  return { 
+    events, 
+    loading, 
+    error, 
+    refetch: fetchEvents,
+    activeTab,
+    currentPage,
+    totalPages,
+    searchQuery,
+    location,
+    date,
+    handleTabChange,
+    handleSearch,
+    handleLocationChange,
+    handleDateChange,
+    handlePageChange,
+    metadata: {
+      currentPage,
+      totalPages
+    }
+  };
 };
