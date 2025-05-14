@@ -1,9 +1,9 @@
 
 // Import from Sonner directly
-import { toast as sonnerToast, type Toast as SonnerToast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
 // Define our custom toast type that works with both implementations
-export interface Toast extends Partial<SonnerToast> {
+export interface Toast {
   id?: string;
   title?: string;
   description?: string;
@@ -13,7 +13,7 @@ export interface Toast extends Partial<SonnerToast> {
 
 // Create a wrapper function that converts our Toast type to Sonner's format
 export function toast(props: Toast) {
-  return sonnerToast(props as SonnerToast);
+  return sonnerToast(props);
 }
 
 // Export a useToast hook

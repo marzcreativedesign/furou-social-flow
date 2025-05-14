@@ -17,7 +17,7 @@ export interface AuthContextType {
   }>;
   signOut: () => Promise<void>;
   loading: boolean;
-  error: any | null; // Added error property
+  error: any | null;
   resetPassword: (email: string) => Promise<{
     error: any | null;
     data?: any;
@@ -26,11 +26,12 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Separate the authentication logic from the component
+const useAuthProvider = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any | null>(null); // Added error state
+  const [error, setError] = useState<any | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -129,18 +130,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  return {
     user,
     session,
     signIn,
     signUp,
     signOut,
     loading,
-    error, // Added error to the context value
+    error,
     resetPassword,
   };
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+// Create AuthProvider as a regular functional component
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const auth = useAuthProvider();
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
