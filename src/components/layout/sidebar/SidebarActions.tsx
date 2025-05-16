@@ -14,7 +14,7 @@ const SidebarActions = ({ darkMode, toggleDarkMode, onLogout }: SidebarActionsPr
   const navigate = useNavigate();
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center">
           {darkMode ? <Moon size={18} className="mr-2" /> : <Sun size={18} className="mr-2" />}
@@ -25,19 +25,19 @@ const SidebarActions = ({ darkMode, toggleDarkMode, onLogout }: SidebarActionsPr
       
       <Button 
         variant="outline" 
-        className="w-full justify-start border-primary text-primary hover:bg-primary/10"
+        className="w-full justify-start h-auto py-2.5 mt-2"
         onClick={() => navigate("/criar")}
       >
-        <PlusCircle size={20} className="mr-2" />
+        <PlusCircle size={18} className="mr-2" />
         <span>Criar Evento</span>
       </Button>
       
       <Button 
         variant="ghost" 
-        className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+        className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 h-auto py-2.5"
         onClick={onLogout}
       >
-        <LogOut size={20} className="mr-2" />
+        <LogOut size={18} className="mr-2" />
         <span>Sair</span>
       </Button>
     </div>

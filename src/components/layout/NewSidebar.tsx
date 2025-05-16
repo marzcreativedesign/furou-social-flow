@@ -89,14 +89,14 @@ const NewSidebar = ({ darkMode, toggleDarkMode }: NewSidebarProps) => {
   };
 
   return (
-    <div className="hidden lg:block lg:w-64 p-4 border-r border-border dark:border-gray-800 min-h-[calc(100vh-64px)] fixed">
+    <div className="hidden lg:block lg:w-64 min-h-[calc(100vh-64px)] fixed bg-card/30 backdrop-blur-sm">
       <div className="sticky top-20 flex flex-col h-[calc(100vh-100px)]">
-        <SidebarUserProfile {...userProfile} />
+        <div className="px-4 py-3">
+          <SidebarUserProfile {...userProfile} />
+        </div>
         
-        <Separator className="my-2" />
-
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-1 pb-4">
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-1 py-2">
             {menuCategories.map((category) => (
               <SidebarMenuCategory
                 key={category.title}
@@ -110,13 +110,14 @@ const NewSidebar = ({ darkMode, toggleDarkMode }: NewSidebarProps) => {
           </div>
         </ScrollArea>
         
-        <Separator className="my-2" />
-        
-        <SidebarActions 
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-          onLogout={handleLogout}
-        />
+        <div className="px-4 pt-2 pb-4">
+          <Separator className="my-2" />
+          <SidebarActions 
+            darkMode={darkMode}
+            toggleDarkMode={toggleDarkMode}
+            onLogout={handleLogout}
+          />
+        </div>
       </div>
     </div>
   );

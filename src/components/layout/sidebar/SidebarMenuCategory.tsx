@@ -28,29 +28,33 @@ const SidebarMenuCategory = ({
   const isMainMenu = title === 'main';
 
   return (
-    <div className="mb-2">
+    <div className="mb-3">
       {!isMainMenu && (
         <Button
           variant="ghost"
-          className="w-full justify-between font-semibold"
+          className="w-full justify-between font-medium text-muted-foreground px-3 h-auto py-2"
           onClick={onToggle}
         >
           {title}
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </Button>
       )}
       
       {isExpanded && (
-        <div className={isMainMenu ? '' : 'pl-2 border-l border-gray-300 dark:border-gray-700 ml-2 mt-1'}>
+        <div className={isMainMenu ? '' : 'mt-1'}>
           {items.map((item) => (
             <Button
               key={item.href}
-              variant={isActive(item.href) ? "secondary" : "ghost"}
-              className="w-full justify-start mb-1"
+              variant="ghost"
+              className={`w-full justify-start mb-1 py-2.5 px-3 h-auto rounded-md ${
+                isActive(item.href) 
+                  ? "bg-muted font-medium text-foreground" 
+                  : "text-muted-foreground font-normal hover:bg-muted/50"
+              }`}
               onClick={() => navigate(item.href)}
             >
               {item.icon}
-              <span className="ml-2">{item.title}</span>
+              <span className="ml-3">{item.title}</span>
             </Button>
           ))}
         </div>
