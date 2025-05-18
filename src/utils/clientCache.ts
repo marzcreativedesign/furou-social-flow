@@ -227,4 +227,3 @@ export const clearCache = (): void => {
     console.error("Cache clear error:", error);
   }
 };
-
