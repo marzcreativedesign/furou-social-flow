@@ -4,6 +4,13 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+// Declare the appLoaded property on the Window interface
+declare global {
+  interface Window {
+    appLoaded?: boolean;
+  }
+}
+
 // Inicializa as preferências do usuário antes de renderizar
 const initUserPreferences = () => {
   try {
