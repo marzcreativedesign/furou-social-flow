@@ -30,10 +30,78 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <style>
+      #loading-fallback {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: 'Poppins', sans-serif;
+        color: #333;
+        display: none; /* Inicialmente oculto */
+      }
+      .error-message {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        color: #721c24;
+        max-width: 80%;
+        text-align: center;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #09f;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
+    <!-- Fallback para casos de erro -->
+    <div id="loading-fallback">
+      <div class="spinner"></div>
+      <h2>Carregando Furou Social Flow...</h2>
+      <div id="error-container" class="error-message" style="display: none;"></div>
+    </div>
+    
+    <script>
+      // Mostrar o fallback se o app não carregar em 3 segundos
+      setTimeout(function() {
+        if (!window.appLoaded) {
+          document.getElementById('loading-fallback').style.display = 'flex';
+        }
+      }, 3000);
+      
+      // Capturar erros globais
+      window.addEventListener('error', function(e) {
+        console.error('Erro capturado:', e.error);
+        document.getElementById('loading-fallback').style.display = 'flex';
+        var errorContainer = document.getElementById('error-container');
+        errorContainer.style.display = 'block';
+        errorContainer.textContent = 'Ocorreu um erro ao carregar o aplicativo. Por favor, tente novamente ou limpe o cache do navegador.';
+      });
+      
+      // Função para limpar o cache
+      window.clearAppCache = function() {
+        // Limpar localStorage e sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        // Recarregar a página
+        window.location.reload(true);
+      };
+    </script>
     <!-- IMPORTANTE: Script necessário para o editor Lovable -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
