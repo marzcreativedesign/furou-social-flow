@@ -89,7 +89,7 @@ const NewSidebar = ({ darkMode, toggleDarkMode }: NewSidebarProps) => {
   };
 
   return (
-    <div className="hidden lg:block lg:w-64 min-h-[calc(100vh-64px)] fixed bg-card/30 backdrop-blur-sm">
+    <div className="hidden lg:flex lg:w-64 min-h-[calc(100vh-64px)] fixed bg-card/30 backdrop-blur-sm">
       <div className="sticky top-20 flex flex-col h-[calc(100vh-100px)]">
         <div className="px-4 py-3">
           <SidebarUserProfile {...userProfile} />
