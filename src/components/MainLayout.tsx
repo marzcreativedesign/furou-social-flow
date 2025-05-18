@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
@@ -6,7 +5,7 @@ import Header from "./Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import NewSidebar from "./layout/NewSidebar";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface MainLayoutProps {
   children: React.ReactNode;
