@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import NewSidebar from "./layout/NewSidebar";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -67,39 +66,58 @@ const MainLayout = ({
     }
   };
 
+  // If user is not authenticated and this is a protected route, redirect to login
+  useEffect(() => {
+    const protectedRoutes = [
+      '/perfil',
+      '/eventos',
+      '/criar',
+      '/agenda',
+      '/calculadora',
+      '/explorar', 
+      '/notificacoes',
+      '/configuracoes',
+      '/acessibilidade'
+    ];
+    
+    if (!user && protectedRoutes.some(route => location.pathname.startsWith(route))) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
+
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen flex flex-col">
-        <Header 
-          title={title}
-          showBack={showBack}
-          onBack={onBack}
-          showSearch={showSearch}
-          onSearch={onSearch}
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-        >
-          {rightContent}
-        </Header>
+    <div className="min-h-screen flex flex-col">
+      <Header 
+        title={title}
+        showBack={showBack}
+        onBack={onBack}
+        showSearch={showSearch}
+        onSearch={onSearch}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      >
+        {rightContent}
+      </Header>
 
-        <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full relative">
-          <div className="flex w-full">
-            {isDesktop && (
-              <NewSidebar
-                darkMode={darkMode}
-                toggleDarkMode={toggleDarkMode}
-              />
-            )}
-            
-            <div className={`flex-1 ${isDesktop ? 'lg:ml-64' : ''}`}>
+      <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full relative">
+        <div className="flex w-full">
+          {isDesktop && (
+            <NewSidebar
+              darkMode={darkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
+          )}
+          
+          <div className={`flex-1 ${isDesktop ? 'lg:ml-64' : ''}`}>
+            <ErrorBoundary>
               {children}
-            </div>
+            </ErrorBoundary>
           </div>
-        </main>
+        </div>
+      </main>
 
-        {!isDesktop && <BottomNav />}
-      </div>
-    </ErrorBoundary>
+      {!isDesktop && <BottomNav />}
+    </div>
   );
 };
 
