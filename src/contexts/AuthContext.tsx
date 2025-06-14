@@ -142,12 +142,13 @@ const useAuthProvider = () => {
   };
 };
 
-// Create AuthProvider as a regular functional component
+// AuthProvider provides the context to children
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthProvider();
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };
 
+// Hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
 
