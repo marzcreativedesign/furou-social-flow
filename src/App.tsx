@@ -10,16 +10,26 @@ import { router } from "./routes";
 
 const queryClient = new QueryClient();
 
+// This wrapper ensures AuthProvider is used WITHIN the router context.
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <RouterProvider router={router} />
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <RouterProvider
+          router={router}
+          fallbackElement={
+            // Provide fallback while router is loading
+            <div className="flex items-center justify-center h-screen">
+              <span className="animate-spin h-8 w-8 border-4 border-muted border-t-transparent rounded-full" />
+            </div>
+          }
+        >
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+          </AuthProvider>
+        </RouterProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
