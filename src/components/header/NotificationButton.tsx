@@ -6,6 +6,10 @@ import { useState, useEffect } from "react";
 import { NotificationsService } from "@/services/notifications.service";
 
 const NotificationButton = () => {
+  // DEBUG LOG
+  console.log("NotificationButton mounted!");
+
+  // useState must only run inside valid React context!
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
@@ -41,3 +45,4 @@ const NotificationButton = () => {
 };
 
 export default NotificationButton;
+

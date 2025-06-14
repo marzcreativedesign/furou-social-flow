@@ -11,8 +11,13 @@ interface SidebarUserProfileProps {
 }
 
 const SidebarUserProfile = ({ name, email, avatarUrl, initials }: SidebarUserProfileProps) => {
+  // DEBUG LOG
+  console.log("SidebarUserProfile mounted!");
+  // UseNavigate hook depends on RouterProvider
   const navigate = useNavigate();
-  
+  if (!navigate) {
+    throw new Error("SidebarUserProfile: useNavigate() undefined. Are you using RouterProvider?");
+  }
   return (
     <div 
       onClick={() => navigate("/perfil")}
@@ -34,3 +39,4 @@ const SidebarUserProfile = ({ name, email, avatarUrl, initials }: SidebarUserPro
 };
 
 export default SidebarUserProfile;
+
