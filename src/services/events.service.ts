@@ -1,54 +1,162 @@
 
-import { EventService } from './event';
-
-// Este arquivo existe apenas para manter a compatibilidade com código existente
-// Utilize o novo EventService em novos desenvolvimentos
-export class EventsService {
-  static async getEvents(page?: number, pageSize?: number) {
-    if (page !== undefined && pageSize !== undefined) {
-      return EventService.getEventsPaginated(page, pageSize);
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: new Error("User not authenticated") };
-    
-    return EventService.getUserEvents(user.id);
-  }
-  
-  static async getPublicEvents(page?: number, pageSize?: number) {
-    return EventService.getPublicEvents(page || 1, pageSize || 10);
-  }
-  
-  static async getEventById(id: string) {
-    return EventService.getEventById(id);
-  }
-  
-  static async createEvent(eventData: any) {
-    return EventService.createEvent(eventData);
-  }
-  
-  static async updateEvent(id: string, eventData: any) {
-    return EventService.updateEvent(id, eventData);
-  }
-  
-  static async deleteEvent(id: string) {
-    return EventService.deleteEvent(id);
-  }
-  
-  static async joinEvent(eventId: string) {
-    return EventService.joinEvent(eventId);
-  }
-  
-  static async declineEvent(eventId: string) {
-    return EventService.declineEvent(eventId);
-  }
-  
-  static async getPendingInvites() {
-    return EventService.getPendingInvites();
-  }
-}
-
 import { supabase } from "@/integrations/supabase/client";
 
-// Re-exportamos EventService para facilitar a migração gradual
-export { EventService };
+export const EventsService = {
+  async getEvents() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: new Error("User not authenticated") };
+
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants(
+            status,
+            user_id,
+            profiles:user_id(*)
+          )
+        `)
+        .or(`creator_id.eq.${user.id},event_participants.user_id.eq.${user.id}`)
+        .order('date', { ascending: false });
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async getPublicEvents() {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants(
+            status,
+            user_id,
+            profiles:user_id(*)
+          )
+        `)
+        .eq('is_public', true)
+        .order('date', { ascending: false });
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async getEventById(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          profiles:creator_id(*),
+          event_participants(
+            status,
+            user_id,
+            profiles:user_id(*)
+          ),
+          comments(
+            *,
+            profiles:user_id(*)
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async createEvent(eventData: any) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: new Error("User not authenticated") };
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert({ ...eventData, creator_id: user.id })
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async updateEvent(id: string, eventData: any) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .update(eventData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async deleteEvent(id: string) {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id);
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  },
+
+  async joinEvent(eventId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: new Error("User not authenticated") };
+
+      const { data, error } = await supabase
+        .from('event_participants')
+        .upsert({
+          event_id: eventId,
+          user_id: user.id,
+          status: 'confirmed'
+        })
+        .select();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async declineEvent(eventId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { data: null, error: new Error("User not authenticated") };
+
+      const { data, error } = await supabase
+        .from('event_participants')
+        .upsert({
+          event_id: eventId,
+          user_id: user.id,
+          status: 'declined'
+        })
+        .select();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+};

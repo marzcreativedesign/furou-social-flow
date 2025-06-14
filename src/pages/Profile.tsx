@@ -1,7 +1,7 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/MainLayout";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -9,6 +9,7 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileInterests } from "@/components/profile/ProfileInterests";
 import { ProfileUpcomingEvents } from "@/components/profile/ProfileUpcomingEvents";
+import { ProfileEditor } from "@/components/profile/ProfileEditor";
 import { useToast } from "@/hooks/use-toast";
 import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -18,12 +19,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect if no user
     if (!user) {
       navigate('/auth');
       return;
@@ -32,7 +31,6 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        setError(null);
         
         // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
@@ -41,21 +39,24 @@ const Profile = () => {
           .eq('id', user.id)
           .single();
           
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
+        if (profileError && profileError.code !== 'PGRST116') {
           throw profileError;
         }
         
         if (!profileData) {
-          console.log('No profile found, creating one');
-          // If no profile exists, create an empty one
-          setProfile({
-            id: user.id,
-            full_name: user.user_metadata?.full_name || "Usuário",
-            avatar_url: null,
-            bio: null,
-            email: user.email
-          });
+          // Create profile if it doesn't exist
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              full_name: user.user_metadata?.full_name || "Usuário",
+              email: user.email
+            })
+            .select()
+            .single();
+            
+          if (createError) throw createError;
+          setProfile(newProfile);
         } else {
           setProfile(profileData);
         }
@@ -75,17 +76,15 @@ const Profile = () => {
           
         if (eventsError) {
           console.error('Events fetch error:', eventsError);
-          throw eventsError;
+        } else {
+          setUpcomingEvents(eventsData || []);
         }
         
-        setUpcomingEvents(eventsData || []);
-        
       } catch (error: any) {
-        console.error('Error fetching user profile:', error.message);
-        setError(error.message);
+        console.error('Error fetching profile:', error);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os dados do perfil",
+          description: "Não foi possível carregar o perfil",
           variant: "destructive"
         });
       } finally {
@@ -94,14 +93,14 @@ const Profile = () => {
     };
     
     fetchUserData();
-  }, [user, toast, navigate]);
+  }, [user, navigate, toast]);
   
   const handleSignOut = async () => {
     try {
       await signOut();
       navigate('/auth');
     } catch (error: any) {
-      console.error('Error signing out:', error.message);
+      console.error('Error signing out:', error);
       toast({
         title: "Erro",
         description: "Não foi possível fazer logout",
@@ -109,27 +108,14 @@ const Profile = () => {
       });
     }
   };
+
+  const handleProfileUpdated = (updatedProfile: any) => {
+    setProfile(prev => ({ ...prev, ...updatedProfile }));
+  };
   
   if (loading) return <ProfileSkeleton />;
   
-  if (error) {
-    return (
-      <MainLayout title="Erro">
-        <div className="p-4 flex flex-col items-center justify-center h-[60vh]">
-          <h2 className="text-xl font-bold mb-2">Ocorreu um erro</h2>
-          <p className="text-muted-foreground mb-4">Não foi possível carregar seus dados de perfil</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary text-white rounded-md"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      </MainLayout>
-    );
-  }
-  
-  if (!user) {
+  if (!user || !profile) {
     navigate('/auth');
     return null;
   }
@@ -139,20 +125,27 @@ const Profile = () => {
       <MainLayout title="Seu Perfil">
         <div className="p-4 mb-16">
           <ProfileHeader 
-            name={profile?.full_name || "Usuário"}
-            bio={profile?.bio || ""}
-            avatarUrl={profile?.avatar_url}
+            name={profile.full_name || "Usuário"}
+            bio={profile.bio || ""}
+            avatarUrl={profile.avatar_url}
           />
           
           <ProfileStats 
             eventsCount={upcomingEvents.length} 
-            reliability={profile?.reliability_score || 0}
+            reliability={profile.reliability_score || 0}
           />
           
           <ProfileActions onSignOut={handleSignOut} />
           
+          <div className="mb-6">
+            <ProfileEditor 
+              profile={profile}
+              onProfileUpdated={handleProfileUpdated}
+            />
+          </div>
+          
           <ProfileInterests 
-            interests={profile?.interests || []}
+            interests={profile.interests || []}
           />
           
           <ProfileUpcomingEvents 

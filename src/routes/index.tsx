@@ -5,8 +5,6 @@ import Login from "@/pages/Login";
 import EventsPage from "@/pages/EventsPage";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminRoute from "@/components/AdminRoute";
 import Profile from "@/pages/Profile";
 import UserProfile from "@/pages/UserProfile";
 import AdminPage from "@/pages/AdminPage";
@@ -17,6 +15,8 @@ import AgendaPage from "@/pages/AgendaPage";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
 import AccessibilityPage from "@/pages/AccessibilityPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 
 export const router = createBrowserRouter([
   {
