@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 
-type FilterType = 'all' | 'public' | 'private' | 'confirmed' | 'missed';
+// The filter types for event listing
+export type FilterType = 'all' | 'public' | 'private' | 'confirmed' | 'missed';
 
 interface EventTypeFiltersProps {
   activeFilter: FilterType;
@@ -39,3 +40,4 @@ const EventTypeFilters = ({ activeFilter, onFilterChange }: EventTypeFiltersProp
 };
 
 export default EventTypeFilters;
+
