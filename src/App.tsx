@@ -1,7 +1,7 @@
 
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner"; // Use as Toaster, not as Sonner
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -11,6 +11,9 @@ import { router } from "./routes";
 const queryClient = new QueryClient();
 
 const App: React.FC = () => {
+  // Help debug render order
+  console.log("App rendering, About to render Toaster and Providers");
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -23,7 +26,7 @@ const App: React.FC = () => {
               </div>
             }
           />
-          <Sonner />
+          <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
@@ -31,3 +34,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
