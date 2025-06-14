@@ -1,8 +1,8 @@
 
-// Import from Sonner directly
+// Import Sonner's toast
 import { toast as sonnerToast } from "sonner";
 
-// Define our custom Toast type that works with both implementations
+// Define our custom Toast type (used for typing, but note: Sonner doesn't require it)
 export interface Toast {
   id?: string;
   title?: string;
@@ -11,7 +11,7 @@ export interface Toast {
   action?: React.ReactNode;
 }
 
-// Create a wrapper function that converts our Toast type to Sonner's format
+// Just a wrapper for Sonner
 export function toast(props: Toast) {
   return sonnerToast(props.title || "", {
     description: props.description,
@@ -20,13 +20,13 @@ export function toast(props: Toast) {
   });
 }
 
-// Export a useToast hook
+// No-op useToast for compatibility
 export const useToast = () => {
-  // This is a simple implementation to make it compatible with the Radix UI pattern
+  // No-op: Sonner manages all internal state.
   return {
     toast,
-    // For compatibility with Radix UI toast
     toasts: [] as Toast[],
-    dismiss: (id: string) => {},
+    dismiss: (_id: string) => {},
   };
 };
+
