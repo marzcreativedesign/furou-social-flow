@@ -1,4 +1,3 @@
-
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,18 +13,16 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <RouterProvider
-            router={router}
-            fallbackElement={
-              <div className="flex items-center justify-center h-screen">
-                <span className="animate-spin h-8 w-8 border-4 border-muted border-t-transparent rounded-full" />
-              </div>
-            }
-          />
-          <Toaster />
-          <Sonner />
-        </AuthProvider>
+        <RouterProvider
+          router={router}
+          fallbackElement={
+            <div className="flex items-center justify-center h-screen">
+              <span className="animate-spin h-8 w-8 border-4 border-muted border-t-transparent rounded-full" />
+            </div>
+          }
+        />
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );
