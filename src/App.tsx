@@ -10,28 +10,28 @@ import { router } from "./routes";
 
 const queryClient = new QueryClient();
 
-// This wrapper ensures AuthProvider is used WITHIN the router context.
+// AuthProvider wraps RouterProvider to allow useNavigate in AuthContext
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <RouterProvider
-          router={router}
-          fallbackElement={
-            // Provide fallback while router is loading
-            <div className="flex items-center justify-center h-screen">
-              <span className="animate-spin h-8 w-8 border-4 border-muted border-t-transparent rounded-full" />
-            </div>
-          }
-        >
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-          </AuthProvider>
-        </RouterProvider>
+        <AuthProvider>
+          <RouterProvider
+            router={router}
+            fallbackElement={
+              // Provide fallback while router is loading
+              <div className="flex items-center justify-center h-screen">
+                <span className="animate-spin h-8 w-8 border-4 border-muted border-t-transparent rounded-full" />
+              </div>
+            }
+          />
+          <Toaster />
+          <Sonner />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
 };
 
 export default App;
+
