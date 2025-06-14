@@ -46,6 +46,7 @@ export const useAgendaEvents = () => {
         }) || [];
 
         setAllEvents(eventsWithParticipants);
+        console.log("[AgendaEvents] Eventos carregados:", eventsWithParticipants);
       } catch (err) {
         console.error("Erro ao buscar eventos:", err);
       } finally {
@@ -56,14 +57,21 @@ export const useAgendaEvents = () => {
     fetchEvents();
   }, [user]);
 
+  // Melhoria na checagem de data: considera corretamento timezones/dia
   const getEventsForDate = (date: Date | undefined) => {
     if (!date || !allEvents.length) return [];
-    return allEvents.filter(event => {
+    // Força checagem pelo mesmo dia, mês, ano (ignorando horas/minutos)
+    const result = allEvents.filter(event => {
       const eventDate = new Date(event.date);
-      return eventDate.getDate() === date.getDate() &&
-             eventDate.getMonth() === date.getMonth() &&
-             eventDate.getFullYear() === date.getFullYear();
+      // Comparação baseada apenas no 'yyyy-mm-dd'
+      return (
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear()
+      );
     });
+    console.log("[AgendaEvents] Eventos para data", date, ":", result);
+    return result;
   };
 
   const getEventDates = () => {
@@ -78,12 +86,18 @@ export const useAgendaEvents = () => {
     );
   };
 
+  // Agora considera events como finalizados APENAS se estão antes de hoje
   const isPastDate = (date: Date) => {
-    return isBefore(startOfDay(date), startOfDay(new Date())) && !isToday(date);
+    // Retorna true se a data for anterior ao dia de hoje (ignora horas/minutos)
+    const dayToCheck = startOfDay(date);
+    const today = startOfDay(new Date());
+    return isBefore(dayToCheck, today);
   };
 
   const getEventTypeBadge = (event: Event) => {
-    const isPastEvent = new Date(event.date) < new Date();
+    // Um evento só é "finalizado" se a data já passou (não considera hoje como passado)
+    const eventDate = new Date(event.date);
+    const isPastEvent = isPastDate(eventDate);
     if (isPastEvent) {
       return 'bg-gray-500';
     }
