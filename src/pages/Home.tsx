@@ -1,11 +1,12 @@
+
 import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import EventsList from '@/components/home/EventsList';
-import EventTypeFilters from '@/components/home/EventTypeFilters';
+import EventTypeFilters, { FilterType } from '@/components/home/EventTypeFilters';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // Just a placeholder, since old hooks were deleted
   // The real HomePage is in HomePage.tsx

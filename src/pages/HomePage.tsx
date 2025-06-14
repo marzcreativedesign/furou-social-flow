@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import MainLayout from "@/components/MainLayout";
 import EventCard from "@/components/EventCard";
-import EventFilters from "@/components/EventFilters";
+import EventFilters, { EventFilters as EventFiltersType } from "@/components/EventFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,21 +13,34 @@ const HomePage = () => {
   const { user } = useAuth();
   const { events, publicEvents, loading } = useEvents();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [filters, setFilters] = useState<EventFiltersType>({
+    type: 'all',
+    date: 'all',
+  });
 
   const allEvents = [...(events || []), ...(publicEvents || [])];
 
   const filteredEvents = allEvents.filter(event => {
-    if (activeFilter === 'public' && !event.is_public) return false;
-    if (activeFilter === 'private' && event.is_public) return false;
-    if (activeFilter === 'confirmed') {
+    // Type-based filtering
+    if (filters.type === 'public' && !event.is_public) return false;
+    if (filters.type === 'private' && event.is_public) return false;
+    if (filters.type === 'confirmed') {
       const userParticipation = event.event_participants?.find(p => p.user_id === user?.id);
       if (!userParticipation || userParticipation.status !== 'confirmed') return false;
     }
+    if (filters.type === 'missed') {
+      // You may want to implement this as needed
+      return false;
+    }
+    // Date-based filtering could go here -- implement as needed
+
+    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return event.title.toLowerCase().includes(query) ||
-             (event.location && event.location.toLowerCase().includes(query));
+      if (!event.title.toLowerCase().includes(query) &&
+          !(event.location && event.location.toLowerCase().includes(query))) {
+        return false;
+      }
     }
     return true;
   });
@@ -69,8 +81,7 @@ const HomePage = () => {
           </Link>
         </div>
         <EventFilters 
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
+          onFilterChange={setFilters}
         />
         {loading ? (
           <div className="grid gap-4 mt-6">
@@ -101,7 +112,6 @@ const HomePage = () => {
                     p.user_id === user?.id && p.status === "confirmed"
                   )}
                   type={event.is_public ? "public" : "private"}
-                  showParticipationButton
                 />
               ))
             )}

@@ -7,13 +7,14 @@ import EventsGrid from "@/components/events/EventsGrid";
 import EventLocationBanner from "@/components/events/EventLocationBanner";
 import { useState } from "react";
 import { useEvents } from "@/hooks/useEvents";
+import type { FilterType } from "@/components/home/EventTypeFilters";
 
 const EventsPage = () => {
   const navigate = useNavigate();
   const { events, publicEvents, loading } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   const handleBackToHome = () => navigate('/');
@@ -87,3 +88,4 @@ const EventsPage = () => {
 };
 
 export default EventsPage;
+
