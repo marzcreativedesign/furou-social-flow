@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Event, EventParticipant } from "@/types/event";
 import { isBefore, isToday, startOfDay } from "date-fns";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useAgendaEvents = () => {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
@@ -19,7 +19,6 @@ export const useAgendaEvents = () => {
       
       setLoading(true);
       try {
-        // Buscar todos os eventos que o usuário criou ou participa
         const { data, error } = await supabase
           .from("events")
           .select(`
@@ -34,14 +33,12 @@ export const useAgendaEvents = () => {
           return;
         }
 
-        // Ensure data is properly typed with the correct status field
         const eventsWithParticipants = data?.map(event => {
           const eventParticipants = event.event_participants?.map(participant => ({
             ...participant,
-            id: String(participant.id), // Convert to string as expected by type
-            status: participant.status || "confirmed" // Use status from DB or default to confirmed
+            id: String(participant.id),
+            status: participant.status || "confirmed"
           })) as EventParticipant[];
-          
           return {
             ...event,
             event_participants: eventParticipants
@@ -59,10 +56,8 @@ export const useAgendaEvents = () => {
     fetchEvents();
   }, [user]);
 
-  // Get events for a specific date
   const getEventsForDate = (date: Date | undefined) => {
     if (!date || !allEvents.length) return [];
-    
     return allEvents.filter(event => {
       const eventDate = new Date(event.date);
       return eventDate.getDate() === date.getDate() &&
@@ -71,12 +66,10 @@ export const useAgendaEvents = () => {
     });
   };
 
-  // Get dates that have events
   const getEventDates = () => {
     return allEvents.map(event => new Date(event.date));
   };
 
-  // Check if a date has events
   const dateHasEvent = (day: Date) => {
     return getEventDates().some(eventDate => 
       eventDate.getDate() === day.getDate() && 
@@ -85,19 +78,15 @@ export const useAgendaEvents = () => {
     );
   };
 
-  // Function to check if a date is in the past
   const isPastDate = (date: Date) => {
     return isBefore(startOfDay(date), startOfDay(new Date())) && !isToday(date);
   };
 
-  // Get badge color based on event type
   const getEventTypeBadge = (event: Event) => {
     const isPastEvent = new Date(event.date) < new Date();
-    
     if (isPastEvent) {
       return 'bg-gray-500';
     }
-    
     if (event.is_public) {
       return 'bg-blue-500';
     } else {

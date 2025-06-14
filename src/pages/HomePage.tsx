@@ -17,7 +17,7 @@ const HomePage = () => {
   const [activeFilter, setActiveFilter] = useState("all");
 
   const allEvents = [...(events || []), ...(publicEvents || [])];
-  
+
   const filteredEvents = allEvents.filter(event => {
     if (activeFilter === 'public' && !event.is_public) return false;
     if (activeFilter === 'private' && event.is_public) return false;
@@ -25,13 +25,11 @@ const HomePage = () => {
       const userParticipation = event.event_participants?.find(p => p.user_id === user?.id);
       if (!userParticipation || userParticipation.status !== 'confirmed') return false;
     }
-    
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      return event.title.toLowerCase().includes(query) || 
+      return event.title.toLowerCase().includes(query) ||
              (event.location && event.location.toLowerCase().includes(query));
     }
-    
     return true;
   });
 
@@ -70,12 +68,10 @@ const HomePage = () => {
             </Button>
           </Link>
         </div>
-
         <EventFilters 
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />
-
         {loading ? (
           <div className="grid gap-4 mt-6">
             {[...Array(3)].map((_, i) => (
@@ -92,10 +88,19 @@ const HomePage = () => {
                 </Link>
               </div>
             ) : (
-              filteredEvents.map((event) => (
+              filteredEvents.map((event: any) => (
                 <EventCard
                   key={event.id}
-                  event={event}
+                  id={event.id}
+                  title={event.title}
+                  date={event.date}
+                  location={event.location}
+                  imageUrl={event.image_url || ""}
+                  attendees={event.event_participants ? event.event_participants.length : 0}
+                  confirmed={event.event_participants?.some((p: any) =>
+                    p.user_id === user?.id && p.status === "confirmed"
+                  )}
+                  type={event.is_public ? "public" : "private"}
                   showParticipationButton
                 />
               ))

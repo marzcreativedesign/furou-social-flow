@@ -1,21 +1,14 @@
-
 import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import EventsList from '@/components/home/EventsList';
-import { useHomeData } from '@/hooks/home/useHomeData';
 import EventTypeFilters from '@/components/home/EventTypeFilters';
-import { FilterType } from '@/hooks/home/types';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  const { 
-    loading, 
-    filteredEvents, 
-    publicEvents,
-  } = useHomeData(searchQuery, activeFilter);
-
+  // Just a placeholder, since old hooks were deleted
+  // The real HomePage is in HomePage.tsx
   return (
     <MainLayout 
       title="Home" 
@@ -25,23 +18,12 @@ const Home = () => {
       <div className="px-4 py-4">
         <EventTypeFilters
           activeFilter={activeFilter}
-          onFilterChange={(filter) => setActiveFilter(filter as FilterType)}
+          onFilterChange={setActiveFilter}
         />
-        
         <EventsList 
-          title="Seus Eventos" 
-          events={filteredEvents}
-          loading={loading}
-          showViewAll
-          viewAllLink="/eventos"
-        />
-
-        <EventsList 
-          title="Eventos Públicos" 
-          events={publicEvents}
-          loading={loading}
-          showViewAll
-          viewAllLink="/eventos"
+          title="Eventos"
+          events={[]} // Substitua pelo hook correto/real
+          loading={false}
         />
       </div>
     </MainLayout>
