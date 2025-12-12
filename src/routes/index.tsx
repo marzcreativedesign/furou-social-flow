@@ -1,12 +1,9 @@
 
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import HomePage from "@/pages/HomePage";
-import Login from "@/pages/Login";
 import EventsPage from "@/pages/EventsPage";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminRoute from "@/components/AdminRoute";
 import Profile from "@/pages/Profile";
 import UserProfile from "@/pages/UserProfile";
 import AdminPage from "@/pages/AdminPage";
@@ -25,103 +22,59 @@ export const router = createBrowserRouter([
   },
   {
     path: "/auth",
-    element: <Login />,
+    element: <Navigate to="/eventos" replace />,
+  },
+  {
+    path: "/login",
+    element: <Navigate to="/eventos" replace />,
   },
   {
     path: "/eventos",
-    element: (
-      <ProtectedRoute>
-        <EventsPage />
-      </ProtectedRoute>
-    ),
+    element: <EventsPage />,
   },
   {
     path: "/eventos/:id",
-    element: (
-      <ProtectedRoute>
-        <EventDetail />
-      </ProtectedRoute>
-    ),
+    element: <EventDetail />,
   },
   {
     path: "/criar",
-    element: (
-      <ProtectedRoute>
-        <CreateEvent />
-      </ProtectedRoute>
-    ),
+    element: <CreateEvent />,
   },
   {
     path: "/perfil",
-    element: (
-      <ProtectedRoute>
-        <Profile />
-      </ProtectedRoute>
-    ),
+    element: <Profile />,
   },
   {
     path: "/usuarios/:id",
-    element: (
-      <ProtectedRoute>
-        <UserProfile />
-      </ProtectedRoute>
-    ),
+    element: <UserProfile />,
   },
   {
     path: "/admin",
-    element: (
-      <AdminRoute>
-        <AdminPage />
-      </AdminRoute>
-    ),
+    element: <AdminPage />,
   },
   {
     path: "/calculadora",
-    element: (
-      <ProtectedRoute>
-        <CostCalculatorPage />
-      </ProtectedRoute>
-    ),
+    element: <CostCalculatorPage />,
   },
   {
     path: "/explorar",
-    element: (
-      <ProtectedRoute>
-        <ExplorePage />
-      </ProtectedRoute>
-    ),
+    element: <ExplorePage />,
   },
   {
     path: "/agenda",
-    element: (
-      <ProtectedRoute>
-        <AgendaPage />
-      </ProtectedRoute>
-    ),
+    element: <AgendaPage />,
   },
   {
     path: "/notificacoes",
-    element: (
-      <ProtectedRoute>
-        <Notifications />
-      </ProtectedRoute>
-    ),
+    element: <Notifications />,
   },
   {
     path: "/configuracoes",
-    element: (
-      <ProtectedRoute>
-        <Settings />
-      </ProtectedRoute>
-    ),
+    element: <Settings />,
   },
   {
     path: "/acessibilidade",
-    element: (
-      <ProtectedRoute>
-        <AccessibilityPage />
-      </ProtectedRoute>
-    ),
+    element: <AccessibilityPage />,
   },
   {
     path: "*",

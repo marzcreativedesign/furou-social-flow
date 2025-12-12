@@ -1,9 +1,7 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { mockProfile } from "@/data/mockData";
 
 interface UserProfile {
   id: string;
@@ -21,74 +19,28 @@ interface UserStats {
 }
 
 export const useProfile = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [userStats, setUserStats] = useState<UserStats>({
-    eventsCreated: 0,
-    eventsAttended: 0,
-    eventsMissed: 0,
+  const { user } = useAuth();
+  
+  const [profile] = useState<UserProfile | null>({
+    id: mockProfile.id,
+    full_name: mockProfile.full_name,
+    avatar_url: mockProfile.avatar_url,
+    bio: mockProfile.bio,
+    email: user?.email || "usuario@furou.app"
+  });
+
+  const [userStats] = useState<UserStats>({
+    eventsCreated: 3,
+    eventsAttended: 8,
+    eventsMissed: 2,
     groups: 0
   });
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
+  const [isLoading] = useState(false);
 
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (profileData) {
-          setProfile({
-            id: profileData.id,
-            full_name: profileData.full_name,
-            avatar_url: profileData.avatar_url,
-            bio: profileData.bio,
-            email: user.email || ''
-          });
-        }
-
-        // Fetch events created count
-        const { data: eventsCreated } = await supabase
-          .from('events')
-          .select('id')
-          .eq('creator_id', user.id);
-
-        // Fetch event confirmations
-        const { data: confirmations } = await supabase
-          .from('event_confirmations')
-          .select('status')
-          .eq('user_id', user.id);
-
-        setUserStats({
-          eventsCreated: eventsCreated?.length || 0,
-          eventsAttended: confirmations?.filter(c => c.status === 'confirmed').length || 0,
-          eventsMissed: confirmations?.filter(c => c.status === 'declined').length || 0,
-          groups: 0 // Groups feature is removed, so we set this to 0
-        });
-
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os dados do perfil",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [user, toast]);
+  const setProfile = () => {
+    // Mock - does nothing
+  };
 
   return {
     profile,
