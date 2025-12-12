@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from "react";
-import { getEventById, mockComments } from "@/data/mockData";
+import { getEventById, mockComments, getEventGallery } from "@/data/mockData";
 import type { EventData } from "@/types/event";
 import { parseISO, format } from "date-fns";
 
@@ -12,11 +12,14 @@ export const useEventDetail = (id: string | undefined) => {
     const foundEvent = getEventById(id);
     if (!foundEvent) return null;
 
-    // Add comments to the event
+    // Add comments and gallery to the event
     const eventComments = mockComments.filter(c => c.event_id === id);
+    const eventGallery = getEventGallery(id);
+    
     return {
       ...foundEvent,
-      comments: eventComments
+      comments: eventComments,
+      gallery: eventGallery
     } as unknown as EventData;
   }, [id]);
 
