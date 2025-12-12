@@ -1,7 +1,6 @@
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import HomePage from "@/pages/HomePage";
-import Login from "@/pages/Login";
 import EventsPage from "@/pages/EventsPage";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
@@ -15,8 +14,6 @@ import AgendaPage from "@/pages/AgendaPage";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
 import AccessibilityPage from "@/pages/AccessibilityPage";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminRoute from "@/components/AdminRoute";
 
 const AuthContextLayout = () => (
   <AuthProvider>
@@ -26,62 +23,23 @@ const AuthContextLayout = () => (
 
 export const router = createBrowserRouter([
   {
-    element: <AuthContextLayout />, // This provides Auth to all routes below!
+    element: <AuthContextLayout />,
     children: [
       { path: "/", element: <HomePage /> },
-      { path: "/auth", element: <Login /> },
-      {
-        path: "/eventos",
-        element: <ProtectedRoute><EventsPage /></ProtectedRoute>
-      },
-      {
-        path: "/eventos/:id",
-        element: <ProtectedRoute><EventDetail /></ProtectedRoute>
-      },
-      {
-        path: "/criar",
-        element: <ProtectedRoute><CreateEvent /></ProtectedRoute>
-      },
-      {
-        path: "/perfil",
-        element: <ProtectedRoute><Profile /></ProtectedRoute>
-      },
-      {
-        path: "/usuarios/:id",
-        element: <ProtectedRoute><UserProfile /></ProtectedRoute>
-      },
-      {
-        path: "/admin",
-        element: <AdminRoute><AdminPage /></AdminRoute>
-      },
-      {
-        path: "/calculadora",
-        element: <ProtectedRoute><CostCalculatorPage /></ProtectedRoute>
-      },
-      {
-        path: "/explorar",
-        element: <ProtectedRoute><ExplorePage /></ProtectedRoute>
-      },
-      {
-        path: "/agenda",
-        element: <ProtectedRoute><AgendaPage /></ProtectedRoute>
-      },
-      {
-        path: "/notificacoes",
-        element: <ProtectedRoute><Notifications /></ProtectedRoute>
-      },
-      {
-        path: "/configuracoes",
-        element: <ProtectedRoute><Settings /></ProtectedRoute>
-      },
-      {
-        path: "/acessibilidade",
-        element: <ProtectedRoute><AccessibilityPage /></ProtectedRoute>
-      },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
+      { path: "/auth", element: <Navigate to="/" replace /> },
+      { path: "/eventos", element: <EventsPage /> },
+      { path: "/eventos/:id", element: <EventDetail /> },
+      { path: "/criar", element: <CreateEvent /> },
+      { path: "/perfil", element: <Profile /> },
+      { path: "/usuarios/:id", element: <UserProfile /> },
+      { path: "/admin", element: <AdminPage /> },
+      { path: "/calculadora", element: <CostCalculatorPage /> },
+      { path: "/explorar", element: <ExplorePage /> },
+      { path: "/agenda", element: <AgendaPage /> },
+      { path: "/notificacoes", element: <Notifications /> },
+      { path: "/configuracoes", element: <Settings /> },
+      { path: "/acessibilidade", element: <AccessibilityPage /> },
+      { path: "*", element: <NotFound /> },
     ]
   }
 ]);
