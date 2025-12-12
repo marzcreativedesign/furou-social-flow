@@ -5,7 +5,7 @@ import MainLayout from '../components/MainLayout';
 import ExploreSearchBar from '@/components/explore/ExploreSearchBar';
 import ExploreTabs from '@/components/explore/ExploreTabs';
 import ExploreFilters from '@/components/explore/ExploreFilters';
-import GroupsComingSoon from '@/components/explore/GroupsComingSoon';
+import GroupsList from '@/components/explore/GroupsList';
 import ExploreHeader from '@/components/explore/ExploreHeader';
 import { useExploreEvents } from '@/hooks/useExploreEvents';
 import EventsGrid from '@/components/events/EventsGrid';
@@ -56,7 +56,7 @@ const ExplorePage = () => {
             />
           </>
         ) : (
-          <GroupsComingSoon />
+          <GroupsList searchQuery={searchQuery} />
         )}
       </div>
     </MainLayout>
