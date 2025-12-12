@@ -1,81 +1,61 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { EventsService } from "@/services/events.service";
+import { useState, useMemo } from "react";
+import { getEventById, mockComments } from "@/data/mockData";
 import type { EventData } from "@/types/event";
 import { parseISO, format } from "date-fns";
 
 export const useEventDetail = (id: string | undefined) => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [event, setEvent] = useState<EventData | null>(null);
-  const [editEventData, setEditEventData] = useState({
-    title: "",
-    description: "",
-    location: "",
-    address: "",
-    date: "",
-    startTime: "",
-    endTime: "",
-    type: "public" as "public" | "private",
-    includeEstimatedBudget: false,
-    estimatedBudget: "",
-  });
+  const [loading] = useState(false);
 
-  useEffect(() => {
-    const fetchEventData = async () => {
-      if (!id) return;
-      
-      setLoading(true);
-      try {
-        const { data, error } = await EventsService.getEventById(id);
-        
-        if (error) {
-          console.error("Error fetching event:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar os dados do evento",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data) {
-          setEvent(data as unknown as EventData);
-          
-          // Parse date for edit form
-          const eventDate = parseISO(data.date);
-          const formattedDate = format(eventDate, 'yyyy-MM-dd');
-          const startTime = format(eventDate, 'HH:mm');
-          const endTime = format(new Date(eventDate.getTime() + 3 * 60 * 60 * 1000), 'HH:mm');
-          
-          setEditEventData({
-            title: data.title,
-            description: data.description || "",
-            location: data.location || "",
-            address: data.address || "",
-            date: formattedDate,
-            startTime: startTime,
-            endTime: endTime,
-            type: data.is_public ? "public" : "private",
-            includeEstimatedBudget: !!data.estimated_budget,
-            estimatedBudget: data.estimated_budget ? data.estimated_budget.toString() : "",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching event:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os dados do evento",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
+  const event = useMemo(() => {
+    if (!id) return null;
+    const foundEvent = getEventById(id);
+    if (!foundEvent) return null;
+
+    // Add comments to the event
+    const eventComments = mockComments.filter(c => c.event_id === id);
+    return {
+      ...foundEvent,
+      comments: eventComments
+    } as unknown as EventData;
+  }, [id]);
+
+  const initialEditEventData = useMemo(() => {
+    if (!event) {
+      return {
+        title: "",
+        description: "",
+        location: "",
+        address: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+        type: "public" as "public" | "private",
+        includeEstimatedBudget: false,
+        estimatedBudget: "",
+      };
+    }
+
+    const eventDate = parseISO(event.date);
+    const formattedDate = format(eventDate, 'yyyy-MM-dd');
+    const startTime = format(eventDate, 'HH:mm');
+    const endTime = format(new Date(eventDate.getTime() + 3 * 60 * 60 * 1000), 'HH:mm');
+
+    return {
+      title: event.title,
+      description: event.description || "",
+      location: event.location || "",
+      address: event.address || "",
+      date: formattedDate,
+      startTime: startTime,
+      endTime: endTime,
+      type: event.is_public ? "public" as const : "private" as const,
+      includeEstimatedBudget: !!event.estimated_budget,
+      estimatedBudget: event.estimated_budget ? event.estimated_budget.toString() : "",
     };
-    
-    fetchEventData();
-  }, [id, toast]);
+  }, [event]);
+
+  const [editEventData, setEditEventData] = useState(initialEditEventData);
 
   return {
     loading,

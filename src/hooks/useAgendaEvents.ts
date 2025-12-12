@@ -1,62 +1,22 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useMemo } from "react";
 import { Event, EventParticipant } from "@/types/event";
 import { isBefore, isToday, startOfDay } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { mockEvents } from "@/data/mockData";
 
 export const useAgendaEvents = () => {
-  const [allEvents, setAllEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const [loading] = useState(false);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
-      try {
-        // Buscar todos os eventos que o usuário criou ou participa
-        const { data, error } = await supabase
-          .from("events")
-          .select(`
-            *,
-            event_participants(*)
-          `)
-          .or(`creator_id.eq.${user.id},event_participants.user_id.eq.${user.id}`)
-          .order('date', { ascending: true });
-
-        if (error) {
-          console.error("Erro ao buscar eventos:", error);
-          return;
-        }
-
-        // Ensure data is properly typed with the correct status field
-        const eventsWithParticipants = data?.map(event => {
-          const eventParticipants = event.event_participants?.map(participant => ({
-            ...participant,
-            id: String(participant.id), // Convert to string as expected by type
-            status: participant.status || "confirmed" // Use status from DB or default to confirmed
-          })) as EventParticipant[];
-          
-          return {
-            ...event,
-            event_participants: eventParticipants
-          } as Event;
-        }) || [];
-
-        setAllEvents(eventsWithParticipants);
-      } catch (err) {
-        console.error("Erro ao buscar eventos:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
+  // Use mock data and filter for user's events
+  const allEvents = useMemo(() => {
+    if (!user) return [];
+    
+    return mockEvents.filter(event => 
+      event.creator_id === user.id || 
+      event.event_participants?.some(p => p.user_id === user.id)
+    ) as unknown as Event[];
   }, [user]);
 
   // Get events for a specific date
