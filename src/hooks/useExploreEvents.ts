@@ -1,8 +1,6 @@
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Event } from '@/types/event';
-import { toast } from '@/hooks/use-toast';
+import { mockEvents, getPublicEvents } from '@/data/mockData';
 
 export const useExploreEvents = (
   initialSearchQuery = '',
@@ -18,13 +16,6 @@ export const useExploreEvents = (
   const [activeTab, setActiveTab] = useState<string>("events");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-
-  // Simple local cache using Map
-  const simpleCache = useMemo(() => new Map<string, Event[]>(), []);
-
-  const cacheKey = useMemo(() => {
-    return `explore_${searchQuery}_${location}_${date}`;
-  }, [searchQuery, location, date]);
 
   const getDateRange = useCallback((dateString: string) => {
     if (!dateString) return { start: null, end: null };
@@ -61,8 +52,8 @@ export const useExploreEvents = (
         return { start: null, end: null };
     }
     return { 
-      start: startDate.toISOString(), 
-      end: endDate ? endDate.toISOString() : null 
+      start: startDate, 
+      end: endDate 
     };
   }, []);
   
@@ -70,42 +61,51 @@ export const useExploreEvents = (
     setLoading(true);
     setError(null);
 
-    if (simpleCache.has(cacheKey)) {
-      setEvents(simpleCache.get(cacheKey) || []);
-      setLoading(false);
-      return;
-    }
     try {
-      let query = supabase.from('events').select('*');
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      let filteredEvents = getPublicEvents();
+      
+      // Apply search filter
       if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%, description.ilike.%${searchQuery}%`);
+        const query = searchQuery.toLowerCase();
+        filteredEvents = filteredEvents.filter(event =>
+          event.title.toLowerCase().includes(query) ||
+          event.description.toLowerCase().includes(query) ||
+          event.location.toLowerCase().includes(query)
+        );
       }
+      
+      // Apply location filter
       if (location && location !== 'todos') {
-        query = query.eq('location', location);
+        filteredEvents = filteredEvents.filter(event =>
+          event.location.toLowerCase().includes(location.toLowerCase())
+        );
       }
+      
+      // Apply date filter
       if (date) {
         const { start, end } = getDateRange(date);
         if (start && end) {
-          query = query.gte('date', start).lte('date', end);
+          filteredEvents = filteredEvents.filter(event => {
+            const eventDate = new Date(event.date);
+            return eventDate >= start && eventDate <= end;
+          });
         }
       }
-      query = query.order('date', { ascending: true });
-      const { data, error } = await query;
-      if (error) throw error;
-      simpleCache.set(cacheKey, data as Event[]);
-      setEvents(data as Event[]);
-      setTotalPages(Math.ceil((data?.length || 0) / 10));
+      
+      // Sort by date
+      filteredEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      setEvents(filteredEvents);
+      setTotalPages(Math.ceil(filteredEvents.length / 10));
     } catch (err) {
       setError(err as Error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os eventos.',
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
-  }, [cacheKey, searchQuery, location, date, getDateRange, simpleCache]);
+  }, [searchQuery, location, date, getDateRange]);
 
   useEffect(() => {
     fetchEvents();
@@ -115,17 +115,21 @@ export const useExploreEvents = (
     setSearchQuery(query);
     setCurrentPage(1);
   }, []);
+  
   const handleLocationChange = useCallback((loc: string | null) => {
     setLocation(loc);
     setCurrentPage(1);
   }, []);
+  
   const handleDateChange = useCallback((newDate: string | null) => {
     setDate(newDate);
     setCurrentPage(1);
   }, []);
+  
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
   }, []);
+  
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);

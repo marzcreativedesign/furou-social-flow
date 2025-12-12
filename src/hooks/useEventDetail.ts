@@ -1,48 +1,32 @@
-
 import { useState, useEffect } from 'react';
-import { EventsService } from '@/services/events.service';
-import { useToast } from '@/hooks/use-toast';
+import { Event } from '@/types/event';
+import { getEventById } from '@/data/mockData';
 
 export const useEventDetail = (eventId: string | undefined) => {
-  const [event, setEvent] = useState(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editEventData, setEditEventData] = useState({});
-  const { toast } = useToast();
+  const [editEventData, setEditEventData] = useState<Partial<Event>>({});
 
   useEffect(() => {
-    if (!eventId) return;
+    if (!eventId) {
+      setLoading(false);
+      return;
+    }
 
-    const fetchEvent = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await EventsService.getEventById(eventId);
-        
-        if (error) {
-          console.error('Error fetching event:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar o evento",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        setEvent(data);
-        setEditEventData(data);
-      } catch (error) {
-        console.error('Error in fetchEvent:', error);
-        toast({
-          title: "Erro",
-          description: "Erro inesperado ao carregar evento",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      const foundEvent = getEventById(eventId);
+      
+      if (foundEvent) {
+        setEvent(foundEvent);
+        setEditEventData(foundEvent);
       }
-    };
+      
+      setLoading(false);
+    }, 300);
 
-    fetchEvent();
-  }, [eventId, toast]);
+    return () => clearTimeout(timer);
+  }, [eventId]);
 
   return {
     event,
