@@ -13,11 +13,11 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ onSignOut }) => 
   const navigate = useNavigate();
 
   const handleEditProfile = () => {
-    navigate('/configuracoes');
+    navigate('/profile/edit');
   };
 
   const handleSettings = () => {
-    navigate('/acessibilidade');
+    navigate('/settings');
   };
 
   return (
@@ -41,7 +41,6 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ onSignOut }) => 
         Config.
       </Button>
       <Button 
-        type="button"
         variant="outline" 
         size="sm"
         onClick={onSignOut}

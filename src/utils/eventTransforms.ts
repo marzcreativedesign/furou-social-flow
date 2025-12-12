@@ -22,16 +22,9 @@ export const createEventResponse = (
   events: Event[], 
   currentPage: number,
   totalPages: number = 1
-): Partial<ExploreEventsData> => {
+): ExploreEventsData => {
   return {
     events: events.map(transformEventData),
-    loading: false,
-    error: null,
-    currentPage,
-    totalPages,
-    searchQuery: '',
-    handleSearch: () => {},
-    handlePageChange: () => {},
     metadata: {
       totalPages,
       currentPage

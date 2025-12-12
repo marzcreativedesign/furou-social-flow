@@ -9,9 +9,10 @@ import TextSection from "@/components/settings/TextSection";
 import AnimationSection from "@/components/settings/AnimationSection";
 import SettingsPreview from "@/components/settings/SettingsPreview";
 import { useSettings } from "@/hooks/use-settings";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const AccessibilityPage = () => {
+  const { toast } = useToast();
   const { settings, updateSetting, saveAllSettings, isDirty } = useSettings();
   const [showSaveMessage, setShowSaveMessage] = useState(false);
 

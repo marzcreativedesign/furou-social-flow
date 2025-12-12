@@ -4,8 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import NewSidebar from "./layout/NewSidebar";
-import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -33,7 +33,49 @@ const MainLayout = ({
   const [darkMode, setDarkMode] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const { user } = useAuth();
-  
+  const [userProfile, setUserProfile] = useState({
+    name: "Usuário",
+    email: "usuario@exemplo.com",
+    avatarUrl: "",
+    initials: "U"
+  });
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error fetching user profile:", error);
+            return;
+          }
+
+          const fullName = profileData?.full_name || user.user_metadata?.full_name || "Usuário";
+          const nameParts = fullName.split(' ');
+          const initials = nameParts.length > 1 
+            ? `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}` 
+            : fullName.charAt(0);
+          
+          setUserProfile({
+            name: fullName,
+            email: user.email || "usuario@exemplo.com",
+            avatarUrl: profileData?.avatar_url || "",
+            initials: initials.toUpperCase()
+          });
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
   useEffect(() => {
     const handleResize = () => {
       setIsDesktop(window.innerWidth >= 1024);
@@ -66,25 +108,6 @@ const MainLayout = ({
     }
   };
 
-  // If user is not authenticated and this is a protected route, redirect to login
-  useEffect(() => {
-    const protectedRoutes = [
-      '/perfil',
-      '/eventos',
-      '/criar',
-      '/agenda',
-      '/calculadora',
-      '/explorar', 
-      '/notificacoes',
-      '/configuracoes',
-      '/acessibilidade'
-    ];
-    
-    if (!user && protectedRoutes.some(route => location.pathname.startsWith(route))) {
-      navigate('/auth', { replace: true });
-    }
-  }, [user, location.pathname, navigate]);
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
@@ -99,8 +122,8 @@ const MainLayout = ({
         {rightContent}
       </Header>
 
-      <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full relative">
-        <div className="flex w-full">
+      <main className="flex-1 pb-16 lg:pb-0 max-w-7xl mx-auto w-full">
+        <div className="lg:flex">
           {isDesktop && (
             <NewSidebar
               darkMode={darkMode}
@@ -109,9 +132,7 @@ const MainLayout = ({
           )}
           
           <div className={`flex-1 ${isDesktop ? 'lg:ml-64' : ''}`}>
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
+            {children}
           </div>
         </div>
       </main>

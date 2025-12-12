@@ -1,31 +1,82 @@
+
 import { useState, useEffect } from "react";
-import { Event } from "@/types/event";
+import { supabase } from "@/integrations/supabase/client";
+import { Event, EventParticipant } from "@/types/event";
 import { isBefore, isToday, startOfDay } from "date-fns";
-import { mockEvents, getEventsForDate as getMockEventsForDate } from "@/data/mockData";
+import { useAuth } from "@/hooks/use-auth";
 
 export const useAgendaEvents = () => {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Use mock data - simulate small delay
-    const timer = setTimeout(() => {
-      setAllEvents(mockEvents);
-      setLoading(false);
-    }, 200);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchEvents = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        // Buscar todos os eventos que o usuário criou ou participa
+        const { data, error } = await supabase
+          .from("events")
+          .select(`
+            *,
+            event_participants(*)
+          `)
+          .or(`creator_id.eq.${user.id},event_participants.user_id.eq.${user.id}`)
+          .order('date', { ascending: true });
 
+        if (error) {
+          console.error("Erro ao buscar eventos:", error);
+          return;
+        }
+
+        // Ensure data is properly typed with the correct status field
+        const eventsWithParticipants = data?.map(event => {
+          const eventParticipants = event.event_participants?.map(participant => ({
+            ...participant,
+            id: String(participant.id), // Convert to string as expected by type
+            status: participant.status || "confirmed" // Use status from DB or default to confirmed
+          })) as EventParticipant[];
+          
+          return {
+            ...event,
+            event_participants: eventParticipants
+          } as Event;
+        }) || [];
+
+        setAllEvents(eventsWithParticipants);
+      } catch (err) {
+        console.error("Erro ao buscar eventos:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [user]);
+
+  // Get events for a specific date
   const getEventsForDate = (date: Date | undefined) => {
-    if (!date) return [];
-    return getMockEventsForDate(date);
+    if (!date || !allEvents.length) return [];
+    
+    return allEvents.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getDate() === date.getDate() &&
+             eventDate.getMonth() === date.getMonth() &&
+             eventDate.getFullYear() === date.getFullYear();
+    });
   };
 
+  // Get dates that have events
   const getEventDates = () => {
     return allEvents.map(event => new Date(event.date));
   };
 
+  // Check if a date has events
   const dateHasEvent = (day: Date) => {
     return getEventDates().some(eventDate => 
       eventDate.getDate() === day.getDate() && 
@@ -34,25 +85,24 @@ export const useAgendaEvents = () => {
     );
   };
 
+  // Function to check if a date is in the past
   const isPastDate = (date: Date) => {
-    const dayToCheck = startOfDay(date);
-    const today = startOfDay(new Date());
-    return isBefore(dayToCheck, today);
+    return isBefore(startOfDay(date), startOfDay(new Date())) && !isToday(date);
   };
 
+  // Get badge color based on event type
   const getEventTypeBadge = (event: Event) => {
-    const eventDate = new Date(event.date);
-    const isPastEvent = isPastDate(eventDate);
+    const isPastEvent = new Date(event.date) < new Date();
     
     if (isPastEvent) {
       return 'bg-gray-500';
     }
     
-    if (isToday(eventDate)) {
+    if (event.is_public) {
+      return 'bg-blue-500';
+    } else {
       return 'bg-green-500';
     }
-    
-    return event.is_public ? 'bg-blue-500' : 'bg-purple-500';
   };
 
   return {

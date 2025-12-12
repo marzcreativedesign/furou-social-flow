@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/MainLayout";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -9,10 +9,10 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfileInterests } from "@/components/profile/ProfileInterests";
 import { ProfileUpcomingEvents } from "@/components/profile/ProfileUpcomingEvents";
-import { ProfileEditor } from "@/components/profile/ProfileEditor";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProfileSkeleton from "@/components/profile/ProfileSkeleton";
-import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -23,10 +23,7 @@ const Profile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) return;
     
     const fetchUserData = async () => {
       try {
@@ -39,27 +36,9 @@ const Profile = () => {
           .eq('id', user.id)
           .single();
           
-        if (profileError && profileError.code !== 'PGRST116') {
-          throw profileError;
-        }
+        if (profileError) throw profileError;
         
-        if (!profileData) {
-          // Create profile if it doesn't exist
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              full_name: user.user_metadata?.full_name || "Usuário",
-              email: user.email
-            })
-            .select()
-            .single();
-            
-          if (createError) throw createError;
-          setProfile(newProfile);
-        } else {
-          setProfile(profileData);
-        }
+        setProfile(profileData);
         
         // Fetch upcoming events
         const { data: eventsData, error: eventsError } = await supabase
@@ -74,17 +53,15 @@ const Profile = () => {
           .order('date', { ascending: true })
           .limit(3);
           
-        if (eventsError) {
-          console.error('Events fetch error:', eventsError);
-        } else {
-          setUpcomingEvents(eventsData || []);
-        }
+        if (eventsError) throw eventsError;
+        
+        setUpcomingEvents(eventsData || []);
         
       } catch (error: any) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching user profile:', error.message);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar o perfil",
+          description: "Não foi possível carregar os dados do perfil",
           variant: "destructive"
         });
       } finally {
@@ -93,14 +70,14 @@ const Profile = () => {
     };
     
     fetchUserData();
-  }, [user, navigate, toast]);
+  }, [user, toast]);
   
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/auth');
+      navigate('/login');
     } catch (error: any) {
-      console.error('Error signing out:', error);
+      console.error('Error signing out:', error.message);
       toast({
         title: "Erro",
         description: "Não foi possível fazer logout",
@@ -108,53 +85,40 @@ const Profile = () => {
       });
     }
   };
-
-  const handleProfileUpdated = (updatedProfile: any) => {
-    setProfile(prev => ({ ...prev, ...updatedProfile }));
-  };
   
   if (loading) return <ProfileSkeleton />;
   
   if (!user || !profile) {
-    navigate('/auth');
+    navigate('/login');
     return null;
   }
   
   return (
-    <ErrorBoundary>
-      <MainLayout title="Seu Perfil">
-        <div className="p-4 mb-16">
-          <ProfileHeader 
-            name={profile.full_name || "Usuário"}
-            bio={profile.bio || ""}
-            avatarUrl={profile.avatar_url}
-          />
-          
-          <ProfileStats 
-            eventsCount={upcomingEvents.length} 
-            reliability={profile.reliability_score || 0}
-          />
-          
-          <ProfileActions onSignOut={handleSignOut} />
-          
-          <div className="mb-6">
-            <ProfileEditor 
-              profile={profile}
-              onProfileUpdated={handleProfileUpdated}
-            />
-          </div>
-          
-          <ProfileInterests 
-            interests={profile.interests || []}
-          />
-          
-          <ProfileUpcomingEvents 
-            events={upcomingEvents}
-            loading={false}
-          />
-        </div>
-      </MainLayout>
-    </ErrorBoundary>
+    <MainLayout title="Seu Perfil">
+      <div className="p-4 mb-16">
+        <ProfileHeader 
+          name={profile.full_name || "Usuário"}
+          bio={profile.bio || ""}
+          avatarUrl={profile.avatar_url}
+        />
+        
+        <ProfileStats 
+          eventsCount={upcomingEvents.length} 
+          reliability={profile.reliability_score || 0}
+        />
+        
+        <ProfileActions onSignOut={handleSignOut} />
+        
+        <ProfileInterests 
+          interests={profile.interests || []}
+        />
+        
+        <ProfileUpcomingEvents 
+          events={upcomingEvents}
+          loading={false}
+        />
+      </div>
+    </MainLayout>
   );
 };
 

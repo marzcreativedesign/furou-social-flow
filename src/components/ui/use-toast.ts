@@ -1,6 +1,5 @@
 
-// Re-export from our wrapper, ONLY Sonner
-import { useToast as useToastHook, toast, type Toast } from "@/hooks/use-toast";
+// Re-export the toast hooks from the actual implementation
+import { useToast, toast } from "@/hooks/use-toast";
 
-export { useToastHook as useToast, toast, type Toast };
-
+export { useToast, toast };

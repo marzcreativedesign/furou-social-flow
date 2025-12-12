@@ -1,7 +1,8 @@
+
 import { Separator } from "@/components/ui/separator";
 import NavigationMenu from "./NavigationMenu";
 import UserProfileSection from "./UserProfileSection";
-import SidebarActions from "./sidebar/SidebarActions";
+import SidebarActions from "./SidebarActions";
 
 interface DesktopSidebarProps {
   userProfile: {
@@ -21,22 +22,13 @@ const DesktopSidebar = ({
   toggleDarkMode, 
   isActive 
 }: DesktopSidebarProps) => {
-  // Placeholder logout (adjust if you use a context/provider for logout)
-  const handleLogout = () => {
-    window.location.href = "/auth";
-  };
-
   return (
     <div className="hidden lg:block lg:w-64 p-4 border-r border-border dark:border-gray-800 min-h-[calc(100vh-64px)] fixed">
       <div className="sticky top-20 space-y-4 flex flex-col h-[calc(100vh-100px)]">
         <UserProfileSection {...userProfile} />
         <Separator className="my-2" />
         <NavigationMenu isActive={isActive} />
-        <SidebarActions
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-          onLogout={handleLogout}
-        />
+        <SidebarActions darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
       </div>
     </div>
   );

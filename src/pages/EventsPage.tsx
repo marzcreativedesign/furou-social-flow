@@ -5,45 +5,27 @@ import EventTypeFilters from "../components/home/EventTypeFilters";
 import EventLocationFilter from "@/components/events/EventLocationFilter";
 import EventsGrid from "@/components/events/EventsGrid";
 import EventLocationBanner from "@/components/events/EventLocationBanner";
-import { useState } from "react";
-import { useEvents } from "@/hooks/useEvents";
-import type { FilterType } from "@/components/home/EventTypeFilters";
+import { useEventsData } from "@/hooks/useEventsData";
 
 const EventsPage = () => {
   const navigate = useNavigate();
-  const { events, publicEvents, loading } = useEvents();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [locationQuery, setLocationQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const { 
+    filteredEvents,
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    locationQuery,
+    setLocationQuery,
+    activeFilter,
+    setActiveFilter,
+    currentPage,
+    metadata,
+    handlePageChange
+  } = useEventsData();
 
   const handleBackToHome = () => navigate('/');
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => setLocationQuery(e.target.value);
   const handleClearLocation = () => setLocationQuery("");
-
-  // Combine and filter events
-  const allEvents = [...(events || []), ...(publicEvents || [])];
-  let filteredEvents = allEvents;
-  if (activeFilter !== 'all') {
-    filteredEvents = filteredEvents.filter(e =>
-      activeFilter === 'public'
-        ? e.is_public
-        : activeFilter === 'private'
-          ? !e.is_public
-          : true
-    );
-  }
-  if (searchQuery) {
-    filteredEvents = filteredEvents.filter(e =>
-      e.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.location && e.location.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }
-  if (locationQuery) {
-    filteredEvents = filteredEvents.filter(e =>
-      e.location && e.location.toLowerCase().includes(locationQuery.toLowerCase())
-    );
-  }
 
   return (
     <MainLayout
@@ -63,7 +45,7 @@ const EventsPage = () => {
       <div className="px-4 py-4">
         <EventTypeFilters
           activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
+          onFilterChange={(filter) => setActiveFilter(filter)}
         />
         
         <EventLocationBanner 
@@ -73,13 +55,13 @@ const EventsPage = () => {
         
         <EventsGrid
           events={filteredEvents}
-          loading={loading}
+          loading={isLoading}
           searchQuery={searchQuery}
           locationQuery={locationQuery}
           pagination={{
-            currentPage,
-            totalPages: 1,
-            onPageChange: setCurrentPage
+            currentPage: metadata.currentPage,
+            totalPages: metadata.totalPages,
+            onPageChange: handlePageChange
           }}
         />
       </div>
@@ -88,4 +70,3 @@ const EventsPage = () => {
 };
 
 export default EventsPage;
-
